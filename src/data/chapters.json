@@ -1,0 +1,128 @@
+[
+  {
+    "id": 1,
+    "name": "Arjuna Visada Yoga",
+    "name_meaning": "The Yoga of Arjuna's Dejection",
+    "verses_count": 47,
+    "summary": "Arjuna requests Krishna to move his chariot between the two armies. His mind is overwhelmed with grief and he decides not to fight."
+  },
+  {
+    "id": 2,
+    "name": "Sankhya Yoga",
+    "name_meaning": "The Yoga of Analysis",
+    "verses_count": 72,
+    "summary": "Krishna teaches Arjuna about the immortal nature of the soul and introduces the path of self-realization through actions without attachment."
+  },
+  {
+    "id": 3,
+    "name": "Karma Yoga",
+    "name_meaning": "The Yoga of Action",
+    "verses_count": 43,
+    "summary": "Krishna explains the performance of duties in modern life and how taking action without expecting rewards purifies the mind."
+  },
+  {
+    "id": 4,
+    "name": "Jnana Karma Sanyasa Yoga",
+    "name_meaning": "The Yoga of Knowledge",
+    "verses_count": 42,
+    "summary": "Krishna reveals his divine appearances and teaches that true knowledge brings immense peace and removes ignorance."
+  },
+  {
+    "id": 5,
+    "name": "Karma Sanyasa Yoga",
+    "name_meaning": "The Yoga of Renunciation",
+    "verses_count": 29,
+    "summary": "Krishna compares the path of knowledge and the path of action, emphasizing that both lead to the same spiritual goal."
+  },
+  {
+    "id": 6,
+    "name": "Dhyana Yoga",
+    "name_meaning": "The Yoga of Meditation",
+    "verses_count": 47,
+    "summary": "Krishna details the practice of meditation, control of the restless mind, and the ultimate achievement of deep spiritual union."
+  },
+  {
+    "id": 7,
+    "name": "Jnana Vijnana Yoga",
+    "name_meaning": "The Yoga of Knowledge and Wisdom",
+    "verses_count": 30,
+    "summary": "Krishna describes his absolute reality, the material and spiritual energies, and how living beings are part of his divine nature."
+  },
+  {
+    "id": 8,
+    "name": "Aksara Brahma Yoga",
+    "name_meaning": "The Yoga of the Imperishable",
+    "verses_count": 28,
+    "summary": "Krishna explains the cosmos, the journey of the soul after death, and the method of remembering the Supreme at the time of leaving the body."
+  },
+  {
+    "id": 9,
+    "name": "Raja Vidya Raja Guhya Yoga",
+    "name_meaning": "The Yoga of the Sovereign Science",
+    "verses_count": 34,
+    "summary": "Krishna reveals the sovereign, most profound and secret knowledge about the universe and how true devotion brings ultimate salvation."
+  },
+  {
+    "id": 10,
+    "name": "Vibhuti Yoga",
+    "name_meaning": "The Yoga of Divine Manifestations",
+    "verses_count": 42,
+    "summary": "Krishna describes his endless divine manifestations, showing how he is the essence of all beautiful, glorious, and powerful things."
+  },
+  {
+    "id": 11,
+    "name": "Visvarupa Darsana Yoga",
+    "name_meaning": "The Yoga of the Vision of the Universal Form",
+    "verses_count": 55,
+    "summary": "Krishna grants Arjuna divine vision and reveals his spectacular, terrifying, and awe-inspiring universal form."
+  },
+  {
+    "id": 12,
+    "name": "Bhakti Yoga",
+    "name_meaning": "The Yoga of Devotion",
+    "verses_count": 20,
+    "summary": "Krishna explains the path of loving devotion, the qualities of a true devotee, and how it is the highest and easiest path to God."
+  },
+  {
+    "id": 13,
+    "name": "Ksetra Ksetrajna Vibhaga Yoga",
+    "name_meaning": "The Yoga of the Field and its Knower",
+    "verses_count": 34,
+    "summary": "Krishna distinguishes between the physical body (the field) and the soul (the knower), revealing the nature of true knowledge."
+  },
+  {
+    "id": 14,
+    "name": "Gunatraya Vibhaga Yoga",
+    "name_meaning": "The Yoga of the Three Modes of Material Nature",
+    "verses_count": 27,
+    "summary": "Krishna explains the three qualities of nature (goodness, passion, and ignorance) and how to transcend them."
+  },
+  {
+    "id": 15,
+    "name": "Purusottama Yoga",
+    "name_meaning": "The Yoga of the Supreme Divine Personality",
+    "verses_count": 20,
+    "summary": "Krishna uses the analogy of an upside-down banyan tree to explain the material world and reveals his identity as the Supreme Being."
+  },
+  {
+    "id": 16,
+    "name": "Daivasura Sampad Vibhaga Yoga",
+    "name_meaning": "The Yoga of Divine and Demoniac Natures",
+    "verses_count": 24,
+    "summary": "Krishna details the divine qualities that lead to liberation and the demoniac qualities that bind the soul to suffering."
+  },
+  {
+    "id": 17,
+    "name": "Sraddhatraya Vibhaga Yoga",
+    "name_meaning": "The Yoga of the Threefold Faith",
+    "verses_count": 28,
+    "summary": "Krishna categorizes faith, food, sacrifices, austerities, and charity into the three modes of material nature."
+  },
+  {
+    "id": 18,
+    "name": "Moksa Sanyasa Yoga",
+    "name_meaning": "The Yoga of Liberation by Renunciation",
+    "verses_count": 78,
+    "summary": "Krishna summarizes all previous teachings, explaining the final path of liberation through surrender and renunciation of the fruits of action."
+  }
+]
