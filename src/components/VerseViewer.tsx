@@ -30,6 +30,14 @@ const pick = (language: Language, english: string | undefined, kannada: string |
   return english ? { text: english, lang: englishLang } : null;
 };
 
+/* Section headings in the reader's own language. The label is tagged with its
+   script so the [lang] font rules pick up Noto Sans Kannada/Telugu — the UI
+   stack deliberately carries no Indic fallback, because one there would pull
+   both faces on every screen for the sake of the language <select>. */
+const TRANSLATION_LABEL: Record<Language, string> = { en: "Translation", kn: "\u0c85\u0ca8\u0cc1\u0cb5\u0cbe\u0ca6", te: "\u0c05\u0c28\u0c41\u0c35\u0c3e\u0c26\u0c02" };
+const COMMENTARY_LABEL: Record<Language, string> = { en: "Commentary", kn: "\u0cad\u0cbe\u0cb7\u0ccd\u0caf", te: "\u0c2d\u0c3e\u0c37\u0c4d\u0c2f\u0c02" };
+const SECTION_LANG: Record<Language, string> = { en: "en", kn: "kn", te: "te" };
+
 const verseDomId = (chapter: number, verse: number): string => `c${chapter}v${verse}`;
 
 const reducedMotion = (): boolean => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -63,7 +71,7 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language }>((
       </div>
 
       <div className="verse-section-card">
-        <h3 className="verse-section-title">{language === "kn" ? "ಅನುವಾದ (Translation)" : language === "te" ? "అనువాదం (Translation)" : "Translation"}</h3>
+        <h3 className="verse-section-title" lang={SECTION_LANG[language]}>{TRANSLATION_LABEL[language]}</h3>
         <p className="verse-section-content" lang={translation.lang}>
           {translation.text}
         </p>
@@ -71,7 +79,7 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language }>((
 
       {commentary && (
         <div className="verse-section-card commentary">
-          <h3 className="verse-section-title">{language === "kn" ? "ಭಾಷ್ಯ (Commentary)" : language === "te" ? "భాష్యం (Commentary)" : "Commentary"}</h3>
+          <h3 className="verse-section-title" lang={SECTION_LANG[language]}>{COMMENTARY_LABEL[language]}</h3>
           <p className="verse-section-content" lang={commentary.lang}>
             {commentary.text}
           </p>
