@@ -1,5 +1,6 @@
-import { BookOpen, ChevronLeft, Globe, Moon, Sun } from "lucide-react";
+import { ChevronLeft, Globe, Moon, Sun } from "lucide-react";
 import type React from "react";
+import { Logo } from "./Logo";
 
 export type Language = "en" | "kn" | "te";
 
@@ -27,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHomeClick,
         </button>
       ) : (
         <button type="button" onClick={onHomeClick} className="nav-logo-button pressable">
-          <BookOpen size={22} aria-hidden />
+          <Logo size={40} />
           <span className="nav-title">{title}</span>
         </button>
       )}

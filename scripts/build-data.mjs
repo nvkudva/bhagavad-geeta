@@ -22,6 +22,8 @@ const VERSE_KEYS = [
   "translation_kannada",
   "translation_telugu",
   "context_english",
+  "commentary_english",
+  "commentary_author",
   "context_kannada",
   "context_telugu",
 ];

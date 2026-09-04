@@ -12,6 +12,8 @@ export interface Verse {
   translation_kannada?: string; // 4/701
   translation_telugu?: string; // 4/701
   context_english?: string; // 701/701
+  commentary_english?: string; // 701/701 — Swami Sivananda, via vedicscriptures.github.io
+  commentary_author?: string;
   context_kannada?: string; // 4/701
   context_telugu?: string; // 4/701
 }

@@ -42,9 +42,9 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
       manifest: {
-        name: "Bhagavad-Geeta",
-        short_name: "Bhagavad-Geeta",
-        description: "A premium Bhagavad-Geeta progressive web app",
+        name: "Geeta",
+        short_name: "Geeta",
+        description: "Geeta — a premium Bhagavad Gita progressive web app",
         // The dark ground, not white: the manifest colours are the splash screen and
         // the task-switcher card, i.e. the first paint an installed user sees.
         theme_color: "#0a0a0b",

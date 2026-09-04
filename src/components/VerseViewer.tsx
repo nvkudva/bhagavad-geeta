@@ -36,6 +36,7 @@ const pick = (language: Language, english: string | undefined, kannada: string |
    both faces on every screen for the sake of the language <select>. */
 const TRANSLATION_LABEL: Record<Language, string> = { en: "Translation", kn: "\u0c85\u0ca8\u0cc1\u0cb5\u0cbe\u0ca6", te: "\u0c05\u0c28\u0c41\u0c35\u0c3e\u0c26\u0c02" };
 const COMMENTARY_LABEL: Record<Language, string> = { en: "Commentary", kn: "\u0cad\u0cbe\u0cb7\u0ccd\u0caf", te: "\u0c2d\u0c3e\u0c37\u0c4d\u0c2f\u0c02" };
+const WORD_MEANINGS_LABEL = "Word meanings";
 const SECTION_LANG: Record<Language, string> = { en: "en", kn: "kn", te: "te" };
 
 const verseDomId = (chapter: number, verse: number): string => `c${chapter}v${verse}`;
@@ -48,7 +49,12 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language }>((
   // Scripture: Devanagari is the source text; kn/te are transliterations of it.
   const scripture = pick(language, verse.text, verse.text_kannada, verse.text_telugu, "sa") as Tagged;
   const translation = pick(language, verse.translation_english, verse.translation_kannada, verse.translation_telugu, "en") as Tagged;
-  const commentary = pick(language, verse.context_english, verse.context_kannada, verse.context_telugu, "en");
+  const commentary = pick(language, verse.commentary_english, verse.context_kannada, verse.context_telugu, "en");
+  // Word-by-word glosses are English only; there is no Kannada or Telugu set.
+  const wordMeanings = language === "en" ? verse.context_english : undefined;
+  const [tab, setTab] = useState<"words" | "commentary">(commentary ? "commentary" : "words");
+  // "term—gloss; term—gloss" from the source, split to one term per line.
+  const glosses = wordMeanings?.split(";").map((g) => g.trim().replace(/\s*—\s*/, ": ")).filter(Boolean);
 
   return (
     <article className="verse-block" id={verseDomId(chapter, verse.verse_number)} data-verse={verse.verse_number}>
@@ -77,12 +83,53 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language }>((
         </p>
       </div>
 
-      {commentary && (
+      {(wordMeanings || commentary) && (
         <div className="verse-section-card commentary">
-          <h3 className="verse-section-title" lang={SECTION_LANG[language]}>{COMMENTARY_LABEL[language]}</h3>
-          <p className="verse-section-content" lang={commentary.lang}>
-            {commentary.text}
-          </p>
+          <div className="verse-tabs" role="tablist">
+            {commentary && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === "commentary"}
+                className="verse-tab"
+                onClick={() => setTab("commentary")}
+                lang={SECTION_LANG[language]}
+              >
+                {COMMENTARY_LABEL[language]}
+              </button>
+            )}
+            {wordMeanings && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === "words"}
+                className="verse-tab"
+                onClick={() => setTab("words")}
+                lang="en"
+              >
+                {WORD_MEANINGS_LABEL}
+              </button>
+            )}
+          </div>
+
+          {tab === "words" && glosses ? (
+            <ul className="verse-glosses" lang="en">
+              {glosses.map((g) => (
+                <li key={g}>{g}</li>
+              ))}
+            </ul>
+          ) : (
+            commentary && (
+              <>
+                <p className="verse-section-content" lang={commentary.lang}>
+                  {commentary.text}
+                </p>
+                {commentary.lang === "en" && verse.commentary_author && (
+                  <p className="verse-section-attribution">{verse.commentary_author}</p>
+                )}
+              </>
+            )
+          )}
         </div>
       )}
     </article>

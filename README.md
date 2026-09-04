@@ -1,4 +1,4 @@
-# Bhagavad Geeta PWA
+# Geeta (गीता · ಗೀತೆ · గీత)
 
 A modern, high-performance Progressive Web App (PWA) for the Bhagavad Gita, designed with a premium reading experience in mind.
 

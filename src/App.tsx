@@ -6,7 +6,7 @@ import { Header } from "./components/Header";
 import { TabBar } from "./components/TabBar";
 import { VerseViewer } from "./components/VerseViewer";
 import { getChapterMeta, getChapters, loadChapter, peekChapter } from "./lib/gita";
-import type { Verse } from "./lib/gita.types";
+import type { Language, Verse } from "./lib/gita.types";
 import { navigate, useRoute, useScrollRestoration } from "./lib/router";
 import { SettingsProvider, useSettings } from "./lib/settings";
 
@@ -16,15 +16,22 @@ const FIRST_CHAPTER = chapters[0].id;
 const LAST_CHAPTER = chapters[chapters.length - 1].id;
 const TOTAL_VERSES = chapters.reduce((sum, c) => sum + c.verses_count, 0);
 
-const Home: React.FC = () => (
-  <div className="animate-fade-in home-container">
-    <h2 className="home-title">Bhagavad Gita</h2>
-    <p className="home-description">
-      {chapters.length} chapters · {TOTAL_VERSES} verses
-    </p>
-    <ChapterList chapters={chapters} onSelectChapter={(id) => navigate({ name: "verse", chapter: id, verse: 1 })} />
-  </div>
-);
+// The app name in the script the reader has chosen; "en" gets the IAST romanisation.
+const APP_NAME: Record<Language, string> = { en: "Geeta", kn: "ಗೀತೆ", te: "గీత" };
+const HOME_TITLE: Record<Language, string> = { en: "Bhagavad Geeta", kn: "ಭಗವದ್ ಗೀತೆ", te: "భగవద్గీత" };
+
+const Home: React.FC = () => {
+  const { language } = useSettings();
+  return (
+    <div className="animate-fade-in home-container">
+      <h2 className="home-title">{HOME_TITLE[language]}</h2>
+      <p className="home-description">
+        {chapters.length} chapters · {TOTAL_VERSES} verses
+      </p>
+      <ChapterList chapters={chapters} onSelectChapter={(id) => navigate({ name: "verse", chapter: id, verse: 1 })} />
+    </div>
+  );
+};
 
 /** Reachable, routed placeholders so the tab bar is complete. The screens
  *  themselves are DESIGN_PLAN §4.4–4.6 (P1/P2). */
@@ -134,7 +141,7 @@ const AppShell: React.FC = () => {
         // iOS-style contextual leading item: absent on Home, and on a chapter it
         // is labelled with where it goes back to.
         back={inReader ? { label: "Chapters", onClick: () => navigate({ name: "home" }) } : undefined}
-        title={inReader ? (getChapterMeta(route.chapter)?.name ?? "Bhagavad Gita") : "Bhagavad Gita"}
+        title={inReader ? (getChapterMeta(route.chapter)?.name ?? APP_NAME[language]) : APP_NAME[language]}
       />
 
       <main className="app-main" data-reader={inReader ? "true" : "false"}>

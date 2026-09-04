@@ -53,7 +53,7 @@
 }
 
 /* ------------------------------------------------------------------ tokens
-   DESIGN_PLAN §2.3 — dark-first. A near-black ground, one violet accent, and
+   DESIGN_PLAN §2.3 — dark-first. A near-black ground, one maroon accent, and
    scripture set in white so it reads as the lit object on the page. */
 
 :root {
@@ -196,8 +196,10 @@
 
   /* Cards float on the ground rather than sitting on a flat fill, so they are
      translucent with a blur behind them. --well is the recessed panel inside. */
-  --glass: rgba(20, 20, 22, 0.62);
+  --glass: rgba(20, 20, 22, 0.46);
+  --glass-hover: rgba(46, 46, 52, 0.58);
   --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-border-hover: rgba(255, 255, 255, 0.2);
   /* Darkens rather than lightens: a lightening well over a card that already sits
      on a lit bloom drops the section label under 4.5:1. */
   --well: rgba(0, 0, 0, 0.42);
@@ -210,18 +212,18 @@
   --ink-3: #8b8b94;
   --ink-4: #63636b;
 
-  --accent: #a78bfa;
-  --accent-hi: #c4b5fd;
-  --accent-soft: rgba(167, 139, 250, 0.16);
-  --accent-line: rgba(167, 139, 250, 0.35);
+  --accent: #e2586d;
+  --accent-hi: #f18b9b;
+  --accent-soft: rgba(226, 88, 109, 0.16);
+  --accent-line: rgba(226, 88, 109, 0.35);
   --on-accent: #0a0a0b;
 
   --danger: #f87171;
   --success: #4ade80;
 
   /* Materials — floating chrome ONLY. */
-  --mat-chrome: rgba(10, 10, 11, 0.72);
-  --mat-blur: saturate(180%) blur(20px);
+  --mat-chrome: rgba(10, 10, 11, 0.42);
+  --mat-blur: saturate(180%) blur(30px);
   --mat-border: rgba(255, 255, 255, 0.08);
 
   /* On a near-black ground a drop shadow is invisible; separation comes from
@@ -273,10 +275,12 @@
   --bloom-4-at: 70% 60% at 6% 92%;
   --bloom-4-stop: 70%;
 
-  --glass: rgba(255, 255, 255, 0.74);
+  --glass: rgba(255, 255, 255, 0.56);
+  --glass-hover: rgba(255, 255, 255, 0.82);
   --glass-border: rgba(255, 255, 255, 0.9);
+  --glass-border-hover: rgba(161, 29, 51, 0.22);
   /* Darkens the card rather than lightening it: on a white glass card a lighter
-     well is nearly invisible. Tinted to the ground's violet, not neutral grey. */
+     well is nearly invisible. Tinted to the ground's maroon, not neutral grey. */
   --well: rgba(38, 16, 54, 0.085);
   --well-border: rgba(38, 16, 54, 0.07);
 
@@ -287,17 +291,17 @@
   --ink-3: #62626b;
   --ink-4: #85858e;
 
-  --accent: #7c3aed;
-  --accent-hi: #6d28d9;
+  --accent: #a11d33;
+  --accent-hi: #8a1729;
   /* 0.07, not 0.10: at 0.10 the accent-on-soft pill lands at 4.49:1. */
-  --accent-soft: rgba(124, 58, 237, 0.07);
-  --accent-line: rgba(124, 58, 237, 0.28);
+  --accent-soft: rgba(161, 29, 51, 0.07);
+  --accent-line: rgba(161, 29, 51, 0.28);
   --on-accent: #ffffff;
 
   --danger: #dc2626;
   --success: #15803d;
 
-  --mat-chrome: rgba(255, 255, 255, 0.72);
+  --mat-chrome: rgba(255, 255, 255, 0.5);
   --mat-border: rgba(10, 10, 11, 0.07);
 
   --el-1: 0 1px 2px rgba(10, 10, 11, 0.05);
@@ -574,9 +578,25 @@ body::before {
   transform: scale(0.985);
 }
 
+.chapter-card.pressable:active {
+  background-color: var(--glass-hover);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .pressable:hover {
     background-color: var(--surface-2);
+  }
+  /* The nav logo is transparent chrome, not a tile: a hover fill paints an
+     opaque block behind the mark and title. */
+  .nav-logo-button.pressable:hover {
+    background-color: transparent;
+  }
+  /* Glass cards keep their translucency on hover: the flat --surface-2 fill
+     reads as a grey block against the bloom ground. */
+  .chapter-card.pressable:hover {
+    background-color: var(--glass-hover);
+    border-color: var(--glass-border-hover);
+    box-shadow: var(--el-2);
   }
 }
 
@@ -719,9 +739,9 @@ body::before {
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  justify-content: center;
   min-height: var(--tap-min);
-  padding: 0 var(--sp-3);
+  min-width: var(--tap-min);
   background: var(--surface-1);
   border: 1px solid var(--separator);
   border-radius: var(--r-pill);
@@ -729,15 +749,34 @@ body::before {
 }
 
 .language-select {
-  min-height: var(--tap-min);
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  appearance: none;
   background: transparent;
   border: none;
-  color: var(--ink-1);
-  font-family: inherit;
-  font-size: var(--fs-subhead);
-  font-weight: var(--fw-medium);
+  opacity: 0;
   outline: none;
   cursor: pointer;
+}
+
+.verse-section-attribution {
+  margin-top: var(--sp-2);
+  color: var(--ink-3);
+  font-size: var(--fs-caption2);
+  font-style: italic;
+  text-align: right;
+}
+
+.verse-glosses {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-read);
+  font-size: calc(var(--fs-comment) - 1px);
+  line-height: var(--lh-read);
+  color: var(--ink-2);
 }
 
 .home-container {
@@ -791,6 +830,9 @@ body::before {
   text-align: left;
   width: 100%;
   cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out-ios),
+    box-shadow var(--dur-fast) var(--ease-out-ios);
 }
 
 .chapter-card-header {
@@ -983,6 +1025,30 @@ body::before {
 
 .verse-section-card.commentary {
   margin-top: var(--sp-3);
+}
+
+.verse-tabs {
+  display: flex;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--separator);
+}
+
+.verse-tab {
+  padding: 0 var(--sp-2) var(--sp-2);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--ink-3);
+  font-family: inherit;
+  font-size: var(--fs-footnote);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.verse-tab[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
 }
 
 .verse-section-title {
