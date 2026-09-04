@@ -29,12 +29,40 @@ attribution travels with the data.
 
 ## Kannada — no open source exists
 
-Checked and rejected: kn.wikisource (Sanskrit in Kannada script only, plus one
-unproofread OCR scan), GitHub (one 701-verse dataset, unlicensed and itself
-machine-generated), HuggingFace (script transliterations, not translations),
-gitasupersite.in (no data API, IIT-Kanpur copyright), archive.org (the 1936
-PD-in-India text is old-Kannada ṣaṭpadi metre with no verse alignment).
-Modern translations — Bannanje, Chinmayananda, Prabhupada — are in copyright.
+Two searches, both dead ends. Recorded here so nobody runs them a third time.
+
+**Openly-licensed datasets.** kn.wikisource carries only the Sanskrit in
+Kannada script, plus one 500-page scan whose every page is `pagequality=1`
+(unproofread OCR, `ಕರಯೋಗ` for `ಕರ್ಮಯೋಗ`). The single 701-verse Kannada dataset on
+GitHub is unlicensed and, by its own repo contents, itself machine-generated.
+HuggingFace's Gita dumps carry `script-kn` columns — Sanskrit transliterated
+into Kannada, which this corpus already has. gitasupersite.in exposes no data
+API and is IIT-Kanpur copyright.
+
+**Public domain in India** (life + 60, so an author dead by 1965). The only
+text with both clean rights and the right per-verse prose shape is
+`shn.bhagavadgita0000muns` — Munshi Srinivasaiya, ed. J. Garrett, Mysore
+Government Press, 1869. Its `_djvu.txt` is Tesseract on 1869 letterpress at
+roughly 70–80% word accuracy, with the `ಉವಾಚ` and numeral verse boundaries
+mostly destroyed, so verse segmentation is not recoverable without a fresh
+vision OCR pass and line-by-line proofreading — and the result would be 1869
+orthography. The "Karnataka Bhagavadgita" scans (1936, and Basavanal) are the
+16th-century ṣaṭpadi metrical rendering, whose verses do not map to the ślokas
+at all.
+
+**In copyright.** Bannanje Govindacharya, Chinmayananda. Satchidanandendra
+Saraswati's volumes are CC BY-NC-ND, and ND forbids the verse-splitting
+derivative this app would be. Prabhupada's Kannada edition on archive.org
+(`bhagavadgita-srila-prabhupadas-books`) is a 2021 personal upload with no
+`licenseurl` and no `rights` field, which means all rights reserved — it is
+Bhaktivedanta Book Trust text, in copyright in India until 2037. A second
+upload of the same text carries a `publicdomain/mark/1.0` applied by its
+uploader; that mark is simply wrong and must not be relied on.
+
+**Conclusion.** `translation_kannada` is machine-assisted, rendered from the
+Sanskrit with the English and the Telugu alongside it, deliberately without
+reference to any copyrighted Kannada edition. Every verse carries
+`translation_kannada_source` saying so, and the reader is told in the UI.
 
 `translation_kannada` is therefore machine-assisted, rendered from the Sanskrit
 with the English and the Telugu alongside it, and every verse carries
