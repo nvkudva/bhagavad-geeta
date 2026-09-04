@@ -211,9 +211,9 @@
   --sp-16: 4rem;
   /* Screen gutter, card padding and section rhythm all read through these —
      tighten them here rather than patching use sites. */
-  --gutter: var(--sp-3); /* 12px, was 16 */
+  --gutter: var(--sp-4); /* 16px — Apple's directional layout margin on iPhone */
   --pad-card: var(--sp-4); /* verse section cards, was 20 */
-  --pad-tile: var(--sp-3); /* chapter tiles, was 16 */
+  --pad-tile: var(--sp-4); /* chapter tiles — same 16px inset as a grouped cell */
   --gap-section: var(--sp-5); /* between blocks inside a verse, was 32 */
   --gap-verse: var(--sp-8); /* between consecutive verses in a chapter */
   --measure: 34rem;
@@ -232,6 +232,8 @@
 
   /* ---------- Hit targets ---------- */
   --tap-min: 44px;
+  /* Diameter of a round toolbar control: the glass is 36, the target is 44. */
+  --control-round: 36px;
   --tap-comfortable: 48px;
 
   /* ---------- Motion ---------- */
@@ -307,8 +309,8 @@
      ever have the ground behind them and would otherwise pay 30px of blur for
      a gradient. brightness() is what makes the material *tint* the backdrop
      rather than merely desaturate it. */
-  --mat-chrome: rgba(10, 10, 11, 0.42);
-  --mat-blur: saturate(180%) brightness(0.82) blur(30px);
+  --mat-chrome: rgba(10, 10, 11, 0.28);
+  --mat-blur: saturate(200%) blur(24px);
   --mat-blur-thin: saturate(180%) brightness(0.9) blur(16px);
   --mat-border: rgba(255, 255, 255, 0.08);
 
@@ -378,7 +380,7 @@
   /* Floating chrome hovers this far off the bottom edge, above the inset. */
   --float-gap: var(--sp-2);
   /* Real height of the sticky nav, for scroll-margin-top on verse anchors. */
-  --nav-total: calc(var(--nav-h) + max(var(--sp-2), var(--sa-top)) + var(--sp-2));
+  --nav-total: calc(var(--nav-h) + var(--sa-top) + 2 * var(--sp-1));
   --sidebar-w: 17rem;
 }
 
@@ -434,8 +436,8 @@
   --danger: #dc2626;
   --success: #15803d;
 
-  --mat-chrome: rgba(255, 255, 255, 0.5);
-  --mat-blur: saturate(180%) brightness(1.08) blur(30px);
+  --mat-chrome: rgba(250, 250, 252, 0.72);
+  --mat-blur: saturate(200%) blur(24px);
   --mat-blur-thin: saturate(180%) brightness(1.04) blur(16px);
   --mat-border: rgba(10, 10, 11, 0.07);
 
@@ -677,33 +679,37 @@ body::before {
 
 /* The scroll-edge effect: at the top of a scroll view the bar is *nothing* —
    no material, no hairline, no specular — and the content runs under a bare
-   status bar. The material only condenses once content has passed beneath it.
-   Driven by data-scrolled, which Header sets from a passive scroll listener. */
+   status bar. Header writes --nav-progress (0 -> 1 over the first 52px) every
+   frame, so the material arrives *with* the finger instead of snapping at a
+   threshold, and one variable drives the whole condense. */
 .app-nav {
   position: sticky;
   top: 0;
   z-index: 100;
-  padding-top: max(var(--sp-2), var(--sa-top));
-  padding-bottom: var(--sp-2);
+  /* The 44pt control row plus 4pt of air on each side of it, so a round glass
+     control ends 8pt clear of the bar's own hairline instead of touching it. */
+  padding-top: calc(var(--sa-top) + var(--sp-1));
+  padding-bottom: var(--sp-1);
   padding-left: max(var(--gutter), var(--sa-left));
   padding-right: max(var(--gutter), var(--sa-right));
-  background: transparent;
-  border-bottom: 0.5px solid transparent;
-  box-shadow: none;
-  transition:
-    background-color var(--dur-base) var(--ease-out-ios),
-    border-color var(--dur-base) var(--ease-out-ios),
-    box-shadow var(--dur-base) var(--ease-out-ios),
-    -webkit-backdrop-filter var(--dur-base) var(--ease-out-ios),
-    backdrop-filter var(--dur-base) var(--ease-out-ios);
 }
 
-.app-nav[data-scrolled="true"] {
+/* The material is its own layer so it can be faded: backdrop-filter cannot be
+   interpolated, but the opacity of the element carrying it can, and a partly
+   transparent backdrop layer blends toward the unfiltered page. One hairline
+   and one specular highlight — the old rule stacked a border-bottom on top of
+   --spec's inset dark edge and drew the seam twice. */
+.app-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   background: var(--mat-chrome);
   -webkit-backdrop-filter: var(--mat-blur);
   backdrop-filter: var(--mat-blur);
-  border-bottom-color: var(--mat-border);
-  box-shadow: var(--spec);
+  border-bottom: 0.5px solid var(--mat-border);
+  box-shadow: inset 0 1px 0 var(--spec-top);
+  opacity: var(--nav-progress, 0);
+  pointer-events: none;
 }
 
 /* The 44pt control row. The large title, when present, is a second row below. */
@@ -728,23 +734,17 @@ body::before {
   color: var(--ink-1);
   white-space: nowrap;
   overflow: hidden;
-  height: var(--large-title-h);
-  opacity: 1;
+  /* Above the material layer, and driven straight off the scroll: the title
+     shrinks into the bar continuously rather than crossfading on a spring. */
+  position: relative;
+  height: calc(var(--large-title-h) * (1 - var(--nav-progress, 0)));
+  opacity: calc(1 - var(--nav-progress, 0) * 1.6);
+  transform: scale(calc(1 - 0.38 * var(--nav-progress, 0))) translateY(calc(6px * var(--nav-progress, 0)));
   transform-origin: left bottom;
-  transition:
-    height var(--dur-base) var(--spring-gentle),
-    opacity var(--dur-fast) var(--ease-out-ios),
-    transform var(--dur-base) var(--spring-gentle);
-}
-
-.app-nav[data-scrolled="true"] .nav-large-title {
-  height: 0;
-  opacity: 0;
-  transform: scale(0.62) translateY(6px);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .app-nav[data-scrolled="true"] {
+  .app-nav::before {
     background: var(--surface-1);
   }
 }
@@ -947,7 +947,7 @@ body::before {
 
 .nav-title {
   font-family: var(--font-read);
-  font-size: calc(var(--fs-headline) + 4px);
+  font-size: var(--fs-headline);
   font-weight: var(--fw-semibold);
   letter-spacing: var(--tr-title);
   color: var(--ink-1);
@@ -966,43 +966,57 @@ body::before {
   text-align: left;
 }
 
+/* iOS 26 back item: a circular glass chevron, not a labelled text button. The
+   label survives as the accessible name; the destination is already named by
+   the title it returns to. */
 .nav-back-button {
-  display: flex;
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
   align-items: center;
-  gap: 2px;
-  min-height: var(--tap-min);
-  padding: 0 var(--sp-1) 0 0;
-  margin-left: -4px;
-  background: none;
-  border: 0;
+  justify-content: center;
+  width: var(--control-round);
+  height: var(--control-round);
+  padding: 0;
+  margin-left: -2px;
+  background: var(--mat-chrome);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  border: 0.5px solid var(--mat-border);
+  border-radius: 50%;
+  box-shadow: inset 0 1px 0 var(--spec-top);
   color: var(--accent);
-  font-family: inherit;
-  font-size: var(--fs-subhead);
-  font-weight: var(--fw-medium);
   cursor: pointer;
 }
 
-.nav-back-label {
-  letter-spacing: var(--tr-body);
+/* 40pt of glass, 44pt of target. */
+.nav-back-button::after {
+  content: "";
+  position: absolute;
+  inset: calc((var(--control-round) - var(--tap-min)) / 2);
 }
 
-/* Centred title needs room the 375px nav does not have next to a back label,
-   a language pill and the theme toggle. */
+/* The compact title is the collapsed form of the large one, so it exists at
+   every width; the circular back button leaves room for it at 375px. */
 .nav-title-centered {
-  display: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 52%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* With a large title below it, the compact one only arrives as that leaves. */
+.app-nav[data-large="true"] .nav-title-centered {
+  opacity: calc(var(--nav-progress, 0) * 2 - 1);
 }
 
 @media (min-width: 600px) {
   .nav-title-centered {
-    display: block;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: 40%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    pointer-events: none;
+    max-width: 46%;
   }
 }
 
@@ -1336,7 +1350,10 @@ body::before {
    measure comes back with the desktop layout, where there is room for it. */
 .verse-viewer-container {
   margin: 0 auto;
-  padding: var(--sp-3) 0 0;
+  /* The card sits in the same gutter on all four sides: this is the top one,
+     the screen's own padding is the sides, and the height calc below leaves
+     the fourth above the pager. */
+  padding: var(--gutter) 0 0;
 }
 
 .verse-viewer-empty {
@@ -1357,20 +1374,6 @@ body::before {
   font-size: var(--fs-subhead);
 }
 
-/* Chapter masthead, above the continuous verse scroll. */
-.chapter-head {
-  padding-bottom: var(--gap-section);
-  border-bottom: 1px solid var(--separator);
-}
-
-.chapter-head-name {
-  margin-top: var(--sp-2);
-  font-family: var(--font-read);
-  font-size: var(--fs-title3);
-  font-weight: var(--fw-semibold);
-  color: var(--ink-1);
-}
-
 /* ------------------------------------------------------ continuous scroll
    One chapter, all its verses, one scroll. `/chapter/:n/verse/:m` means
    "chapter n, scrolled to verse m", so each block is an anchor: scroll-margin-top
@@ -1379,7 +1382,7 @@ body::before {
 .verse-block {
   /* Each verse is its own card, so the anchor must clear the header AND the
      card's own top edge, not just the text inside it. */
-  scroll-margin-top: calc(var(--nav-total) + var(--sp-3));
+  scroll-margin-top: calc(var(--nav-total) + var(--gutter));
   margin-top: var(--gap-verse);
   padding: var(--pad-card);
   border-radius: var(--r-xl);
@@ -1391,6 +1394,30 @@ body::before {
      blocks. 640px is the measured median block content height at 375px wide. */
   content-visibility: auto;
   contain-intrinsic-size: auto 640px;
+}
+
+/* The masthead is gone, so the first card is what sits under the nav bar; the
+   container's own padding is all the air it needs. */
+.verse-block:first-of-type {
+  margin-top: 0;
+}
+
+/* One verse, one screenful. Below the sidebar breakpoint the card is sized by
+   the viewport rather than by its text: the height left between the sticky nav
+   and the floating pager, so a card never runs on behind the bar and the next
+   one always starts at the top of a screen. Verses longer than that scroll
+   inside the card. */
+@media (max-width: 1023.98px) {
+  .verse-block {
+    height: calc(100dvh - var(--nav-total) - var(--pager-h) - var(--float-gap) - var(--sa-bottom) - 2 * var(--gutter));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* The height is fixed, so there is no unknown block height left for
+       content-visibility to estimate — and its size containment would collapse
+       the card's own scroll extent. */
+    content-visibility: visible;
+    contain-intrinsic-size: none;
+  }
 }
 
 
@@ -1580,7 +1607,8 @@ body::before {
   z-index: 99;
   min-height: var(--tabbar-h);
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  justify-content: space-around;
   padding: var(--sp-1);
   background: var(--mat-chrome);
   -webkit-backdrop-filter: var(--mat-blur);
@@ -1591,19 +1619,24 @@ body::before {
 }
 
 .tab-item {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  min-height: var(--tap-min);
-  border-radius: var(--r-pill);
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border-radius: 50%;
   color: var(--ink-3);
   font-size: var(--fs-caption2);
   font-weight: var(--fw-medium);
   letter-spacing: 0;
   text-decoration: none;
+}
+
+/* The capsule is icon-only; the label is the accessible name and the sidebar's
+   visible one. */
+.app-tabbar .tab-label {
+  display: none;
 }
 
 .tab-item[aria-current="page"] {
@@ -1651,6 +1684,31 @@ body::before {
 .btn-compact {
   padding: 0 var(--sp-3);
   font-size: var(--fs-footnote);
+}
+
+/* The pager's two controls are the same round glass as the back item: inside
+   the capsule's material, so they read as controls set *into* the glass. */
+.pager-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-round);
+  height: var(--control-round);
+  padding: 0;
+  background: var(--mat-chrome);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  border: 0.5px solid var(--mat-border);
+  border-radius: 50%;
+  box-shadow: inset 0 1px 0 var(--spec-top);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.pager-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 /* ------------------------------------------------------ placeholder screens
@@ -2048,6 +2106,8 @@ body::before {
     flex-direction: row;
     justify-content: flex-start;
     gap: var(--sp-3);
+    width: auto;
+    height: auto;
     min-height: var(--tap-min);
     padding: 0 var(--sp-3);
     border-radius: var(--r-md);

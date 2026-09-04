@@ -78,7 +78,6 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
   return (
     <VerseViewer
       chapter={chapter}
-      meta={meta}
       verses={verses}
       targetVerse={verse}
       language={language}
@@ -206,6 +205,9 @@ const AppShell: React.FC = () => {
         // is labelled with where it goes back to.
         back={inReader ? { label: "Home", onClick: () => navigate({ name: "home" }) } : undefined}
         title={inReader ? (getChapterMeta(route.chapter)?.name ?? APP_NAME[language]) : APP_NAME[language]}
+        // Only Home takes a large title. The reader's masthead was removed on
+        // purpose, so its chapter name stays in the compact bar.
+        largeTitle={inReader ? undefined : APP_NAME[language]}
       />
 
       <main className="app-main" data-reader={inReader ? "true" : "false"}>

@@ -2,7 +2,7 @@ import { Bookmark, ChevronLeft, ChevronRight } from "lucide-react";
 import type React from "react";
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toggleBookmark, useIsSaved } from "../lib/bookmarks";
-import type { ChapterMeta, Verse } from "../lib/gita.types";
+import type { Verse } from "../lib/gita.types";
 import { getNavKind, syncVerseUrl } from "../lib/router";
 import type { Language } from "../lib/gita.types";
 import type { Sections } from "../lib/settings";
@@ -10,7 +10,6 @@ import { useSettings } from "../lib/settings";
 
 interface VerseViewerProps {
   chapter: number;
-  meta: ChapterMeta;
   verses: readonly Verse[];
   /** The verse the URL points at: "render chapter n, scrolled to verse m". */
   targetVerse: number;
@@ -164,7 +163,7 @@ VerseBlock.displayName = "VerseBlock";
 /** The whole chapter in one scroll. `/chapter/:n/verse/:m` means "render chapter
  *  n, scrolled to verse m"; prev/next scrolls between verses instead of swapping
  *  content, and an IntersectionObserver replaceStates the URL back as you scroll. */
-export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, meta, verses, targetVerse, language, onGoToVerse, onPrevChapter, onNextChapter, hasPrevChapter, hasNextChapter }) => {
+export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targetVerse, language, onGoToVerse, onPrevChapter, onNextChapter, hasPrevChapter, hasNextChapter }) => {
   const { sections } = useSettings();
   const containerRef = useRef<HTMLDivElement | null>(null);
   /** The verse currently positioned under the header. Mirrors `active` without
@@ -278,13 +277,6 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, meta, verses,
 
   return (
     <div className="verse-viewer-container" ref={containerRef}>
-      <header className="chapter-head">
-        <span className="chapter-badge">Chapter {chapter}</span>
-        <h1 className="chapter-head-name">{meta.name}</h1>
-        <p className="chapter-meaning">{meta.name_meaning}</p>
-        <p className="chapter-summary">{meta.summary}</p>
-      </header>
-
       {verses.length === 0 ? (
         <p className="verse-viewer-loading">Loading chapter…</p>
       ) : (
@@ -292,14 +284,14 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, meta, verses,
       )}
 
       <div className="verse-pager">
-        <button type="button" className="btn btn-compact pressable" onClick={goPrev} disabled={!hasPrev} aria-label="Previous verse">
-          <ChevronLeft size={18} /> Prev
+        <button type="button" className="pager-btn pressable" onClick={goPrev} disabled={!hasPrev} aria-label="Previous verse">
+          <ChevronLeft size={18} strokeWidth={2.5} aria-hidden />
         </button>
         <span className="verse-pager-label" aria-live="polite">
           {chapter}.{active} <span className="verse-pager-total">of {last}</span>
         </span>
-        <button type="button" className="btn btn-compact pressable" onClick={goNext} disabled={!hasNext} aria-label="Next verse">
-          Next <ChevronRight size={18} />
+        <button type="button" className="pager-btn pressable" onClick={goNext} disabled={!hasNext} aria-label="Next verse">
+          <ChevronRight size={18} strokeWidth={2.5} aria-hidden />
         </button>
       </div>
     </div>

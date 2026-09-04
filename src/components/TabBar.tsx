@@ -39,6 +39,7 @@ export const TabBar: React.FC<{ route: Route }> = ({ route }) => {
             key={id}
             to={to}
             className="tab-item pressable"
+            aria-label={label}
             aria-current={isActive ? "page" : undefined}
             onClick={(event) => {
               if (!isActive) return;
@@ -49,7 +50,7 @@ export const TabBar: React.FC<{ route: Route }> = ({ route }) => {
               else window.scrollTo({ top: 0, behavior: "smooth" });
             }}>
             <Icon size={22} strokeWidth={isActive ? 2.2 : 1.8} aria-hidden />
-            {label}
+            <span className="tab-label">{label}</span>
           </Link>
         );
       })}
@@ -77,6 +78,7 @@ export const Sidebar: React.FC<{ route: Route; title: string }> = ({ route, titl
             key={id}
             to={to}
             className="tab-item pressable"
+            aria-label={label}
             aria-current={isActive ? "page" : undefined}
             onClick={(event) => {
               if (!isActive) return;
@@ -85,7 +87,7 @@ export const Sidebar: React.FC<{ route: Route; title: string }> = ({ route, titl
               else window.scrollTo({ top: 0, behavior: "smooth" });
             }}>
             <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} aria-hidden />
-            {label}
+            <span className="tab-label">{label}</span>
           </Link>
         );
       })}
