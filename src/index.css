@@ -1246,6 +1246,16 @@ body::before {
   }
 }
 
+/* Provenance, and the "this is English because there is no Kannada" state.
+   Leading-aligned and not italic, so it does not read as a second attribution
+   line under a commentary that already has one. */
+.verse-section-note {
+  margin-top: var(--sp-2);
+  color: var(--ink-3);
+  font-size: var(--fs-caption2);
+  text-align: left;
+}
+
 .verse-section-attribution {
   margin-top: var(--sp-2);
   color: var(--ink-3);

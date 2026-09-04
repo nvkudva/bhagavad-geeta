@@ -25,12 +25,30 @@ interface VerseViewerProps {
 /** BCP-47 tag for a field, so the `[lang]` font and line-height rules pick the
  *  right script. A field that fell back to English must be tagged "en" or the
  *  Latin prose would be painted in an Indic face at Indic line-height. */
-type Tagged = { text: string; lang: "sa" | "kn" | "te" | "en" };
+type Tagged = { text: string; lang: "sa" | "kn" | "te" | "en"; fellBack: boolean };
 
 const pick = (language: Language, english: string | undefined, kannada: string | undefined, telugu: string | undefined, englishLang: "sa" | "en"): Tagged | null => {
-  if (language === "kn" && kannada) return { text: kannada, lang: "kn" };
-  if (language === "te" && telugu) return { text: telugu, lang: "te" };
-  return english ? { text: english, lang: englishLang } : null;
+  if (language === "kn" && kannada) return { text: kannada, lang: "kn", fellBack: false };
+  if (language === "te" && telugu) return { text: telugu, lang: "te", fellBack: false };
+  // `fellBack` is the whole point: a reader who asked for Kannada and is given
+  // English prose has to be told so, rather than left to assume the corpus has
+  // no more to say (docs/TODO "translation not yet available in this language").
+  return english ? { text: english, lang: englishLang, fellBack: language !== "en" } : null;
+};
+
+/* Where each translation comes from. Stated once here rather than shipped as a
+   per-verse field: it is the same sentence for all 701 verses, and the reader
+   is entitled to know that the Kannada is not a traditional rendering. */
+const TRANSLATION_SOURCE: Partial<Record<Language, string>> = {
+  kn: "ಯಂತ್ರಸಹಾಯದಿಂದ ಅನುವಾದಿಸಲಾಗಿದೆ",
+  te: "తెలుగు వికీసోర్స్ · CC BY-SA 4.0",
+};
+
+/** Shown under an English section the reader did not ask for. */
+const ONLY_IN_ENGLISH: Record<Language, string> = {
+  en: "",
+  kn: "ಇದು ಇಂಗ್ಲಿಷ್\u200cನಲ್ಲಿ ಮಾತ್ರ ಲಭ್ಯವಿದೆ",
+  te: "ఇది ఇంగ్లీషులో మాత్రమే అందుబాటులో ఉంది",
 };
 
 /* Section headings in the reader's own language. The label is tagged with its
@@ -116,6 +134,17 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
           <p className="verse-section-content" lang={translation.lang}>
             {translation.text}
           </p>
+          {translation.fellBack ? (
+            <p className="verse-section-note" lang={SECTION_LANG[language]}>
+              {ONLY_IN_ENGLISH[language]}
+            </p>
+          ) : (
+            TRANSLATION_SOURCE[language] && (
+              <p className="verse-section-note" lang={SECTION_LANG[language]}>
+                {TRANSLATION_SOURCE[language]}
+              </p>
+            )
+          )}
         </div>
       )}
 
@@ -130,6 +159,11 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
             <p className="verse-section-content" lang={commentary.lang}>
               {commentary.text}
             </p>
+            {commentary.fellBack && (
+              <p className="verse-section-note" lang={SECTION_LANG[language]}>
+                {ONLY_IN_ENGLISH[language]}
+              </p>
+            )}
             {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
           </div>
           <div className="verse-section-card commentary">
@@ -171,6 +205,11 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
                   <p className="verse-section-content" lang={commentary.lang}>
                     {commentary.text}
                   </p>
+                  {commentary.fellBack && (
+                    <p className="verse-section-note" lang={SECTION_LANG[language]}>
+                      {ONLY_IN_ENGLISH[language]}
+                    </p>
+                  )}
                   {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
                 </>
               )

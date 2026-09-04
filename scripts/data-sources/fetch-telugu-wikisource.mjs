@@ -59,7 +59,7 @@ const stripMarkup = (s) =>
     .replace(/\[\[[^\]|]*\|([^\]]*)\]\]/g, "$1")
     .replace(/\[\[([^\]]*)\]\]/g, "$1")
     .replace(/'''?/g, "")
-    .replace(/ /g, " ");
+    .replace(/\u00a0/g, " ");
 
 /* The śloka is closed by a `|| 2-47 ||` marker. The source is hand-typed and
    inconsistent about it: some verses drop a pipe (`|| 16-4 |`), some drop the

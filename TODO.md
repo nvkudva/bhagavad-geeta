@@ -6,10 +6,11 @@ marked SUPERSEDED were written against the earlier warm-paper direction.
 
 ## Data — blocked, needs a decision
 
-- [ ] BLOCKED: source Kannada + Telugu translations for 697 of 701 verses — no open dataset carries them (checked vedicscriptures/bhagavad-gita, gita/gita, ravisiyer/gita-data, saurabh2k1, praneshp1org: all english/hindi/sanskrit only; sanskritdocuments link hub has none; gitasupersite.in claims 11 Indian languages but exposes no data API and is IIT-Kanpur copyrighted). Options: commission a translation, license one, machine-translate with a visible label, or ship English fallback.
+- [x] Telugu: solved. te.wikisource.org carries a full per-verse Telugu translation (CC BY-SA 4.0) for all 701, and its chapter 13 has the same 35 verses this corpus does. See scripts/data-sources/README.md.
+- [x] Kannada: no legally-usable source exists — kn.wikisource has only Sanskrit in Kannada script plus one unproofread OCR scan; the one 701-verse GitHub dataset is unlicensed and itself machine-generated; HuggingFace carries script transliterations, not translations; the PD-in-India 1936 archive.org text is old-Kannada ṣaṭpadi metre with no verse alignment. Shipped machine-assisted with a visible label instead.
 - [ ] BLOCKED: source a clean per-verse English commentary. Sivananda is corrupted identically in every JSON mirror (13,006 commas replaced by `?`, letter `q` deleted corpus-wide). Sastry/Shankara OCR parses at only 52% — verse 2.47 does not survive either scan. Next viable step is re-OCR of the archive.org page images with Tesseract 5; alternatives are asking wisdomlib for their clean transcription, or switching to Swarupananda (parses at 84%).
-- [ ] Show an explicit "translation not yet available in this language" state instead of silently rendering English prose under a Kannada/Telugu heading (VerseViewer.tsx falls through to translation_english for 697 verses).
-- [ ] Confirm the chapter 13 recension: verses.json has 35 verses, hence 701 total rather than 700, because some traditions open the chapter with an extra verse. chapters.json has been corrected from 34 to 35 to match.
+- [x] Show an explicit "translation not yet available in this language" state instead of silently rendering English prose under a Kannada/Telugu heading.
+- [x] Confirmed the chapter 13 recension: 35 verses, hence 701 total. te.wikisource independently carries the same 35, which is a second witness for it.
 - [ ] Evaluate importing per-verse Sanskrit recitation MP3s from github.com/gita/gita (data/verse_recitation/, all 701 verses) for an audio playback feature.
 
 ## Architecture — P1, pending
