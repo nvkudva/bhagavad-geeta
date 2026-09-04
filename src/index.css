@@ -420,7 +420,12 @@
 
   --glass: rgba(255, 255, 255, 0.56);
   --glass-hover: rgba(255, 255, 255, 0.82);
-  --glass-border: rgba(255, 255, 255, 0.9);
+  /* Low alpha because the border paints over the card's own white fill, not
+     over the ground: white at the fill's alpha composites to nearly double it
+     and rings the card in a halo brighter than anything inside it. 0.12 lands
+     a whisper above the fill — an edge, not an outline. The lit edge proper is
+     --spec-top's job, along the top alone, the way light actually falls. */
+  --glass-border: rgba(255, 255, 255, 0.12);
   --glass-border-hover: rgba(161, 29, 51, 0.22);
   /* Darkens the card rather than lightening it: on a white glass card a lighter
      well is nearly invisible. Tinted to the ground's maroon, not neutral grey. */
@@ -1108,25 +1113,39 @@ body::before {
 }
 
 .settings-group {
+  --group-r: var(--r-xl);
   background: var(--glass);
   -webkit-backdrop-filter: var(--mat-blur-thin);
   backdrop-filter: var(--mat-blur-thin);
   border: 1px solid var(--glass-border);
-  border-radius: var(--r-lg);
+  border-radius: var(--group-r);
   box-shadow: var(--spec);
   overflow: hidden;
 }
 
-/* Concentric inside .settings-group, which has --r-lg and no padding, so the
-   rows meet its curve directly and inherit it rather than squaring it off. */
+/* A group holding a single row is a capsule: iOS lets the corner run to half
+   the row's height rather than stopping at the group's usual curve, so a lone
+   row reads as one control instead of a list truncated to one entry. */
+.settings-group:has(> .settings-row:only-child) {
+  --group-r: var(--r-pill);
+}
+
+/* The curve eats the leading edge at capsule radius, so the label steps in to
+   clear it — the same inset iOS gives a single-row group. */
+.settings-group:has(> .settings-row:only-child) .settings-row {
+  padding-inline: var(--sp-5);
+}
+
+/* Concentric inside .settings-group, which has no padding, so the rows meet
+   its curve directly and inherit it rather than squaring it off. */
 .settings-row:first-child {
-  border-top-left-radius: calc(var(--r-lg) - 1px);
-  border-top-right-radius: calc(var(--r-lg) - 1px);
+  border-top-left-radius: calc(var(--group-r) - 1px);
+  border-top-right-radius: calc(var(--group-r) - 1px);
 }
 
 .settings-row:last-child {
-  border-bottom-left-radius: calc(var(--r-lg) - 1px);
-  border-bottom-right-radius: calc(var(--r-lg) - 1px);
+  border-bottom-left-radius: calc(var(--group-r) - 1px);
+  border-bottom-right-radius: calc(var(--group-r) - 1px);
 }
 
 .settings-row {
