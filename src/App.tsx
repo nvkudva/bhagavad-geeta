@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, Settings2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useReducer } from "react";
 import { ChapterList } from "./components/ChapterList";
@@ -10,7 +10,7 @@ import { VerseOfMoment } from "./components/VerseOfMoment";
 import { VerseViewer } from "./components/VerseViewer";
 import { getChapterMeta, getChapters, loadChapter, peekChapter } from "./lib/gita";
 import type { Language, Verse } from "./lib/gita.types";
-import { navigate, useRoute, useScrollRestoration } from "./lib/router";
+import { Link, navigate, useRoute, useScrollRestoration } from "./lib/router";
 import type { FontKey, SectionKey } from "./lib/settings";
 import { FONT_KEYS, SECTION_KEYS, SettingsProvider, useSettings } from "./lib/settings";
 
@@ -118,6 +118,35 @@ const FONT_LABELS: Record<FontKey, string> = {
   system: "System",
 };
 
+/** A grouped-inset settings list: sections carry a header and, where a rule
+ *  needs stating, a footer; exclusive choices are a radio group with a tinted
+ *  checkmark, and booleans are switches. */
+const SettingsSection: React.FC<{ header: string; footer?: string; radio?: boolean; children: React.ReactNode }> = ({ header, footer, radio, children }) => (
+  <section className="settings-section">
+    <h3 className="settings-group-label">{header}</h3>
+    <div className="settings-group" role={radio ? "radiogroup" : undefined} aria-label={radio ? header : undefined}>
+      {children}
+    </div>
+    {footer && <p className="settings-note">{footer}</p>}
+  </section>
+);
+
+const SettingsChoice: React.FC<{ selected: boolean; onSelect: () => void; children: React.ReactNode }> = ({ selected, onSelect, children }) => (
+  <button type="button" className="settings-row pressable" role="radio" aria-checked={selected} onClick={onSelect}>
+    <span className="settings-row-label">{children}</span>
+    <Check className="settings-check" size={18} strokeWidth={2.5} aria-hidden data-on={selected ? "true" : "false"} />
+  </button>
+);
+
+const SettingsSwitch: React.FC<{ on: boolean; onToggle: () => void; label: string }> = ({ on, onToggle, label }) => (
+  <button type="button" className="settings-row pressable" role="switch" aria-checked={on} onClick={onToggle}>
+    <span className="settings-row-label">{label}</span>
+    <span className="settings-switch" data-on={on ? "true" : "false"} aria-hidden>
+      <span className="settings-switch-knob" />
+    </span>
+  </button>
+);
+
 const SettingsScreen: React.FC = () => {
   const { theme, toggleTheme, language, setLanguage, sections, toggleSection, font, setFont } = useSettings();
 
@@ -125,49 +154,37 @@ const SettingsScreen: React.FC = () => {
     <div className="animate-fade-in settings-screen">
       <h2 className="settings-heading">Settings</h2>
 
-      <p className="settings-group-label">Language</p>
-      <div className="settings-group">
+      <SettingsSection header="Language" radio>
         {LANGUAGES.map((lang) => (
-          <button key={lang} type="button" className="settings-row pressable" aria-pressed={language === lang} onClick={() => setLanguage(lang)}>
-            <span>{LANGUAGE_LABELS[lang]}</span>
-            {language === lang && <Check size={18} aria-hidden />}
-          </button>
+          <SettingsChoice key={lang} selected={language === lang} onSelect={() => setLanguage(lang)}>
+            {LANGUAGE_LABELS[lang]}
+          </SettingsChoice>
         ))}
-      </div>
+      </SettingsSection>
 
-      <p className="settings-group-label">Appearance</p>
-      <div className="settings-group">
-        <button type="button" className="settings-row pressable" aria-pressed={theme === "dark"} onClick={() => theme !== "dark" && toggleTheme()}>
-          <span>Dark</span>
-          {theme === "dark" && <Check size={18} aria-hidden />}
-        </button>
-        <button type="button" className="settings-row pressable" aria-pressed={theme === "light"} onClick={() => theme !== "light" && toggleTheme()}>
-          <span>Light</span>
-          {theme === "light" && <Check size={18} aria-hidden />}
-        </button>
-      </div>
+      <SettingsSection header="Appearance" radio>
+        <SettingsChoice selected={theme === "light"} onSelect={() => theme !== "light" && toggleTheme()}>
+          Light
+        </SettingsChoice>
+        <SettingsChoice selected={theme === "dark"} onSelect={() => theme !== "dark" && toggleTheme()}>
+          Dark
+        </SettingsChoice>
+      </SettingsSection>
 
-      <p className="settings-group-label">Reading face</p>
-      <div className="settings-group">
+      <SettingsSection header="Reading face" footer="Applies to English only. Kannada and Telugu keep Noto Sans." radio>
         {FONT_KEYS.map((key) => (
-          <button key={key} type="button" className="settings-row pressable" aria-pressed={font === key} onClick={() => setFont(key)}>
+          <SettingsChoice key={key} selected={font === key} onSelect={() => setFont(key)}>
             {/* Each option is set in itself — the label is the specimen. */}
             <span data-font-sample={key}>{FONT_LABELS[key]}</span>
-            {font === key && <Check size={18} aria-hidden />}
-          </button>
+          </SettingsChoice>
         ))}
-      </div>
-      <p className="settings-note">Applies to English only. Kannada and Telugu keep Noto Sans.</p>
+      </SettingsSection>
 
-      <p className="settings-group-label">Show in each verse</p>
-      <div className="settings-group">
+      <SettingsSection header="Show in each verse" footer="Hidden sections stay in the verse for search, they are only left out of the reading view.">
         {SECTION_KEYS.map((key) => (
-          <button key={key} type="button" className="settings-row pressable" role="switch" aria-checked={sections[key]} onClick={() => toggleSection(key)}>
-            <span>{SECTION_LABELS[key]}</span>
-            {sections[key] && <Check size={18} aria-hidden />}
-          </button>
+          <SettingsSwitch key={key} on={sections[key]} onToggle={() => toggleSection(key)} label={SECTION_LABELS[key]} />
         ))}
-      </div>
+      </SettingsSection>
     </div>
   );
 };
@@ -208,6 +225,15 @@ const AppShell: React.FC = () => {
         // Only Home takes a large title. The reader's masthead was removed on
         // purpose, so its chapter name stays in the compact bar.
         largeTitle={inReader ? undefined : APP_NAME[language]}
+        // The tab bar is gone in the reader, so Settings needs a door: the
+        // trailing bar slot, as a round glass control matching the back item.
+        trailing={
+          inReader ? (
+            <Link to={{ name: "settings" }} className="nav-action-button pressable" aria-label="Settings">
+              <Settings2 size={17} strokeWidth={2.2} aria-hidden />
+            </Link>
+          ) : undefined
+        }
       />
 
       <main className="app-main" data-reader={inReader ? "true" : "false"}>

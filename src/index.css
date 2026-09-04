@@ -805,7 +805,8 @@ body::before {
   /* The nav logo is transparent chrome, not a tile: a hover fill paints an
      opaque block behind the mark and title. */
   .nav-logo-button.pressable:hover,
-  .nav-back-button.pressable:hover {
+  .nav-back-button.pressable:hover,
+  .nav-action-button.pressable:hover {
     background-color: transparent;
   }
   /* Bar buttons tint rather than fill: --surface-2 paints an opaque block on
@@ -996,6 +997,35 @@ body::before {
   inset: calc((var(--control-round) - var(--tap-min)) / 2);
 }
 
+/* Trailing bar item: the same round glass as the back chevron, so the reader's
+   bar reads as one pair of controls flanking the title. It only appears where
+   the tab bar does not, so it never duplicates a visible destination. */
+.nav-action-button {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-round);
+  height: var(--control-round);
+  margin-right: -2px;
+  background: var(--mat-chrome);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  border: 0.5px solid var(--mat-border);
+  border-radius: 50%;
+  box-shadow: inset 0 1px 0 var(--spec-top);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+/* 36pt of glass, 44pt of target. */
+.nav-action-button::after {
+  content: "";
+  position: absolute;
+  inset: calc((var(--control-round) - var(--tap-min)) / 2);
+}
+
 /* The compact title is the collapsed form of the large one, so it exists at
    every width; the circular back button leaves room for it at 375px. */
 .nav-title-centered {
@@ -1040,25 +1070,32 @@ body::before {
 [data-font-sample="faustina"] { font-family: "Faustina", Georgia, serif; }
 [data-font-sample="system"] { font-family: var(--font-sys); }
 
+/* Grouped-inset list: a header above the group, an optional footer below it,
+   and the space between sections carried by the section rather than the group,
+   so a footer sits with the group it explains instead of floating mid-gap. */
+.settings-section {
+  margin-bottom: var(--sp-8);
+}
+
 .settings-note {
-  margin: var(--sp-2) 0 var(--sp-2);
-  padding: 0 var(--sp-3);
+  margin: var(--sp-2) 0 0;
+  padding: 0 var(--sp-4);
   font-size: var(--fs-footnote);
   line-height: var(--lh-body);
   color: var(--ink-3);
 }
 
+/* Sentence case, as iOS has set grouped headers since the flat era; uppercase
+   tracking is a pre-iOS 7 mannerism. */
 .settings-group-label {
-  margin: 0 0 var(--sp-2) var(--sp-3);
+  margin: 0 0 var(--sp-2) var(--sp-4);
   color: var(--ink-3);
   font-size: var(--fs-footnote);
-  font-weight: var(--fw-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-weight: var(--fw-regular);
+  letter-spacing: var(--tr-body);
 }
 
 .settings-group {
-  margin-bottom: var(--sp-6);
   background: var(--glass);
   -webkit-backdrop-filter: var(--mat-blur-thin);
   backdrop-filter: var(--mat-blur-thin);
@@ -1081,16 +1118,16 @@ body::before {
 }
 
 .settings-row {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
   width: 100%;
   min-height: var(--tap-min);
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
   background: none;
   border: 0;
-  border-top: 0.5px solid var(--separator);
   color: var(--ink-1);
   font-family: inherit;
   font-size: var(--fs-body);
@@ -1098,12 +1135,84 @@ body::before {
   cursor: pointer;
 }
 
-.settings-row:first-child {
-  border-top: 0;
+/* The separator is inset to the label's leading edge, the way a UITableViewCell
+   sets its separatorInset — a full-bleed rule cuts the list into slabs. Drawn
+   as a pseudo-element so it does not add to the row box. */
+.settings-row + .settings-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--sp-4);
+  right: 0;
+  height: 0.5px;
+  background: var(--separator);
 }
 
-.settings-row[aria-pressed="true"] {
+.settings-row-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The label keeps label colour and the checkmark carries the tint: iOS marks
+   the selected row, it does not recolour the whole line. Reserving the mark's
+   box at all times stops the label shifting as selection moves. */
+.settings-check {
+  flex: 0 0 auto;
   color: var(--accent);
+  opacity: 0;
+  transform: scale(0.7);
+  transition:
+    opacity var(--dur-fast) var(--ease-out-ios),
+    transform var(--dur-base) var(--spring-snappy);
+}
+
+.settings-check[data-on="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* A switch, not a checkmark: the section is five independent booleans, and
+   iOS gives those a UISwitch. 51x31 is the system metric. */
+.settings-switch {
+  flex: 0 0 auto;
+  position: relative;
+  width: 51px;
+  height: 31px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 0.5px var(--separator);
+  transition: background-color var(--dur-base) var(--ease-out-ios);
+}
+
+.settings-switch[data-on="true"] {
+  background: var(--accent);
+  box-shadow: none;
+}
+
+.settings-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16);
+  transition: transform var(--dur-base) var(--spring-snappy);
+}
+
+.settings-switch[data-on="true"] .settings-switch-knob {
+  transform: translateX(20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-check,
+  .settings-switch,
+  .settings-switch-knob {
+    transition: none;
+  }
 }
 
 .verse-section-attribution {
@@ -1159,8 +1268,8 @@ body::before {
 }
 
 .saved-item-link {
-  --metal-face: var(--metal-graphite-face);
-  --metal-edge: var(--metal-graphite-edge);
+  --metal-face: var(--metal-oxblood-face);
+  --metal-edge: var(--metal-oxblood-edge);
 }
 
 /* No backdrop to sample and no gradient to lay over it: Increase Contrast and
@@ -1574,6 +1683,8 @@ body::before {
   bottom: calc(var(--sa-bottom) + var(--float-gap));
   z-index: 99;
   min-height: var(--pager-h);
+  width: fit-content;
+  margin-inline: auto;
   padding: var(--sp-1) var(--sp-2);
   display: flex;
   align-items: center;
@@ -1606,9 +1717,11 @@ body::before {
   bottom: calc(var(--sa-bottom) + var(--float-gap));
   z-index: 99;
   min-height: var(--tabbar-h);
+  width: fit-content;
+  margin-inline: auto;
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  gap: var(--sp-1);
   padding: var(--sp-1);
   background: var(--mat-chrome);
   -webkit-backdrop-filter: var(--mat-blur);
@@ -1882,7 +1995,24 @@ body::before {
 }
 
 .saved-item-link {
-  padding-right: calc(var(--sp-3) + 34px);
+  padding-inline: var(--sp-2);
+}
+
+/* The remove button is absolutely placed over the card's top-right corner, so
+   only the reference row has to keep clear of it. */
+.saved-item-link .search-result-ref {
+  padding-right: 34px;
+}
+
+/* One warm accent per card, and it is the sloka. Everything else on the metal
+   is neutral ink — the crimson reference and the dim grey caption both fought
+   the gold for the eye. */
+.saved-item-link .search-result-ref {
+  color: var(--ink-1);
+}
+
+.saved-item-link .search-result-chapter {
+  color: var(--ink-2);
 }
 
 .saved-item-text {
@@ -1894,12 +2024,13 @@ body::before {
   line-height: var(--lh-verse);
   color: transparent;
   white-space: pre-wrap;
+  text-align: center;
 }
 
 .saved-item-translation {
   font-size: var(--fs-comment);
   line-height: var(--lh-body);
-  color: var(--ink-3);
+  color: var(--ink-2);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -1919,7 +2050,7 @@ body::before {
   background: none;
   border: 0;
   border-radius: var(--r-pill);
-  color: var(--ink-4);
+  color: var(--ink-3);
   cursor: pointer;
   transition: color var(--dur-fast) var(--ease-out-ios);
 }
@@ -2134,6 +2265,12 @@ body::before {
 
   /* No floating capsule to clear at the bottom of the content column. */
   .app-tabbar {
+    display: none;
+  }
+
+  /* The sidebar carries Settings at this width, so the reader's trailing pill
+     would be a second door to the same room. */
+  .nav-action-button {
     display: none;
   }
 

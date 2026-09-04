@@ -1,4 +1,4 @@
-import { BookOpen, Bookmark, Search, Settings2 } from "lucide-react";
+import { Bookmark, House, Search, Settings2 } from "lucide-react";
 import type React from "react";
 import type { Route } from "../lib/router";
 import { Link, navigate } from "../lib/router";
@@ -6,8 +6,8 @@ import { Logo } from "./Logo";
 
 type TabId = "read" | "search" | "saved" | "settings";
 
-const TABS: readonly { id: TabId; label: string; Icon: typeof BookOpen; to: Route }[] = [
-  { id: "read", label: "Read", Icon: BookOpen, to: { name: "home" } },
+const TABS: readonly { id: TabId; label: string; Icon: typeof House; to: Route }[] = [
+  { id: "read", label: "Read", Icon: House, to: { name: "home" } },
   { id: "search", label: "Search", Icon: Search, to: { name: "search", q: "" } },
   { id: "saved", label: "Saved", Icon: Bookmark, to: { name: "saved" } },
   { id: "settings", label: "Settings", Icon: Settings2, to: { name: "settings" } },

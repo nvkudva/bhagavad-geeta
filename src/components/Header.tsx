@@ -12,6 +12,9 @@ interface HeaderProps {
   /** When present, a 34px large title sits below the bar and collapses into it
    *  on scroll, the way a UINavigationBar with prefersLargeTitles does. */
   largeTitle?: string;
+  /** Trailing bar item, in the slot a UINavigationItem's rightBarButtonItem
+   *  occupies. Used to reach Settings on screens with no tab bar. */
+  trailing?: React.ReactNode;
 }
 
 /** The scroll distance the condense is spread over — one line of the large
@@ -20,7 +23,7 @@ const CONDENSE_OVER = 52;
 
 /** The edge-to-edge sticky nav bar of DESIGN_PLAN §3.3. Global navigation lives
  *  in the bottom tab bar; the nav carries only the leading item and the title. */
-export const Header: React.FC<HeaderProps> = ({ onHomeClick, back, title, largeTitle }) => {
+export const Header: React.FC<HeaderProps> = ({ onHomeClick, back, title, largeTitle, trailing }) => {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -59,6 +62,8 @@ export const Header: React.FC<HeaderProps> = ({ onHomeClick, back, title, largeT
         )}
 
         {(back || largeTitle) && <span className="nav-title nav-title-centered">{title}</span>}
+
+        {trailing}
       </div>
 
       {largeTitle && <h1 className="nav-large-title">{largeTitle}</h1>}
