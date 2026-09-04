@@ -61,11 +61,11 @@
   /* Deliberately no Indic family here: the language <select> carries Kannada and
      Telugu labels, so a fallback in the UI stack would pull both faces on every
      screen and defeat the per-script loading that unicode-range exists for. */
-  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   /* Scripture and long-form translation share the UI face: on a near-black
      ground a serif's hairlines bloom and break up, while Inter and Noto Sans
      hold an even stroke at every optical size (DESIGN_PLAN §2.2). */
-  --font-read: var(--font-ui);
+  --font-read: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-deva: "Noto Sans Devanagari", "Devanagari Sangam MN", "Nirmala UI", sans-serif;
   --font-knda: "Noto Sans Kannada", "Kannada Sangam MN", "Nirmala UI", sans-serif;
   --font-telu: "Noto Sans Telugu", "Telugu Sangam MN", "Nirmala UI", sans-serif;
@@ -88,10 +88,11 @@
   --reading-scale: 1;
   /* Snapped to iOS Dynamic Type steps at the Large default, so the reading ramp
      sits on the same scale as the UI above: Title2 / Body / Subheadline. */
-  --fs-verse: calc(1.375rem * var(--reading-scale)); /* 22px — Title 2 */
-  --fs-translit: calc(0.9375rem * var(--reading-scale)); /* 15px — Subheadline */
-  --fs-trans: calc(1.0625rem * var(--reading-scale)); /* 17px — Body */
-  --fs-comment: calc(0.9375rem * var(--reading-scale)); /* 15px — Subheadline */
+  --fs-verse: calc(0.875rem * var(--reading-scale)); /* 14px */
+  --fs-translit: calc(0.6875rem * var(--reading-scale)); /* 11px */
+  --fs-trans: calc(0.875rem * var(--reading-scale)); /* 14px */
+  --fs-comment: calc(0.75rem * var(--reading-scale)); /* 12px */
+  --fs-gloss: calc(0.6875rem * var(--reading-scale)); /* 11px */
 
   /* ---------- Line heights ---------- */
   --lh-tight: 1.2;
@@ -221,10 +222,22 @@
   --danger: #f87171;
   --success: #4ade80;
 
-  /* Materials — floating chrome ONLY. */
+  /* Materials. One recipe, two thicknesses: --mat-blur for chrome that has
+     scrolling content passing behind it, --mat-blur-thin for cards that only
+     ever have the ground behind them and would otherwise pay 30px of blur for
+     a gradient. brightness() is what makes the material *tint* the backdrop
+     rather than merely desaturate it. */
   --mat-chrome: rgba(10, 10, 11, 0.42);
-  --mat-blur: saturate(180%) blur(30px);
+  --mat-blur: saturate(180%) brightness(0.82) blur(30px);
+  --mat-blur-thin: saturate(180%) brightness(0.9) blur(16px);
   --mat-border: rgba(255, 255, 255, 0.08);
+
+  /* Specular edge — the single most recognisable Liquid Glass cue. A bright
+     hairline where light catches the top bevel, a dark one where the underside
+     falls away. Applied as inset shadows so they ride inside the radius. */
+  --spec-top: rgba(255, 255, 255, 0.14);
+  --spec-bottom: rgba(0, 0, 0, 0.35);
+  --spec: inset 0 1px 0 var(--spec-top), inset 0 -1px 0 var(--spec-bottom);
 
   /* On a near-black ground a drop shadow is invisible; separation comes from
      the surface step and a hairline, and the shadow only anchors what floats. */
@@ -241,10 +254,12 @@
   --sa-left: env(safe-area-inset-left, 0px);
 
   --nav-h: 44px;
-  --tab-h: 49px;
   /* 44px controls plus 6px of breathing room above and below them. */
   --pager-h: 56px;
   --large-title-h: 52px;
+  --tabbar-h: 56px;
+  /* Floating chrome hovers this far off the bottom edge, above the inset. */
+  --float-gap: var(--sp-2);
   /* Real height of the sticky nav, for scroll-margin-top on verse anchors. */
   --nav-total: calc(var(--nav-h) + max(var(--sp-2), var(--sa-top)) + var(--sp-2));
 }
@@ -302,7 +317,13 @@
   --success: #15803d;
 
   --mat-chrome: rgba(255, 255, 255, 0.5);
+  --mat-blur: saturate(180%) brightness(1.08) blur(30px);
+  --mat-blur-thin: saturate(180%) brightness(1.04) blur(16px);
   --mat-border: rgba(10, 10, 11, 0.07);
+
+  /* Light glass catches the highlight harder and has almost no underside. */
+  --spec-top: rgba(255, 255, 255, 0.85);
+  --spec-bottom: rgba(10, 10, 11, 0.06);
 
   --el-1: 0 1px 2px rgba(10, 10, 11, 0.05);
   --el-2: 0 2px 8px rgba(10, 10, 11, 0.06), 0 1px 2px rgba(10, 10, 11, 0.04);
@@ -385,6 +406,30 @@ h6 {
   }
 }
 
+/* HIG requirement, not a nicety: Reduce Transparency must yield an opaque UI.
+   Every material collapses to a solid surface and the blur is dropped, so the
+   text contrast floor no longer depends on what happens to be behind. */
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  [data-theme="light"] {
+    --mat-chrome: var(--surface-1);
+    --mat-blur: none;
+    --mat-blur-thin: none;
+    --glass: var(--surface-1);
+    --glass-hover: var(--surface-2);
+    --spec-top: transparent;
+    --spec-bottom: transparent;
+  }
+  :root {
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --mat-border: rgba(255, 255, 255, 0.14);
+  }
+  [data-theme="light"] {
+    --glass-border: rgba(10, 10, 11, 0.14);
+    --mat-border: rgba(10, 10, 11, 0.14);
+  }
+}
+
 @media (prefers-contrast: more) {
   :root {
     --ink-2: #d4d4d8;
@@ -399,6 +444,16 @@ h6 {
     --ink-4: #62626b;
     --separator: rgba(10, 10, 11, 0.28);
     --mat-border: rgba(10, 10, 11, 0.2);
+  }
+  /* Increase Contrast also means: stop asking the reader to find an edge in a
+     translucent wash. Materials go opaque, exactly as they do on iOS. */
+  :root,
+  [data-theme="light"] {
+    --mat-chrome: var(--surface-1);
+    --mat-blur: none;
+    --mat-blur-thin: none;
+    --glass: var(--surface-1);
+    --glass-hover: var(--surface-2);
   }
 }
 
@@ -462,33 +517,76 @@ body::before {
   grid-template-rows: auto 1fr auto;
 }
 
+/* The scroll-edge effect: at the top of a scroll view the bar is *nothing* —
+   no material, no hairline, no specular — and the content runs under a bare
+   status bar. The material only condenses once content has passed beneath it.
+   Driven by data-scrolled, which Header sets from a passive scroll listener. */
 .app-nav {
   position: sticky;
   top: 0;
   z-index: 100;
+  padding-top: max(var(--sp-2), var(--sa-top));
+  padding-bottom: var(--sp-2);
+  padding-left: max(var(--gutter), var(--sa-left));
+  padding-right: max(var(--gutter), var(--sa-right));
+  background: transparent;
+  border-bottom: 0.5px solid transparent;
+  box-shadow: none;
+  transition:
+    background-color var(--dur-base) var(--ease-out-ios),
+    border-color var(--dur-base) var(--ease-out-ios),
+    box-shadow var(--dur-base) var(--ease-out-ios),
+    -webkit-backdrop-filter var(--dur-base) var(--ease-out-ios),
+    backdrop-filter var(--dur-base) var(--ease-out-ios);
+}
+
+.app-nav[data-scrolled="true"] {
+  background: var(--mat-chrome);
+  -webkit-backdrop-filter: var(--mat-blur);
+  backdrop-filter: var(--mat-blur);
+  border-bottom-color: var(--mat-border);
+  box-shadow: var(--spec);
+}
+
+/* The 44pt control row. The large title, when present, is a second row below. */
+.app-nav-bar {
+  position: relative;
   min-height: var(--nav-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
-  padding-top: max(var(--sp-2), var(--sa-top));
-  padding-bottom: var(--sp-2);
-  padding-left: max(var(--gutter), var(--sa-left));
-  padding-right: max(var(--gutter), var(--sa-right));
-  background: var(--mat-chrome);
-  -webkit-backdrop-filter: var(--mat-blur);
-  backdrop-filter: var(--mat-blur);
-  border-bottom: 0.5px solid var(--mat-border);
-  transition: border-color var(--dur-fast) var(--ease-out-ios);
 }
 
-.app-nav[data-scrolled="false"] {
-  border-bottom-color: transparent;
+/* Large title — 34px, collapsing into the compact bar as the reader scrolls.
+   Height and opacity are animated together on a spring so it reads as the
+   title being *pulled up* into the bar rather than two crossfading labels. */
+.nav-large-title {
+  font-family: var(--font-read);
+  font-size: var(--fs-large);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tr-large);
+  line-height: var(--lh-tight);
+  color: var(--ink-1);
+  white-space: nowrap;
+  overflow: hidden;
+  height: var(--large-title-h);
+  opacity: 1;
+  transform-origin: left bottom;
+  transition:
+    height var(--dur-base) var(--spring-gentle),
+    opacity var(--dur-fast) var(--ease-out-ios),
+    transform var(--dur-base) var(--spring-gentle);
+}
+
+.app-nav[data-scrolled="true"] .nav-large-title {
+  height: 0;
+  opacity: 0;
+  transform: scale(0.62) translateY(6px);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .app-nav,
-  .app-tabbar {
+  .app-nav[data-scrolled="true"] {
     background: var(--surface-1);
   }
 }
@@ -496,82 +594,42 @@ body::before {
 .app-main {
   padding-left: max(var(--gutter), var(--sa-left));
   padding-right: max(var(--gutter), var(--sa-right));
-  padding-bottom: calc(var(--tab-h) + var(--sa-bottom) + var(--sp-6));
+  /* Content scrolls *under* the floating tab bar, so it must clear the capsule,
+     its gap and the home indicator, not merely the safe inset. */
+  padding-bottom: calc(var(--tabbar-h) + var(--float-gap) + var(--sa-bottom) + var(--sp-6));
 }
 
-/* The reader stacks a pinned pager above the tab bar; the content must clear both. */
 .app-main[data-reader="true"] {
-  padding-bottom: calc(var(--tab-h) + var(--pager-h) + var(--sa-bottom) + var(--sp-4));
+  padding-bottom: calc(var(--pager-h) + var(--float-gap) + var(--sa-bottom) + var(--sp-6));
 }
 
-.app-tabbar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  min-height: calc(var(--tab-h) + var(--sa-bottom));
-  padding-bottom: var(--sa-bottom);
-  padding-left: var(--sa-left);
-  padding-right: var(--sa-right);
-  background: var(--mat-chrome);
-  -webkit-backdrop-filter: var(--mat-blur);
-  backdrop-filter: var(--mat-blur);
-  border-top: 0.5px solid var(--mat-border);
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-}
-
-.tab-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-1);
-  min-height: var(--tap-min);
-  height: var(--tab-h);
-  padding: var(--sp-1) 0;
-  background: none;
-  border: 0;
-  color: var(--ink-3);
-  font-family: inherit;
-  font-size: var(--fs-caption2);
-  font-weight: var(--fw-medium);
-  letter-spacing: 0;
-  text-decoration: none;
-  cursor: pointer;
-  transition:
-    color var(--dur-instant) linear,
-    transform var(--dur-instant) var(--ease-out-ios);
-}
-
-.tab-item[aria-current="page"] {
-  color: var(--accent);
-}
-
-.tab-item:active {
-  transform: scale(0.94);
-}
-
-.tab-item:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-  border-radius: var(--r-xs);
-}
 
 /* --------------------------------------------------------- press & focus */
 
+/* Press-in is fast and flat; release rides --spring-snappy back past 1.0 and
+   settles. That asymmetry — instant grab, springy let-go — is what separates
+   an iOS control from a CSS button. */
 .pressable {
   transition:
-    transform var(--dur-instant) var(--ease-out-ios),
-    background-color var(--dur-instant) linear,
-    opacity var(--dur-instant) linear;
+    transform var(--dur-base) var(--spring-snappy),
+    background-color var(--dur-fast) var(--ease-out-ios),
+    opacity var(--dur-fast) var(--ease-out-ios);
+}
+
+.pressable:active {
+  transition-duration: var(--dur-instant), var(--dur-instant), var(--dur-instant);
+  transition-timing-function: var(--ease-out-ios);
 }
 
 .pressable:active {
   transform: scale(0.97);
   background-color: var(--surface-2);
+}
+
+/* iOS bar buttons dim on press instead of taking a fill. */
+.app-nav .pressable:active {
+  background-color: transparent;
+  opacity: 0.4;
 }
 
 .pressable-lg:active {
@@ -588,15 +646,21 @@ body::before {
   }
   /* The nav logo is transparent chrome, not a tile: a hover fill paints an
      opaque block behind the mark and title. */
-  .nav-logo-button.pressable:hover {
+  .nav-logo-button.pressable:hover,
+  .nav-back-button.pressable:hover {
     background-color: transparent;
+  }
+  /* Bar buttons tint rather than fill: --surface-2 paints an opaque block on
+     chrome that is deliberately translucent. */
+  .app-nav .icon-button.pressable:hover {
+    background-color: var(--accent-soft);
   }
   /* Glass cards keep their translucency on hover: the flat --surface-2 fill
      reads as a grey block against the bloom ground. */
   .chapter-card.pressable:hover {
     background-color: var(--glass-hover);
     border-color: var(--glass-border-hover);
-    box-shadow: var(--el-2);
+    box-shadow: var(--spec), var(--el-2);
   }
 }
 
@@ -618,7 +682,7 @@ body::before {
   background: none;
   border: 0;
   border-radius: var(--r-pill);
-  color: var(--ink-1);
+  color: var(--accent);
   cursor: pointer;
 }
 
@@ -664,6 +728,97 @@ body::before {
 
 .animate-fade-in {
   animation: fadeIn var(--dur-base) var(--ease-out-ios) both;
+}
+
+/* ---------------------------------------------------- push / pop transition
+   A UINavigationController push: the incoming screen slides in from the
+   trailing edge while the outgoing one parallaxes a third of the way off to
+   the leading edge and dims. data-nav on <html> flips the direction for a pop.
+   Progressive enhancement — browsers without view transitions get the fade. */
+.app-main {
+  view-transition-name: screen;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(screen) {
+    animation-duration: var(--dur-base);
+    animation-timing-function: var(--spring-gentle);
+  }
+
+  ::view-transition-old(screen),
+  ::view-transition-new(screen) {
+    animation-duration: var(--dur-base);
+    animation-timing-function: var(--spring-gentle);
+    mix-blend-mode: normal;
+  }
+
+  [data-nav="push"]::view-transition-new(screen) {
+    animation-name: screen-in-from-trailing;
+  }
+  [data-nav="push"]::view-transition-old(screen) {
+    animation-name: screen-out-to-leading;
+  }
+  [data-nav="pop"]::view-transition-new(screen) {
+    animation-name: screen-in-from-leading;
+  }
+  [data-nav="pop"]::view-transition-old(screen) {
+    animation-name: screen-out-to-trailing;
+  }
+
+  /* A tab switch is lateral: the two roots are siblings, so there is no
+     leading/trailing relationship to honour and a slide reads as a lie. The
+     outgoing screen defocuses and the incoming one resolves out of blur —
+     the material re-forming rather than a page turning. Ease, not spring:
+     --spring-gentle overshoots past 1, and an overshooting blur is negative. */
+  [data-nav="lateral"]::view-transition-old(screen),
+  [data-nav="lateral"]::view-transition-new(screen) {
+    animation-duration: var(--dur-fast);
+    animation-timing-function: var(--ease-out-ios);
+  }
+  [data-nav="lateral"]::view-transition-old(screen) {
+    animation-name: screen-defocus-out;
+  }
+  [data-nav="lateral"]::view-transition-new(screen) {
+    animation-name: screen-resolve-in;
+  }
+}
+
+@keyframes screen-defocus-out {
+  to {
+    opacity: 0;
+    filter: blur(10px);
+    transform: scale(0.98);
+  }
+}
+@keyframes screen-resolve-in {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes screen-in-from-trailing {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes screen-out-to-leading {
+  to {
+    transform: translateX(-33%);
+    opacity: 0.4;
+  }
+}
+@keyframes screen-in-from-leading {
+  from {
+    transform: translateX(-33%);
+    opacity: 0.4;
+  }
+}
+@keyframes screen-out-to-trailing {
+  to {
+    transform: translateX(100%);
+  }
 }
 
 /* -------------------------------------------------------------- home/nav */
@@ -729,36 +884,76 @@ body::before {
   }
 }
 
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
+.settings-screen {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-top: var(--sp-4);
 }
 
-.language-switcher {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--tap-min);
-  min-width: var(--tap-min);
-  background: var(--surface-1);
-  border: 1px solid var(--separator);
-  border-radius: var(--r-pill);
-  color: var(--ink-2);
+.settings-heading {
+  margin: 0 0 var(--sp-5);
+  font-size: var(--fs-title1);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tr-title);
+  color: var(--ink-1);
 }
 
-.language-select {
-  position: absolute;
-  inset: 0;
+.settings-group-label {
+  margin: 0 0 var(--sp-2) var(--sp-3);
+  color: var(--ink-3);
+  font-size: var(--fs-footnote);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.settings-group {
+  margin-bottom: var(--sp-6);
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--spec);
+  overflow: hidden;
+}
+
+/* Concentric inside .settings-group, which has --r-lg and no padding, so the
+   rows meet its curve directly and inherit it rather than squaring it off. */
+.settings-row:first-child {
+  border-top-left-radius: calc(var(--r-lg) - 1px);
+  border-top-right-radius: calc(var(--r-lg) - 1px);
+}
+
+.settings-row:last-child {
+  border-bottom-left-radius: calc(var(--r-lg) - 1px);
+  border-bottom-right-radius: calc(var(--r-lg) - 1px);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
   width: 100%;
-  height: 100%;
-  appearance: none;
-  background: transparent;
-  border: none;
-  opacity: 0;
-  outline: none;
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-4);
+  background: none;
+  border: 0;
+  border-top: 0.5px solid var(--separator);
+  color: var(--ink-1);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  text-align: left;
   cursor: pointer;
+}
+
+.settings-row:first-child {
+  border-top: 0;
+}
+
+.settings-row[aria-pressed="true"] {
+  color: var(--accent);
 }
 
 .verse-section-attribution {
@@ -774,7 +969,7 @@ body::before {
   padding: 0;
   list-style: none;
   font-family: var(--font-read);
-  font-size: calc(var(--fs-comment) - 1px);
+  font-size: var(--fs-gloss);
   line-height: var(--lh-read);
   color: var(--ink-2);
 }
@@ -785,13 +980,6 @@ body::before {
   padding-top: var(--sp-4);
 }
 
-.home-title {
-  font-family: var(--font-read);
-  font-size: var(--fs-large);
-  font-weight: var(--fw-bold);
-  letter-spacing: var(--tr-large);
-  color: var(--ink-1);
-}
 
 .home-description {
   margin-top: var(--sp-1);
@@ -820,11 +1008,11 @@ body::before {
   min-height: var(--tap-min);
   padding: var(--pad-tile);
   background: var(--glass);
-  -webkit-backdrop-filter: blur(14px) saturate(120%);
-  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  backdrop-filter: var(--mat-blur-thin);
   border: 1px solid var(--glass-border);
   border-radius: var(--r-lg);
-  box-shadow: var(--el-0);
+  box-shadow: var(--spec);
   color: var(--ink-1);
   font-family: inherit;
   text-align: left;
@@ -936,10 +1124,11 @@ body::before {
   margin-top: var(--gap-verse);
   padding: var(--pad-card);
   background: var(--glass);
-  -webkit-backdrop-filter: blur(14px) saturate(120%);
-  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  backdrop-filter: var(--mat-blur-thin);
   border: 1px solid var(--glass-border);
   border-radius: var(--r-xl);
+  box-shadow: var(--spec);
   /* ARCHITECTURE_PLAN §4.1: the CSS answer to 78 verses in one document, not a
      virtualiser. `auto` in contain-intrinsic-size makes the browser remember each
      block's real size after its first render, so anchors stop drifting; 560px is
@@ -1020,7 +1209,9 @@ body::before {
   padding: var(--pad-card);
   background: var(--well);
   border: 1px solid var(--well-border);
-  border-radius: var(--r-lg);
+  /* Concentric with the .verse-block that contains it: an inner radius must be
+     the outer radius minus the gap between them, or the two curves fight. */
+  border-radius: calc(var(--r-xl) - var(--pad-card));
 }
 
 .verse-section-card.commentary {
@@ -1077,32 +1268,94 @@ body::before {
 }
 
 /* ------------------------------------------------------------- verse pager
-   Pinned directly above the tab bar rather than replacing it: the tab bar is the
-   app's only global navigation and hiding it strands the reader. Stacked, the
-   two bars are 44 + 49 px plus the home indicator inset — the same bottom
-   chrome iOS Safari itself carries. */
+   The only bottom chrome now that global navigation lives in the header, so it
+   sits on the bottom edge and carries the home-indicator inset itself. */
 
+/* iOS 26 controls hover above the content rather than sitting on the edge:
+   an inset capsule with its own shadow, so the page visibly continues beneath
+   and behind it. It stacks above the tab bar, which it replaces in the reader. */
 .verse-pager {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--tab-h) + var(--sa-bottom));
+  left: max(var(--sp-4), var(--sa-left));
+  right: max(var(--sp-4), var(--sa-right));
+  bottom: calc(var(--sa-bottom) + var(--float-gap));
   z-index: 99;
-  height: var(--pager-h);
+  min-height: var(--pager-h);
+  padding: var(--sp-1) var(--sp-2);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
-  padding-left: max(var(--sp-4), var(--sa-left));
-  padding-right: max(var(--sp-4), var(--sa-right));
   background: var(--mat-chrome);
   -webkit-backdrop-filter: var(--mat-blur);
   backdrop-filter: var(--mat-blur);
-  border-top: 0.5px solid var(--mat-border);
+  border: 0.5px solid var(--mat-border);
+  border-radius: var(--r-pill);
+  box-shadow: var(--spec), var(--el-3);
+}
+
+/* --------------------------------------------------------------- tab bar
+   Global navigation belongs at the bottom of a phone, not in the top-right
+   corner. Same floating-capsule material as the pager; the reader hides it and
+   shows the pager in its place, so only ever one capsule floats. */
+.app-tabbar {
+  position: fixed;
+  left: max(var(--sp-4), var(--sa-left));
+  right: max(var(--sp-4), var(--sa-right));
+  bottom: calc(var(--sa-bottom) + var(--float-gap));
+  z-index: 99;
+  min-height: var(--tabbar-h);
+  display: flex;
+  align-items: stretch;
+  padding: var(--sp-1);
+  background: var(--mat-chrome);
+  -webkit-backdrop-filter: var(--mat-blur);
+  backdrop-filter: var(--mat-blur);
+  border: 0.5px solid var(--mat-border);
+  border-radius: var(--r-pill);
+  box-shadow: var(--spec), var(--el-3);
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--tap-min);
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+  font-size: var(--fs-caption2);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-decoration: none;
+}
+
+.tab-item[aria-current="page"] {
+  color: var(--accent);
+}
+
+/* The selected tab carries a glass pill of its own — the iOS 26 selection
+   indicator, which sits *inside* the bar's material rather than tinting it. */
+.tab-item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--accent-soft);
+  box-shadow: var(--spec);
+}
+
+.tab-item {
+  position: relative;
+  isolation: isolate;
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .verse-pager {
+  .verse-pager,
+  .app-tabbar {
     background: var(--surface-1);
   }
 }

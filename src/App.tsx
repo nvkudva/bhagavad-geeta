@@ -1,4 +1,4 @@
-import { Bookmark, Search, Settings2 } from "lucide-react";
+import { Bookmark, Check, Search } from "lucide-react";
 import type React from "react";
 import { useEffect, useReducer } from "react";
 import { ChapterList } from "./components/ChapterList";
@@ -21,10 +21,8 @@ const APP_NAME: Record<Language, string> = { en: "Geeta", kn: "ಗೀತೆ", te
 const HOME_TITLE: Record<Language, string> = { en: "Bhagavad Geeta", kn: "ಭಗವದ್ ಗೀತೆ", te: "భగవద్గీత" };
 
 const Home: React.FC = () => {
-  const { language } = useSettings();
   return (
     <div className="animate-fade-in home-container">
-      <h2 className="home-title">{HOME_TITLE[language]}</h2>
       <p className="home-description">
         {chapters.length} chapters · {TOTAL_VERSES} verses
       </p>
@@ -108,6 +106,43 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
   );
 };
 
+const LANGUAGE_LABELS: Record<Language, string> = { en: "English", kn: "ಕನ್ನಡ", te: "తెలుగు" };
+const LANGUAGES: readonly Language[] = ["en", "kn", "te"];
+
+/** Language and appearance moved off the nav bar and onto their own screen, so
+ *  the bar carries navigation only. */
+const SettingsScreen: React.FC = () => {
+  const { theme, toggleTheme, language, setLanguage } = useSettings();
+
+  return (
+    <div className="animate-fade-in settings-screen">
+      <h2 className="settings-heading">Settings</h2>
+
+      <p className="settings-group-label">Language</p>
+      <div className="settings-group">
+        {LANGUAGES.map((lang) => (
+          <button key={lang} type="button" className="settings-row pressable" aria-pressed={language === lang} onClick={() => setLanguage(lang)}>
+            <span>{LANGUAGE_LABELS[lang]}</span>
+            {language === lang && <Check size={18} aria-hidden />}
+          </button>
+        ))}
+      </div>
+
+      <p className="settings-group-label">Appearance</p>
+      <div className="settings-group">
+        <button type="button" className="settings-row pressable" aria-pressed={theme === "dark"} onClick={() => theme !== "dark" && toggleTheme()}>
+          <span>Dark</span>
+          {theme === "dark" && <Check size={18} aria-hidden />}
+        </button>
+        <button type="button" className="settings-row pressable" aria-pressed={theme === "light"} onClick={() => theme !== "light" && toggleTheme()}>
+          <span>Light</span>
+          {theme === "light" && <Check size={18} aria-hidden />}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const Screen: React.FC<{ route: ReturnType<typeof useRoute> }> = ({ route }) => {
   switch (route.name) {
     case "verse":
@@ -117,7 +152,7 @@ const Screen: React.FC<{ route: ReturnType<typeof useRoute> }> = ({ route }) => 
     case "saved":
       return <Placeholder icon={<Bookmark size={44} />} title="Nothing saved yet" body="Bookmarks will appear here." />;
     case "settings":
-      return <Placeholder icon={<Settings2 size={44} />} title="Settings" body="Language, appearance and reading size will move here." />;
+      return <SettingsScreen />;
     default:
       return <Home />;
   }
@@ -125,7 +160,7 @@ const Screen: React.FC<{ route: ReturnType<typeof useRoute> }> = ({ route }) => 
 
 const AppShell: React.FC = () => {
   const route = useRoute();
-  const { theme, toggleTheme, language, setLanguage } = useSettings();
+  const { language } = useSettings();
   useScrollRestoration(route);
 
   const inReader = route.name === "verse";
@@ -133,22 +168,19 @@ const AppShell: React.FC = () => {
   return (
     <>
       <Header
-        theme={theme}
-        toggleTheme={toggleTheme}
         onHomeClick={() => navigate({ name: "home" })}
-        language={language}
-        setLanguage={setLanguage}
         // iOS-style contextual leading item: absent on Home, and on a chapter it
         // is labelled with where it goes back to.
-        back={inReader ? { label: "Chapters", onClick: () => navigate({ name: "home" }) } : undefined}
+        back={inReader ? { label: "Home", onClick: () => navigate({ name: "home" }) } : undefined}
         title={inReader ? (getChapterMeta(route.chapter)?.name ?? APP_NAME[language]) : APP_NAME[language]}
+        largeTitle={route.name === "home" ? HOME_TITLE[language] : undefined}
       />
 
       <main className="app-main" data-reader={inReader ? "true" : "false"}>
         <Screen route={route} />
       </main>
 
-      <TabBar route={route} />
+      {!inReader && <TabBar route={route} />}
     </>
   );
 };

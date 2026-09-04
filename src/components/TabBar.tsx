@@ -37,7 +37,7 @@ export const TabBar: React.FC<{ route: Route }> = ({ route }) => {
           <Link
             key={id}
             to={to}
-            className="tab-item"
+            className="tab-item pressable"
             aria-current={isActive ? "page" : undefined}
             onClick={(event) => {
               if (!isActive) return;
@@ -45,9 +45,9 @@ export const TabBar: React.FC<{ route: Route }> = ({ route }) => {
               // and if you are already at the root it scrolls that view to top.
               event.preventDefault();
               if (id === "read" && route.name !== "home") navigate({ name: "home" });
-              else window.scrollTo(0, 0);
+              else window.scrollTo({ top: 0, behavior: "smooth" });
             }}>
-            <Icon size={24} strokeWidth={isActive ? 2.2 : 1.8} aria-hidden />
+            <Icon size={22} strokeWidth={isActive ? 2.2 : 1.8} aria-hidden />
             {label}
           </Link>
         );

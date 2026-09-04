@@ -39,18 +39,17 @@
   <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.7"/></filter>
   <filter id="shade" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6"/></filter>
 </defs>
-<clipPath id="tile"><rect x="0" y="0" width="512" height="512" rx="114" ry="114"/></clipPath>
+<clipPath id="tile"><rect x="0" y="0" width="512" height="512"/></clipPath>
 <g clip-path="url(#tile)">
-  <g><rect fill="url(#ground)" x="0" y="0" width="512" height="512" rx="114" ry="114"/></g>
+  <g><rect fill="url(#ground)" x="0" y="0" width="512" height="512"/></g>
   <rect x="0" y="0" width="512" height="512" fill="url(#bloom)"/>
   <rect x="0" y="0" width="512" height="512" fill="url(#glass)"/>
   <ellipse cx="212" cy="-72" rx="392" ry="300" fill="url(#sheen)"/>
-  <g transform="translate(47.30 1.43) scale(6.5217)">
-    <g opacity="0.55" transform="translate(0 1.1)" filter="url(#shade)" fill="none" stroke="#000" stroke-width="2.28" stroke-linecap="round" stroke-linejoin="round"><use href="#p" transform="rotate(-50 32 50)"/><use href="#p" transform="rotate(50 32 50)"/><use href="#p" transform="rotate(-25 32 50)"/><use href="#p" transform="rotate(25 32 50)"/><use href="#p"/><path d="M13 56c6-3 13-3 19 1 6-4 13-4 19-1"/></g>
-    <g fill="none" stroke="#FFB482" stroke-opacity="0.32" stroke-width="2.85" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"><use href="#p" transform="rotate(-50 32 50)"/><use href="#p" transform="rotate(50 32 50)"/><use href="#p" transform="rotate(-25 32 50)"/><use href="#p" transform="rotate(25 32 50)"/><use href="#p"/><path d="M13 56c6-3 13-3 19 1 6-4 13-4 19-1"/></g>
-    <g fill="url(#petalFill)" stroke="url(#petalStroke)" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round"><use href="#p" transform="rotate(-50 32 50)"/><use href="#p" transform="rotate(50 32 50)"/><use href="#p" transform="rotate(-25 32 50)"/><use href="#p" transform="rotate(25 32 50)"/><use href="#p"/></g><g fill="none" stroke="url(#petalStroke)" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round"><path d="M13 56c6-3 13-3 19 1 6-4 13-4 19-1"/></g>
+  <g transform="translate(80.70 46.57) scale(5.4783)">
+    <g opacity="0.55" transform="translate(0 1.1)" filter="url(#shade)" fill="none" stroke="#000" stroke-width="2.72" stroke-linecap="round" stroke-linejoin="round"><use href="#p" transform="rotate(-50 32 50)"/><use href="#p" transform="rotate(50 32 50)"/><use href="#p" transform="rotate(-25 32 50)"/><use href="#p" transform="rotate(25 32 50)"/><use href="#p"/><path d="M13 56c6-3 13-3 19 1 6-4 13-4 19-1"/></g>
+    <g fill="none" stroke="#FFB482" stroke-opacity="0.32" stroke-width="3.40" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"><use href="#p" transform="rotate(-50 32 50)"/><use href="#p" transform="rotate(50 32 50)"/><use href="#p" transform="rotate(-25 32 50)"/><use href="#p" transform="rotate(25 32 50)"/><use href="#p"/><path d="M13 56c6-3 13-3 19 1 6-4 13-4 19-1"/></g>
+    <g fill="url(#petalFill)" stroke="url(#petalStroke)" stroke-width="2.26" stroke-linecap="round" stroke-linejoin="round"><use href="#p" transform="rotate(-50 32 50)"/><use href="#p" transform="rotate(50 32 50)"/><use href="#p" transform="rotate(-25 32 50)"/><use href="#p" transform="rotate(25 32 50)"/><use href="#p"/></g><g fill="none" stroke="url(#petalStroke)" stroke-width="2.26" stroke-linecap="round" stroke-linejoin="round"><path d="M13 56c6-3 13-3 19 1 6-4 13-4 19-1"/></g>
   </g>
 </g>
-<rect x="1.6" y="1.6" width="508.8" height="508.8" rx="112.4" ry="112.4" fill="none" stroke="url(#rim)" stroke-width="3.2"/>
-       <rect x="8" y="8" width="496" height="496" rx="106" ry="106" fill="none" stroke="#fff" stroke-opacity="0.05" stroke-width="1.6"/>
+
 </svg>

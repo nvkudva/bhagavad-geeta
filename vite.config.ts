@@ -18,7 +18,7 @@ const spaFallback = (): Plugin => ({
 });
 
 export default defineConfig({
-  server: { host: true },
+  server: { host: true, allowedHosts: ["vijaymac.merino-brill.ts.net"] },
   build: {
     rollupOptions: {
       output: {
@@ -40,10 +40,16 @@ export default defineConfig({
     spaFallback(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
+      // Without this the manifest and service worker only exist in a build, so
+      // "Add to Home Screen" on a phone pointed at the dev server installs nothing.
+      devOptions: { enabled: true, type: "module" },
+      includeAssets: ["favicon.ico", "apple-touch-icon.png", "logo.svg", "mask-icon.png"],
       manifest: {
+        id: "/",
         name: "Geeta",
         short_name: "Geeta",
+        start_url: "/",
+        scope: "/",
         description: "Geeta — a premium Bhagavad Gita progressive web app",
         // The dark ground, not white: the manifest colours are the splash screen and
         // the task-switcher card, i.e. the first paint an installed user sees.
@@ -51,8 +57,12 @@ export default defineConfig({
         background_color: "#0a0a0b",
         display: "standalone",
         icons: [
-          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
-          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          // A separate maskable art file: Android crops "any" art to its own shape, which
+          // would eat the squircle rim. This one is full-bleed with the lotus inside the
+          // centre 80% safe zone.
+          { src: "pwa-maskable-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
       workbox: {

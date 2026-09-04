@@ -7,7 +7,7 @@ export const Logo: React.FC<{ size?: number; className?: string }> = ({ size = 2
     className={className}
     width={size}
     height={size}
-    viewBox="6 16 52 41"
+    viewBox="6 16 52 45"
     fill="none"
     stroke="currentColor"
     strokeWidth={2.6}
@@ -25,6 +25,6 @@ export const Logo: React.FC<{ size?: number; className?: string }> = ({ size = 2
       <use href="#logo-page" transform="rotate(25 32 50)" />
       <use href="#logo-page" transform="rotate(50 32 50)" />
     </g>
-    <path id="logo-book" d="M13 52c6-3 13-3 19 1 6-4 13-4 19-1" />
+    <path id="logo-book" d="M13 56c6-3 13-3 19 1 6-4 13-4 19-1" />
   </svg>
 );

@@ -4,6 +4,7 @@
 // react-router later is a single-file change (docs/ARCHITECTURE_PLAN.md §3.1).
 import type React from "react";
 import { useCallback, useLayoutEffect, useSyncExternalStore } from "react";
+import { flushSync } from "react-dom";
 import { getChapterMeta, getChapters } from "./gita";
 
 export type Route = { name: "home" } | { name: "verse"; chapter: number; verse: number } | { name: "search"; q: string } | { name: "saved" } | { name: "settings" };
@@ -137,6 +138,28 @@ const setRoute = (route: Route): void => {
   emit();
 };
 
+/** Which tab root a route belongs to. Moving *between* tabs is lateral — there
+ *  is no leading/trailing relationship to honour, so it crossfades instead of
+ *  sliding, which is why a tab tap never reads as a push. */
+const tabFamily = (route: Route): string => (route.name === "search" || route.name === "saved" || route.name === "settings" ? route.name : "read");
+
+/** Swap screens inside a view transition so index.css can animate the push/pop.
+ *  The direction has to be on <html> *before* the old frame is captured, hence
+ *  setting it here rather than in an effect. flushSync is required: the
+ *  transition callback must leave the DOM in its new state when it returns, and
+ *  React 19 would otherwise batch the render past the capture. */
+const setRouteAnimated = (route: Route, kind: "push" | "pop" | "replace"): void => {
+  const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+  if (kind === "replace" || typeof doc.startViewTransition !== "function" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    setRoute(route);
+    return;
+  }
+  document.documentElement.dataset.nav = tabFamily(route) === tabFamily(current) ? kind : "lateral";
+  doc.startViewTransition(() => {
+    flushSync(() => setRoute(route));
+  });
+};
+
 function boot(): void {
   if (typeof window === "undefined") return;
   initScroll();
@@ -166,7 +189,7 @@ function boot(): void {
     currentKey = state?.key ?? newKey();
     navKind = "pop";
     pendingScroll = positions.get(currentKey) ?? 0;
-    setRoute(parseLocation(location.pathname, location.search));
+    setRouteAnimated(parseLocation(location.pathname, location.search), "pop");
   });
 }
 
@@ -190,7 +213,7 @@ export function navigate(to: Route, opts: NavigateOptions = {}): void {
   const scroll = opts.scroll ?? "top";
   pendingScroll = scroll === "preserve" ? null : scroll === "restore" ? (positions.get(currentKey) ?? 0) : 0;
 
-  setRoute(to);
+  setRouteAnimated(to, navKind === "replace" ? "replace" : "push");
 }
 
 /** Scroll-spy hook: point the URL at the verse now under the header without
