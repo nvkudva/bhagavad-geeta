@@ -86,16 +86,20 @@
 
   /* Scripture ramp, driven by the reading-size control (P1, §3.10). */
   --reading-scale: 1;
-  --fs-verse: calc(1.3125rem * var(--reading-scale)); /* 21px */
-  --fs-translit: calc(0.9375rem * var(--reading-scale)); /* 15px */
-  --fs-trans: calc(1rem * var(--reading-scale)); /* 16px */
-  --fs-comment: calc(0.9375rem * var(--reading-scale)); /* 15px */
+  /* Snapped to iOS Dynamic Type steps at the Large default, so the reading ramp
+     sits on the same scale as the UI above: Title2 / Body / Subheadline. */
+  --fs-verse: calc(1.375rem * var(--reading-scale)); /* 22px — Title 2 */
+  --fs-translit: calc(0.9375rem * var(--reading-scale)); /* 15px — Subheadline */
+  --fs-trans: calc(1.0625rem * var(--reading-scale)); /* 17px — Body */
+  --fs-comment: calc(0.9375rem * var(--reading-scale)); /* 15px — Subheadline */
 
   /* ---------- Line heights ---------- */
   --lh-tight: 1.2;
   --lh-snug: 1.3;
   --lh-body: 1.5;
-  --lh-read: 1.55;
+  /* iOS Body is 22/17 = 1.29. Latin reading text follows it; --lh-indic below
+     does not, because the matra floor wins over the system ratio. */
+  --lh-read: 1.3;
   /* Noto Sans Devanagari/Kannada/Telugu stack matras above and below the base
      line. 1.72 is the measured floor at the smaller --fs-verse/--fs-trans: the
      ascending matra of one line and the descending one of the next clear each
@@ -167,12 +171,37 @@
        index.html — a first-time visitor gets dark whatever the OS says) ---- */
   color-scheme: dark;
 
-  --paper: #0a0a0b;
+  --paper: #0b0709;
   --surface-1: #141416;
   --surface-2: #1c1c1f;
   --surface-3: #26262a;
   --separator: rgba(255, 255, 255, 0.09);
   --separator-opaque: #26262a;
+
+  /* Ground — "Ember". Four bloom slots composited by body::before; each is a
+     colour, a size-and-position, and the stop where it fades out, so any bloom
+     can be retuned on its own. Slot 4 is inert here; the light ground uses it. */
+  --bloom-1: rgba(214, 26, 74, 0.58);
+  --bloom-1-at: 58% 48% at 26% 18%;
+  --bloom-1-stop: 66%;
+  --bloom-2: rgba(168, 18, 58, 0.46);
+  --bloom-2-at: 50% 44% at 10% 64%;
+  --bloom-2-stop: 64%;
+  --bloom-3: rgba(96, 10, 36, 0.55);
+  --bloom-3-at: 72% 62% at 84% 90%;
+  --bloom-3-stop: 70%;
+  --bloom-4: rgba(0, 0, 0, 0);
+  --bloom-4-at: 1% 1% at 0% 0%;
+  --bloom-4-stop: 1%;
+
+  /* Cards float on the ground rather than sitting on a flat fill, so they are
+     translucent with a blur behind them. --well is the recessed panel inside. */
+  --glass: rgba(20, 20, 22, 0.62);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  /* Darkens rather than lightens: a lightening well over a card that already sits
+     on a lit bloom drops the section label under 4.5:1. */
+  --well: rgba(0, 0, 0, 0.42);
+  --well-border: rgba(255, 255, 255, 0.07);
 
   /* Contrast against --paper / --surface-1: 19.8 / 18.4, 7.7 / 7.2,
      5.9 / 5.5, 3.3 / 3.1. ink-4 is icons and disabled chrome only. */
@@ -222,12 +251,34 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  --paper: #ffffff;
+  --paper: #f3ebf9;
   --surface-1: #f4f4f5;
   --surface-2: #ebebee;
   --surface-3: #e2e2e6;
   --separator: rgba(10, 10, 11, 0.1);
   --separator-opaque: #e2e2e6;
+
+  /* Ground — "Rose Mist". Same four slots as the dark ground; here all four are
+     used, the fourth being the pale wash that lifts the bottom-left corner. */
+  --bloom-1: rgba(226, 120, 196, 0.72);
+  --bloom-1-at: 52% 44% at 22% 18%;
+  --bloom-1-stop: 64%;
+  --bloom-2: rgba(150, 90, 230, 0.55);
+  --bloom-2-at: 46% 40% at 44% 52%;
+  --bloom-2-stop: 62%;
+  --bloom-3: rgba(160, 150, 245, 0.52);
+  --bloom-3-at: 60% 52% at 80% 74%;
+  --bloom-3-stop: 66%;
+  --bloom-4: rgba(244, 231, 252, 0.95);
+  --bloom-4-at: 70% 60% at 6% 92%;
+  --bloom-4-stop: 70%;
+
+  --glass: rgba(255, 255, 255, 0.74);
+  --glass-border: rgba(255, 255, 255, 0.9);
+  /* Darkens the card rather than lightening it: on a white glass card a lighter
+     well is nearly invisible. Tinted to the ground's violet, not neutral grey. */
+  --well: rgba(38, 16, 54, 0.085);
+  --well-border: rgba(38, 16, 54, 0.07);
 
   /* Contrast against --paper / --surface-1: 19.8 / 18.0, 9.0 / 8.2,
      6.2 / 5.6, 3.6 / 3.3. */
@@ -280,6 +331,7 @@ body {
   color: var(--ink-1);
   min-height: 100vh;
   min-height: 100dvh;
+  position: relative;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -377,6 +429,23 @@ h6 {
 
 /* ------------------------------------------------------------------ shell
    DESIGN_PLAN §3.3. max(gutter, safe-inset) — never the sum. */
+
+/* The ground. One fixed, composited layer rather than a background on `body`:
+   `background-attachment: fixed` repaints the gradient on every scroll frame,
+   which is exactly what this app spent its budget avoiding. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(var(--bloom-1-at), var(--bloom-1) 0%, transparent var(--bloom-1-stop)),
+    radial-gradient(var(--bloom-2-at), var(--bloom-2) 0%, transparent var(--bloom-2-stop)),
+    radial-gradient(var(--bloom-3-at), var(--bloom-3) 0%, transparent var(--bloom-3-stop)),
+    radial-gradient(var(--bloom-4-at), var(--bloom-4) 0%, transparent var(--bloom-4-stop));
+}
 
 #root {
   min-height: 100vh;
@@ -711,8 +780,10 @@ h6 {
   gap: var(--sp-1);
   min-height: var(--tap-min);
   padding: var(--pad-tile);
-  background: var(--surface-1);
-  border: 1px solid var(--separator);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  backdrop-filter: blur(14px) saturate(120%);
+  border: 1px solid var(--glass-border);
   border-radius: var(--r-lg);
   box-shadow: var(--el-0);
   color: var(--ink-1);
@@ -817,8 +888,16 @@ h6 {
    clears the sticky nav instead of a hand-computed offset at the call site. */
 
 .verse-block {
+  /* Each verse is its own card, so the anchor must clear the header AND the
+     card's own top edge, not just the text inside it. */
   scroll-margin-top: calc(var(--nav-total) + var(--sp-3));
-  padding-top: var(--gap-verse);
+  margin-top: var(--gap-verse);
+  padding: var(--pad-card);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  backdrop-filter: blur(14px) saturate(120%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-xl);
   /* ARCHITECTURE_PLAN §4.1: the CSS answer to 78 verses in one document, not a
      virtualiser. `auto` in contain-intrinsic-size makes the browser remember each
      block's real size after its first render, so anchors stop drifting; 560px is
@@ -828,9 +907,6 @@ h6 {
   contain-intrinsic-size: auto 640px;
 }
 
-.verse-block + .verse-block {
-  border-top: 1px solid var(--separator);
-}
 
 .verse-viewer-title-wrapper {
   display: flex;
@@ -896,10 +972,12 @@ h6 {
   overflow-wrap: break-word;
 }
 
+/* Recessed inside the verse card, so a step darker than it rather than the
+   same surface, which would read flat. */
 .verse-section-card {
   padding: var(--pad-card);
-  background: var(--surface-1);
-  border: 1px solid var(--separator);
+  background: var(--well);
+  border: 1px solid var(--well-border);
   border-radius: var(--r-lg);
 }
 
@@ -909,11 +987,14 @@ h6 {
 
 .verse-section-title {
   margin-bottom: var(--sp-2);
-  font-size: var(--fs-caption1);
+  /* Title case, not all-caps: --tr-caps exists to open up uppercase and reads
+     as loose spacing on mixed case, so the tracking goes back to normal too. */
+  font-size: var(--fs-footnote);
   font-weight: var(--fw-semibold);
-  text-transform: uppercase;
-  letter-spacing: var(--tr-caps);
-  color: var(--ink-3);
+  letter-spacing: var(--tr-body);
+  /* ink-2, not ink-3: the recessed well costs the label ~1.3:1 against the card
+     it used to sit on, and ink-3 falls under 4.5:1 in light. */
+  color: var(--ink-2);
 }
 
 .verse-section-content {
@@ -1032,4 +1113,17 @@ h6 {
 .script-telu {
   font-family: var(--font-telu);
   line-height: var(--lh-indic);
+}
+
+/* Without backdrop-filter a translucent card shows the ground straight through
+   and the text loses its contrast floor, so those cards go opaque instead. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .verse-block,
+  .chapter-card {
+    background: var(--surface-1);
+    border-color: var(--separator);
+  }
+  .verse-section-card {
+    background: var(--surface-2);
+  }
 }
