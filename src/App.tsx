@@ -162,13 +162,10 @@ const SettingsScreen: React.FC = () => {
         ))}
       </SettingsSection>
 
-      <SettingsSection header="Appearance" radio>
-        <SettingsChoice selected={theme === "light"} onSelect={() => theme !== "light" && toggleTheme()}>
-          Light
-        </SettingsChoice>
-        <SettingsChoice selected={theme === "dark"} onSelect={() => theme !== "dark" && toggleTheme()}>
-          Dark
-        </SettingsChoice>
+      <SettingsSection header="Appearance">
+        {/* Two mutually exclusive rows for a binary is a radio group doing a
+            switch's job; one switch says the same thing in half the height. */}
+        <SettingsSwitch on={theme === "dark"} onToggle={toggleTheme} label="Dark mode" />
       </SettingsSection>
 
       <SettingsSection header="Reading face" footer="Applies to English only. Kannada and Telugu keep Noto Sans." radio>
