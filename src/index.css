@@ -323,6 +323,11 @@
      the glass, not a border. Sized to spill well past the corner radius. */
   --glow-accent: 0 0 0 1px var(--accent-line), 0 10px 44px -10px rgba(226, 88, 109, 0.5), 0 0 72px -24px rgba(226, 88, 109, 0.42);
   --glow-accent-hover: 0 0 0 1px var(--accent), 0 12px 52px -8px rgba(226, 88, 109, 0.66), 0 0 88px -20px rgba(226, 88, 109, 0.55);
+  /* The brass card carries its own hairline in --metal-brass-edge, so its
+     glow adds no ring — only warm light under the card, in the metal's own
+     hue rather than the accent's. */
+  --glow-brass: 0 10px 40px -14px rgba(240, 205, 122, 0.28), 0 0 60px -26px rgba(240, 205, 122, 0.22);
+  --glow-brass-hover: 0 14px 48px -12px rgba(240, 205, 122, 0.4), 0 0 76px -22px rgba(240, 205, 122, 0.32);
 
   /* Metal, not light. A narrow specular band crosses the middle of the glyph
      the way gold leaf catches a raking light; the halo is tight and nearly
@@ -334,7 +339,7 @@
   --ramp-verse-fallback: #f0cd7a;
   /* The same leaf in white metal: pewter at both corners, white through the
      middle, on the diagonal. Darkest stop still clears 4.5:1 on the well. */
-  --ramp-trans: linear-gradient(135deg, #8792a6, #b8c2d2 24%, #fff 50%, #b8c2d2 76%, #8792a6);
+  --ramp-trans: linear-gradient(135deg, #fff, #b8c2d2 25%, #fff 50%, #b8c2d2 75%, #fff);
   --ramp-trans-glow: drop-shadow(0 1px 0 #00000066) drop-shadow(0 0 7px #e2eaf533);
   --ramp-trans-fallback: #e6ebf2;
 
@@ -445,6 +450,8 @@
 
   --glow-accent: 0 0 0 1px var(--accent-line), 0 10px 40px -12px rgba(161, 29, 51, 0.28), 0 0 64px -24px rgba(161, 29, 51, 0.22);
   --glow-accent-hover: 0 0 0 1px var(--accent), 0 12px 48px -10px rgba(161, 29, 51, 0.38), 0 0 80px -20px rgba(161, 29, 51, 0.3);
+  --glow-brass: 0 10px 34px -16px rgba(120, 88, 22, 0.2), 0 0 52px -28px rgba(168, 122, 30, 0.14);
+  --glow-brass-hover: 0 14px 42px -14px rgba(120, 88, 22, 0.28), 0 0 68px -24px rgba(168, 122, 30, 0.2);
 
   /* The dark ramps are tuned for near-black and go invisible here. Same leaf,
      inverted: the specular band is the *darkest* stop on a light ground, and
@@ -452,7 +459,7 @@
   --ramp-verse: linear-gradient(168deg, #7a5415, #5c3f0f 26%, #3a2706 46%, #63450f 54%, #6b4a12);
   --ramp-verse-glow: drop-shadow(0 1px 0 #ffffff80);
   --ramp-verse-fallback: #6b4a12;
-  --ramp-trans: linear-gradient(135deg, #687083, #4a5262 24%, #1b2028 50%, #4a5262 76%, #687083);
+  --ramp-trans: linear-gradient(135deg, #1b2028, #4a5262 25%, #1b2028 50%, #4a5262 75%, #1b2028);
   --ramp-trans-glow: drop-shadow(0 1px 0 #ffffff73);
   --ramp-trans-fallback: #33383f;
 
@@ -599,7 +606,7 @@ h6 {
   .verse-of-moment-text,
   .saved-item-text {
     background-image: none;
-    color: var(--ramp-verse-fallback);
+    color: var(--ramp-trans-fallback);
   }
   .verse-section-content,
   .verse-of-moment-translation {
@@ -820,7 +827,7 @@ body::before {
     color: var(--ink-1);
   }
   .verse-of-moment:hover {
-    box-shadow: var(--spec), var(--glow-accent-hover);
+    box-shadow: var(--spec), var(--glow-brass-hover);
   }
 }
 
@@ -940,7 +947,7 @@ body::before {
 
 .nav-title {
   font-family: var(--font-read);
-  font-size: var(--fs-headline);
+  font-size: calc(var(--fs-headline) + 4px);
   font-weight: var(--fw-semibold);
   letter-spacing: var(--tr-title);
   color: var(--ink-1);
@@ -1166,7 +1173,7 @@ body::before {
   display: block;
   padding: var(--pad-card);
   border-radius: var(--r-xl);
-  box-shadow: var(--spec), var(--glow-accent);
+  box-shadow: var(--spec), var(--glow-brass);
   color: var(--ink-1);
   text-decoration: none;
   min-height: 148px;
@@ -1179,11 +1186,12 @@ body::before {
 }
 
 .verse-of-moment-head {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: var(--sp-3);
-  margin-bottom: var(--sp-3);
+  margin-bottom: var(--sp-5);
 }
 
 .verse-of-moment-label {
@@ -1191,10 +1199,12 @@ body::before {
   font-weight: var(--fw-semibold);
   letter-spacing: var(--tr-caps);
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--ramp-verse-fallback);
 }
 
 .verse-of-moment-ref {
+  position: absolute;
+  right: 0;
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -1225,6 +1235,7 @@ body::before {
   line-height: var(--lh-body);
   color: transparent;
   text-align: center;
+  margin: var(--sp-4) var(--sp-4) var(--sp-2);
   /* An invitation, not the reading surface: long translations are cut rather
      than pushing the chapter list off the first screen. */
   display: -webkit-box;
