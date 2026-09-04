@@ -83,6 +83,20 @@ for (const meta of chapters) {
 
 writeStable(join(OUT, "chapters.json"), JSON.stringify(chapters.map((c) => pick(c, CHAPTER_KEYS))));
 
+// Search index: one positional row per verse, carrying only the fields worth
+// matching on. Commentary and word glosses are deliberately excluded — they are
+// 75% of the corpus and searching them returns the essay, not the verse.
+// [chapter, verse, devanagari, kannada, telugu, transliteration, english]
+const searchRows = [];
+for (const meta of chapters) {
+  for (const v of byChapter.get(meta.id) ?? []) {
+    searchRows.push([v.chapter_id, v.verse_number, v.text ?? "", v.text_kannada ?? "", v.text_telugu ?? "", v.transliteration ?? "", v.translation_english ?? ""]);
+  }
+}
+const searchContents = JSON.stringify({ schema: 1, rows: searchRows });
+expected.add("search-index.json");
+writeStable(join(OUT, "search-index.json"), searchContents);
+
 // Keep `generated` stable when nothing about the corpus changed.
 const manifestPath = join(OUT, "manifest.json");
 let generated = new Date().toISOString();
@@ -105,3 +119,4 @@ for (const name of readdirSync(OUT)) {
 
 const total = manifestChapters.reduce((n, c) => n + c.bytes, 0);
 console.log(`build-data: ${manifestChapters.length} chapters, ${verses.length} verses, ${(total / 1024).toFixed(1)} KB raw -> public/data/v1/`);
+console.log(`build-data: search index ${searchRows.length} rows, ${(Buffer.byteLength(searchContents) / 1024).toFixed(1)} KB raw`);

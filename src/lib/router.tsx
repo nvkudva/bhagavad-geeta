@@ -138,13 +138,11 @@ const setRoute = (route: Route): void => {
   emit();
 };
 
-/** Which tab root a route belongs to. Moving *between* tabs is lateral — there
- *  is no leading/trailing relationship to honour, so it crossfades instead of
- *  sliding, which is why a tab tap never reads as a push. */
-const tabFamily = (route: Route): string => (route.name === "search" || route.name === "saved" || route.name === "settings" ? route.name : "read");
-
-/** Swap screens inside a view transition so index.css can animate the push/pop.
- *  The direction has to be on <html> *before* the old frame is captured, hence
+/** Swap screens inside a view transition so index.css can animate the change.
+ *  Every transition is the lateral blur crossfade: a sliding push carries a
+ *  spatial claim this app cannot honour — the chapter grid and a chapter are
+ *  not stacked, and the back item returns to a scroll offset, not a frame.
+ *  The attribute has to be on <html> *before* the old frame is captured, hence
  *  setting it here rather than in an effect. flushSync is required: the
  *  transition callback must leave the DOM in its new state when it returns, and
  *  React 19 would otherwise batch the render past the capture. */
@@ -154,7 +152,7 @@ const setRouteAnimated = (route: Route, kind: "push" | "pop" | "replace"): void 
     setRoute(route);
     return;
   }
-  document.documentElement.dataset.nav = tabFamily(route) === tabFamily(current) ? kind : "lateral";
+  document.documentElement.dataset.nav = "lateral";
   doc.startViewTransition(() => {
     flushSync(() => setRoute(route));
   });

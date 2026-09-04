@@ -88,8 +88,8 @@
   --reading-scale: 1;
   /* Snapped to iOS Dynamic Type steps at the Large default, so the reading ramp
      sits on the same scale as the UI above: Title2 / Body / Subheadline. */
-  --fs-verse: calc(0.875rem * var(--reading-scale)); /* 14px */
-  --fs-translit: calc(0.6875rem * var(--reading-scale)); /* 11px */
+  --fs-verse: calc(1.125rem * var(--reading-scale)); /* 18px */
+  --fs-translit: calc(0.8125rem * var(--reading-scale)); /* 13px — Footnote */
   --fs-trans: calc(0.875rem * var(--reading-scale)); /* 14px */
   --fs-comment: calc(0.75rem * var(--reading-scale)); /* 12px */
   --fs-gloss: calc(0.6875rem * var(--reading-scale)); /* 11px */
@@ -239,6 +239,25 @@
   --spec-bottom: rgba(0, 0, 0, 0.35);
   --spec: inset 0 1px 0 var(--spec-top), inset 0 -1px 0 var(--spec-bottom);
 
+  /* An accent bloom under the featured card — the ground's own light caught in
+     the glass, not a border. Sized to spill well past the corner radius. */
+  --glow-accent: 0 0 0 1px var(--accent-line), 0 10px 44px -10px rgba(226, 88, 109, 0.5), 0 0 72px -24px rgba(226, 88, 109, 0.42);
+  --glow-accent-hover: 0 0 0 1px var(--accent), 0 12px 52px -8px rgba(226, 88, 109, 0.66), 0 0 88px -20px rgba(226, 88, 109, 0.55);
+
+  /* Metal, not light. A narrow specular band crosses the middle of the glyph
+     the way gold leaf catches a raking light; the halo is tight and nearly
+     colourless so it reads as sheen rather than glow. --ramp-fallback is the
+     ramp's darkest stop, used wherever a gradient fill cannot be measured for
+     contrast and an opaque colour has to stand in. */
+  --ramp-verse: linear-gradient(168deg, #b8842f, #e6bd62 26%, #fff8e2 46%, #f0cd7a 54%, #a97a2a);
+  --ramp-verse-glow: drop-shadow(0 1px 0 #00000073) drop-shadow(0 0 8px #ffecba38);
+  --ramp-verse-fallback: #f0cd7a;
+  /* The same leaf in white metal: pewter at both corners, white through the
+     middle, on the diagonal. Darkest stop still clears 4.5:1 on the well. */
+  --ramp-trans: linear-gradient(135deg, #8792a6, #b8c2d2 24%, #fff 50%, #b8c2d2 76%, #8792a6);
+  --ramp-trans-glow: drop-shadow(0 1px 0 #00000066) drop-shadow(0 0 7px #e2eaf533);
+  --ramp-trans-fallback: #e6ebf2;
+
   /* On a near-black ground a drop shadow is invisible; separation comes from
      the surface step and a hairline, and the shadow only anchors what floats. */
   --el-0: none;
@@ -262,6 +281,7 @@
   --float-gap: var(--sp-2);
   /* Real height of the sticky nav, for scroll-margin-top on verse anchors. */
   --nav-total: calc(var(--nav-h) + max(var(--sp-2), var(--sa-top)) + var(--sp-2));
+  --sidebar-w: 17rem;
 }
 
 /* ---------- Light appearance — secondary, and fully correct ---------- */
@@ -329,6 +349,19 @@
   --el-2: 0 2px 8px rgba(10, 10, 11, 0.06), 0 1px 2px rgba(10, 10, 11, 0.04);
   --el-3: 0 12px 32px rgba(10, 10, 11, 0.1), 0 2px 6px rgba(10, 10, 11, 0.05);
   --el-sheet: 0 -8px 40px rgba(10, 10, 11, 0.16);
+
+  --glow-accent: 0 0 0 1px var(--accent-line), 0 10px 40px -12px rgba(161, 29, 51, 0.28), 0 0 64px -24px rgba(161, 29, 51, 0.22);
+  --glow-accent-hover: 0 0 0 1px var(--accent), 0 12px 48px -10px rgba(161, 29, 51, 0.38), 0 0 80px -20px rgba(161, 29, 51, 0.3);
+
+  /* The dark ramps are tuned for near-black and go invisible here. Same leaf,
+     inverted: the specular band is the *darkest* stop on a light ground, and
+     the halo is a soft dark lift rather than a bloom. */
+  --ramp-verse: linear-gradient(168deg, #7a5415, #5c3f0f 26%, #3a2706 46%, #63450f 54%, #6b4a12);
+  --ramp-verse-glow: drop-shadow(0 1px 0 #ffffff80);
+  --ramp-verse-fallback: #6b4a12;
+  --ramp-trans: linear-gradient(135deg, #687083, #4a5262 24%, #1b2028 50%, #4a5262 76%, #687083);
+  --ramp-trans-glow: drop-shadow(0 1px 0 #ffffff73);
+  --ramp-trans-fallback: #33383f;
 }
 
 /* ------------------------------------------------------------------- base */
@@ -454,6 +487,18 @@ h6 {
     --mat-blur-thin: none;
     --glass: var(--surface-1);
     --glass-hover: var(--surface-2);
+    --ramp-verse-glow: none;
+    --ramp-trans-glow: none;
+  }
+  /* A gradient fill has no computable contrast ratio, so Increase Contrast gets
+     an opaque colour instead — the ramp's own safe stop, not a different hue. */
+  .verse-text {
+    background-image: none;
+    color: var(--ramp-verse-fallback);
+  }
+  .verse-section-content {
+    background-image: none;
+    color: var(--ramp-trans-fallback);
   }
 }
 
@@ -662,6 +707,15 @@ body::before {
     border-color: var(--glass-border-hover);
     box-shadow: var(--spec), var(--el-2);
   }
+  /* Keyed off the pointer, not the width: a hover state on a touch sidebar
+     sticks after the tap. */
+  .app-sidebar .tab-item.pressable:hover {
+    background-color: var(--glass-hover);
+    color: var(--ink-1);
+  }
+  .verse-of-moment:hover {
+    box-shadow: var(--spec), var(--glow-accent-hover);
+  }
 }
 
 .pressable:focus-visible,
@@ -718,11 +772,11 @@ body::before {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    filter: blur(6px);
   }
   to {
     opacity: 1;
-    transform: none;
+    filter: none;
   }
 }
 
@@ -730,55 +784,34 @@ body::before {
   animation: fadeIn var(--dur-base) var(--ease-out-ios) both;
 }
 
-/* ---------------------------------------------------- push / pop transition
-   A UINavigationController push: the incoming screen slides in from the
-   trailing edge while the outgoing one parallaxes a third of the way off to
-   the leading edge and dims. data-nav on <html> flips the direction for a pop.
-   Progressive enhancement — browsers without view transitions get the fade. */
-.app-main {
-  view-transition-name: screen;
-}
+/* -------------------------------------------------------- screen transition
+   One transition for every navigation: a blur crossfade. No slide, no scale —
+   a directional push asserts a stacking relationship the routes do not have.
+
+   The transition is taken on the *root* snapshot, not on a named .app-main.
+   A named element is snapshotted at its full height and composited over the
+   old one, and .app-main is transparent — so the outgoing screen showed
+   through the incoming one, and at the wrong scroll offset. The root snapshot
+   is exactly the viewport, opaque, and identical in size on both sides, so the
+   only thing that changes across the transition is focus.
+   Progressive enhancement — browsers without view transitions get no
+   transition, which is correct rather than degraded. */
 
 @media (prefers-reduced-motion: no-preference) {
-  ::view-transition-group(screen) {
-    animation-duration: var(--dur-base);
-    animation-timing-function: var(--spring-gentle);
-  }
-
-  ::view-transition-old(screen),
-  ::view-transition-new(screen) {
-    animation-duration: var(--dur-base);
-    animation-timing-function: var(--spring-gentle);
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--dur-fast);
+    animation-timing-function: var(--ease-out-ios);
+    /* The UA pairs the default crossfade with plus-lighter. Our two snapshots
+       are opaque and stacked, so additive blending would wash the middle of
+       the transition out. */
     mix-blend-mode: normal;
   }
 
-  [data-nav="push"]::view-transition-new(screen) {
-    animation-name: screen-in-from-trailing;
-  }
-  [data-nav="push"]::view-transition-old(screen) {
-    animation-name: screen-out-to-leading;
-  }
-  [data-nav="pop"]::view-transition-new(screen) {
-    animation-name: screen-in-from-leading;
-  }
-  [data-nav="pop"]::view-transition-old(screen) {
-    animation-name: screen-out-to-trailing;
-  }
-
-  /* A tab switch is lateral: the two roots are siblings, so there is no
-     leading/trailing relationship to honour and a slide reads as a lie. The
-     outgoing screen defocuses and the incoming one resolves out of blur —
-     the material re-forming rather than a page turning. Ease, not spring:
-     --spring-gentle overshoots past 1, and an overshooting blur is negative. */
-  [data-nav="lateral"]::view-transition-old(screen),
-  [data-nav="lateral"]::view-transition-new(screen) {
-    animation-duration: var(--dur-fast);
-    animation-timing-function: var(--ease-out-ios);
-  }
-  [data-nav="lateral"]::view-transition-old(screen) {
+  ::view-transition-old(root) {
     animation-name: screen-defocus-out;
   }
-  [data-nav="lateral"]::view-transition-new(screen) {
+  ::view-transition-new(root) {
     animation-name: screen-resolve-in;
   }
 }
@@ -787,39 +820,15 @@ body::before {
   to {
     opacity: 0;
     filter: blur(10px);
-    transform: scale(0.98);
   }
 }
 @keyframes screen-resolve-in {
   from {
     opacity: 0;
     filter: blur(10px);
-    transform: scale(1.02);
   }
 }
 
-@keyframes screen-in-from-trailing {
-  from {
-    transform: translateX(100%);
-  }
-}
-@keyframes screen-out-to-leading {
-  to {
-    transform: translateX(-33%);
-    opacity: 0.4;
-  }
-}
-@keyframes screen-in-from-leading {
-  from {
-    transform: translateX(-33%);
-    opacity: 0.4;
-  }
-}
-@keyframes screen-out-to-trailing {
-  to {
-    transform: translateX(100%);
-  }
-}
 
 /* -------------------------------------------------------------- home/nav */
 
@@ -980,11 +989,81 @@ body::before {
   padding-top: var(--sp-4);
 }
 
+/* ------------------------------------------------------- verse for you */
 
-.home-description {
-  margin-top: var(--sp-1);
+/* Holds the card's height before the chapter lands, so the chapter grid does
+   not jump down when it does. */
+.verse-of-moment-placeholder {
+  min-height: 148px;
+  margin: var(--sp-4) 0 var(--sp-8);
+}
+
+.verse-of-moment {
+  display: block;
+  padding: var(--pad-card);
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-xl);
+  box-shadow: var(--spec), var(--glow-accent);
+  color: var(--ink-1);
+  text-decoration: none;
+  min-height: 148px;
+  /* Set apart from the chapter grid it sits above: the glow needs air to read
+     as light rather than as a thick border. */
+  margin: var(--sp-4) 0 var(--sp-8);
+  transition:
+    border-color var(--dur-fast) var(--ease-out-ios),
+    box-shadow var(--dur-base) var(--ease-out-ios);
+}
+
+.verse-of-moment-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.verse-of-moment-label {
+  font-size: var(--fs-caption1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tr-caps);
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.verse-of-moment-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   color: var(--ink-3);
-  font-size: var(--fs-subhead);
+  font-size: var(--fs-footnote);
+  font-variant-numeric: tabular-nums;
+}
+
+.verse-of-moment-text {
+  font-size: var(--fs-verse);
+  line-height: var(--lh-verse);
+  color: var(--ink-1);
+  white-space: pre-wrap;
+  text-align: center;
+  margin-bottom: var(--sp-3);
+}
+
+.verse-of-moment-translation {
+  font-size: var(--fs-trans);
+  line-height: var(--lh-body);
+  color: var(--ink-2);
+  text-align: center;
+  /* An invitation, not the reading surface: long translations are cut rather
+     than pushing the chapter list off the first screen. */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* --------------------------------------------------------- chapter list */
@@ -1074,8 +1153,10 @@ body::before {
 
 /* --------------------------------------------------------- verse reader */
 
+/* No cap below the sidebar breakpoint: the reader owns the whole screen there,
+   and a column pinned to --measure on a 700px tablet is just two gutters. The
+   measure comes back with the desktop layout, where there is room for it. */
 .verse-viewer-container {
-  max-width: var(--measure);
   margin: 0 auto;
   padding: var(--sp-3) 0 0;
 }
@@ -1172,11 +1253,17 @@ body::before {
 /* The reason the app exists: highest contrast, no accent, regular weight —
    Devanagari at semibold muddies conjuncts (DESIGN_PLAN §4.3). */
 .verse-text {
+  background-image: var(--ramp-verse);
+  -webkit-background-clip: text;
+  background-clip: text;
+  /* drop-shadow, not text-shadow: a text-shadow paints behind a transparent
+     fill and silts up the counters of the Devanagari. */
+  filter: var(--ramp-verse-glow);
   font-size: var(--fs-verse);
   font-weight: var(--fw-regular);
   line-height: var(--lh-verse);
   letter-spacing: 0;
-  color: var(--ink-1);
+  color: transparent;
   white-space: pre-wrap;
   /* A Devanagari pada can be one long unbreakable run; breaking it is better
      than a horizontally scrolling page. */
@@ -1255,14 +1342,26 @@ body::before {
 }
 
 .verse-section-content {
+  background-image: var(--ramp-trans);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: var(--ramp-trans-glow);
   font-family: var(--font-read);
   font-size: var(--fs-trans);
   line-height: var(--lh-read);
-  color: var(--ink-1);
+  color: transparent;
   text-align: left;
 }
 
+/* The commentary and the word glosses are reference prose, not the verse: they
+   stay plain ink, or the whole card turns into an effect. */
 .commentary .verse-section-content {
+  background-image: none;
+  /* Not just the image: background-clip:text suppresses the normal text fill in
+     Blink even with no gradient behind it, so the clip has to go back too. */
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  filter: none;
   font-size: var(--fs-comment);
   color: var(--ink-2);
 }
@@ -1298,6 +1397,14 @@ body::before {
    Global navigation belongs at the bottom of a phone, not in the top-right
    corner. Same floating-capsule material as the pager; the reader hides it and
    shows the pager in its place, so only ever one capsule floats. */
+
+/* The sidebar is the wide-window rendering of the same TABS table. Hidden by
+   default rather than desktop-first, so a phone never carries a second
+   "Primary" nav landmark or a duplicate set of aria-current links. */
+.app-sidebar {
+  display: none;
+}
+
 .app-tabbar {
   position: fixed;
   left: max(var(--sp-4), var(--sa-left));
@@ -1406,6 +1513,228 @@ body::before {
   font-size: var(--fs-subhead);
 }
 
+
+/* ------------------------------------------------------------------ search */
+
+.search-screen,
+.saved-screen {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding-top: var(--sp-4);
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-3);
+  height: var(--tap-comfortable);
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+}
+
+.search-field:focus-within {
+  border-color: var(--accent-line);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  color: var(--ink-1);
+  font-family: inherit;
+  /* 16px minimum: anything smaller and iOS Safari zooms the page on focus. */
+  font-size: 1rem;
+}
+
+.search-input::placeholder {
+  color: var(--ink-4);
+}
+
+/* The UA's own clear affordance would sit beside ours. */
+.search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  border: 0;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.search-status,
+.search-hint {
+  margin: var(--sp-4) var(--sp-1) var(--sp-2);
+  color: var(--ink-3);
+  font-size: var(--fs-footnote);
+}
+
+.search-hint {
+  line-height: var(--lh-body);
+}
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.search-result,
+.search-reference,
+.saved-item-link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  color: var(--ink-1);
+  text-decoration: none;
+}
+
+.search-reference {
+  margin-top: var(--sp-4);
+  border-color: var(--accent-line);
+  font-weight: var(--fw-semibold);
+}
+
+.search-result-ref {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  color: var(--accent);
+  font-size: var(--fs-caption1);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.search-result-chapter {
+  color: var(--ink-3);
+  font-weight: var(--fw-regular);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.search-result-snippet {
+  font-size: var(--fs-trans);
+  line-height: var(--lh-body);
+  color: var(--ink-2);
+}
+
+.search-result-snippet mark {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* ------------------------------------------------------------------- saved */
+
+.saved-count {
+  margin: calc(-1 * var(--sp-3)) 0 var(--sp-4);
+  color: var(--ink-3);
+  font-size: var(--fs-footnote);
+}
+
+.saved-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.saved-item {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-2);
+}
+
+.saved-item-link {
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-item-text {
+  font-size: var(--fs-verse);
+  line-height: var(--lh-verse);
+  color: var(--ink-1);
+  white-space: pre-wrap;
+}
+
+.saved-item-translation {
+  font-size: var(--fs-comment);
+  line-height: var(--lh-body);
+  color: var(--ink-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.saved-item-remove {
+  flex: none;
+  width: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+/* -------------------------------------------------------------- save verse */
+
+/* Absolute so the verse number stays optically centred between its two rules
+   whether or not the button is there. */
+.verse-viewer-title-wrapper {
+  position: relative;
+}
+
+.verse-save {
+  position: absolute;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: none;
+  border: 0;
+  border-radius: var(--r-pill);
+  color: var(--ink-4);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out-ios);
+}
+
+.verse-save[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+@media (hover: hover) {
+  .verse-save:hover,
+  .saved-item-remove:hover {
+    color: var(--accent);
+  }
+}
+
 /* ------------------------------------------------- per-script typography
    Driven by the lang attributes set in VerseViewer. Last in the file on
    purpose: these match on a single pseudo-class, so any component rule that
@@ -1444,5 +1773,152 @@ body::before {
   }
   .verse-section-card {
     background: var(--surface-2);
+  }
+}
+
+/* ------------------------------------------------------- wide-window layout
+   1024px is iPad-landscape and the smallest laptop. Width only, deliberately
+   not ANDed with (pointer: fine): a trackpad-less iPad in landscape has the
+   room for a sidebar and expects one. Everything narrower — phones and iPad
+   portrait — keeps the bottom capsule, which is still the correct HIG
+   presentation there. Pointer affordances live in the (hover: hover) block. */
+@media (min-width: 1024px) {
+  /* A Mac is read at ~60cm, a phone at ~30cm, so desktop type is *larger* in
+     CSS px, not smaller — the iOS scale shrunk to macOS proportions is the
+     usual mistake. Roughly one step up the scale across the board. */
+  :root {
+    /* A pointer does not need a phone's edge-to-edge economy. */
+    --gutter: var(--sp-6);
+
+    --fs-caption2: 0.75rem; /* 12px — metadata floor */
+    --fs-caption1: 0.8125rem; /* 13px — control label */
+    --fs-footnote: 0.875rem; /* 14px — secondary UI text */
+    --fs-subhead: 1rem; /* 16px — sidebar and list rows */
+    --fs-callout: 1.0625rem; /* 17px — inline emphasis */
+    --fs-body: 1.125rem; /* 18px — long-form UI prose */
+    --fs-headline: 1.125rem; /* 18px — row titles, wordmark */
+    --fs-title3: 1.375rem; /* 22px — card and section titles */
+    --fs-title2: 1.5rem; /* 24px — screen subtitles */
+    --fs-title1: 2rem; /* 32px — screen titles */
+    --fs-large: 2.5rem; /* 40px — display */
+
+    --fs-verse: calc(1.625rem * var(--reading-scale)); /* 26px — the sloka is the point */
+    --fs-translit: calc(1.0625rem * var(--reading-scale)); /* 17px */
+    --fs-trans: calc(1.25rem * var(--reading-scale)); /* 20px — primary reading size */
+    --fs-comment: calc(1.125rem * var(--reading-scale)); /* 18px */
+    --fs-gloss: calc(1rem * var(--reading-scale)); /* 16px */
+
+    /* 46rem, not the 36rem a 65-character line would want: the Devanagari is
+       centred and set as whole padas, and breaking those to protect the
+       translation's measure is the wrong trade. ~67 characters per line. */
+    --measure: 46rem;
+  }
+
+  .verse-viewer-container {
+    max-width: var(--measure);
+  }
+
+  /* 280px tiles were sized for 15px text; at 18px the summary crowds. */
+  .chapter-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+
+  #root {
+    grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  }
+
+  .app-sidebar {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    padding: max(var(--sp-4), var(--sa-top)) var(--sp-3) var(--sp-4) max(var(--sp-3), var(--sa-left));
+    background: var(--mat-chrome);
+    -webkit-backdrop-filter: var(--mat-blur);
+    backdrop-filter: var(--mat-blur);
+    border-right: 0.5px solid var(--mat-border);
+    box-shadow: var(--spec);
+  }
+
+  .app-sidebar-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: var(--nav-h);
+    padding: 0 var(--sp-3);
+    margin-bottom: var(--sp-2);
+    color: var(--accent);
+  }
+
+  .app-sidebar-wordmark {
+    font-family: var(--font-read);
+    font-size: var(--fs-headline);
+    font-weight: var(--fw-bold);
+    letter-spacing: var(--tr-title);
+    color: var(--ink-1);
+  }
+
+  /* A sidebar row is a row: icon then label, left-aligned, sized for a pointer
+     rather than a thumb. The aria-current accent and its glass pill carry over
+     from .tab-item unchanged. */
+  .app-sidebar .tab-item {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--sp-3);
+    min-height: var(--tap-min);
+    padding: 0 var(--sp-3);
+    border-radius: var(--r-md);
+    font-size: var(--fs-subhead);
+    font-weight: var(--fw-medium);
+    letter-spacing: var(--tr-body);
+  }
+
+  .app-nav,
+  .app-main {
+    grid-column: 2;
+  }
+
+  /* App identity lives in the sidebar now, so a toolbar whose only content
+     would be the app name is an empty 44pt strip. It stays for a pushed screen
+     — where it carries the back item and the title — and collapses otherwise. */
+  .app-nav:not(:has(.nav-back-button)) {
+    display: none;
+  }
+
+  .app-nav:not(:has(.nav-back-button)) + .app-main {
+    padding-top: var(--sp-6);
+  }
+
+  /* No floating capsule to clear at the bottom of the content column. */
+  .app-tabbar {
+    display: none;
+  }
+
+  .app-main {
+    padding-bottom: var(--sp-10);
+  }
+
+  .app-main[data-reader="true"] {
+    padding-bottom: calc(var(--pager-h) + var(--sp-8));
+  }
+
+  /* The pager floats over the content column only — it must not slide under
+     the sidebar's material. */
+  /* Floating capsule, not a full-width bottom bar. An edge-anchored bar would
+     be the only chrome in the app that the content does not visibly continue
+     beneath, and paired with the sidebar it would box the reader into an L.
+     Wider than the reading column, though — the capsule should frame the text
+     rather than sit on it, so it overhangs --measure by a gutter each side. */
+  .verse-pager {
+    left: calc(var(--sidebar-w) + var(--sp-6));
+    right: max(var(--sp-6), var(--sa-right));
+    bottom: var(--sp-6);
+    max-width: calc(var(--measure) + 2 * var(--sp-10));
+    margin-inline: auto;
   }
 }

@@ -1,9 +1,12 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Bookmark, ChevronLeft, ChevronRight } from "lucide-react";
 import type React from "react";
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { toggleBookmark, useIsSaved } from "../lib/bookmarks";
 import type { ChapterMeta, Verse } from "../lib/gita.types";
 import { getNavKind, syncVerseUrl } from "../lib/router";
-import type { Language } from "./Header";
+import type { Language } from "../lib/gita.types";
+import type { Sections } from "../lib/settings";
+import { useSettings } from "../lib/settings";
 
 interface VerseViewerProps {
   chapter: number;
@@ -43,15 +46,31 @@ const verseDomId = (chapter: number, verse: number): string => `c${chapter}v${ve
 
 const reducedMotion = (): boolean => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/** Subscribes to this verse's bookmark only, so saving one does not re-render
+ *  the other 77 blocks in the chapter. */
+const SaveButton: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }) => {
+  const saved = useIsSaved(chapter, verse);
+  return (
+    <button
+      type="button"
+      className="verse-save pressable"
+      aria-pressed={saved}
+      aria-label={saved ? `Remove verse ${chapter}.${verse} from saved` : `Save verse ${chapter}.${verse}`}
+      onClick={() => toggleBookmark(chapter, verse)}>
+      <Bookmark size={18} fill={saved ? "currentColor" : "none"} aria-hidden />
+    </button>
+  );
+};
+
 /** One verse. Memoised: prev/next re-renders the whole chapter, and a 78-verse
  *  chapter must bail out of all of them cheaply (ARCHITECTURE_PLAN §4.2). */
-const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language }>(({ chapter, verse, language }) => {
+const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sections: Sections }>(({ chapter, verse, language, sections }) => {
   // Scripture: Devanagari is the source text; kn/te are transliterations of it.
   const scripture = pick(language, verse.text, verse.text_kannada, verse.text_telugu, "sa") as Tagged;
   const translation = pick(language, verse.translation_english, verse.translation_kannada, verse.translation_telugu, "en") as Tagged;
-  const commentary = pick(language, verse.commentary_english, verse.context_kannada, verse.context_telugu, "en");
+  const commentary = sections.commentary ? pick(language, verse.commentary_english, verse.context_kannada, verse.context_telugu, "en") : null;
   // Word-by-word glosses are English only; there is no Kannada or Telugu set.
-  const wordMeanings = language === "en" ? verse.context_english : undefined;
+  const wordMeanings = sections.words && language === "en" ? verse.context_english : undefined;
   const [tab, setTab] = useState<"words" | "commentary">(commentary ? "commentary" : "words");
   // "term—gloss; term—gloss" from the source, split to one term per line.
   const glosses = wordMeanings?.split(";").map((g) => g.trim().replace(/\s*—\s*/, ": ")).filter(Boolean);
@@ -60,28 +79,35 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language }>((
     <article className="verse-block" id={verseDomId(chapter, verse.verse_number)} data-verse={verse.verse_number}>
       <div className="verse-viewer-title-wrapper">
         <h2 className="verse-viewer-title">Verse {verse.verse_number}</h2>
+        <SaveButton chapter={chapter} verse={verse.verse_number} />
       </div>
 
-      <div className="verse-text-wrapper">
-        <p className="verse-text" lang={scripture.lang}>
-          {/* The corpus separates pada with blank lines; under pre-wrap those
-              render as a gap mid-verse. Collapse to a single line break. */}
-          {scripture.text.replace(/\n\s*\n/g, "\n").trim()}
-        </p>
-      </div>
+      {sections.text && (
+        <div className="verse-text-wrapper">
+          <p className="verse-text" lang={scripture.lang}>
+            {/* The corpus separates pada with blank lines; under pre-wrap those
+                render as a gap mid-verse. Collapse to a single line break. */}
+            {scripture.text.replace(/\n\s*\n/g, "\n").trim()}
+          </p>
+        </div>
+      )}
 
-      <div className="verse-transliteration-wrapper">
-        <p className="verse-transliteration" lang="sa-Latn">
-          {verse.transliteration}
-        </p>
-      </div>
+      {sections.transliteration && (
+        <div className="verse-transliteration-wrapper">
+          <p className="verse-transliteration" lang="sa-Latn">
+            {verse.transliteration}
+          </p>
+        </div>
+      )}
 
-      <div className="verse-section-card">
-        <h3 className="verse-section-title" lang={SECTION_LANG[language]}>{TRANSLATION_LABEL[language]}</h3>
-        <p className="verse-section-content" lang={translation.lang}>
-          {translation.text}
-        </p>
-      </div>
+      {sections.translation && (
+        <div className="verse-section-card">
+          <h3 className="verse-section-title" lang={SECTION_LANG[language]}>{TRANSLATION_LABEL[language]}</h3>
+          <p className="verse-section-content" lang={translation.lang}>
+            {translation.text}
+          </p>
+        </div>
+      )}
 
       {(wordMeanings || commentary) && (
         <div className="verse-section-card commentary">
@@ -141,6 +167,7 @@ VerseBlock.displayName = "VerseBlock";
  *  n, scrolled to verse m"; prev/next scrolls between verses instead of swapping
  *  content, and an IntersectionObserver replaceStates the URL back as you scroll. */
 export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, meta, verses, targetVerse, language, onGoToVerse, onPrevChapter, onNextChapter, hasPrevChapter, hasNextChapter }) => {
+  const { sections } = useSettings();
   const containerRef = useRef<HTMLDivElement | null>(null);
   /** The verse currently positioned under the header. Mirrors `active` without
    *  the render lag, so the scroll effect can tell an external nav from a scroll-spy one. */
@@ -263,7 +290,7 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, meta, verses,
       {verses.length === 0 ? (
         <p className="verse-viewer-loading">Loading chapter…</p>
       ) : (
-        verses.map((verse) => <VerseBlock key={verse.verse_number} chapter={chapter} verse={verse} language={language} />)
+        verses.map((verse) => <VerseBlock key={verse.verse_number} chapter={chapter} verse={verse} language={language} sections={sections} />)
       )}
 
       <div className="verse-pager">

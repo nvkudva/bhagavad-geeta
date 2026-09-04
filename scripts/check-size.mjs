@@ -21,8 +21,18 @@ const KB = 1024;
 //                 trades ~1 KB of gzip for a react chunk that survives app deploys.
 //   CSS +2.0 KB — the §2.3 token set, the §2.4 base rules, the app-nav/main/tabbar
 //                 shell, and seven self-hosted @font-face blocks with unicode-range.
+// Raised from 70/6 KB when search, saved verses and the home verse card landed:
+//   JS  +1.0 KB — the search screen and its scorer, the bookmarks store, the saved
+//                 list and the home verse card, plus five more lucide icons. The
+//                 728 KB search index is fetched on first search, not bundled.
+//   CSS +1.0 KB — the search field and result rows, the saved list, and the
+//                 verse-for-you card.
+// Raised from 71/7 KB when the desktop layout and the gradient sloka landed:
+//   CSS +1.0 KB — the min-width:1024px sidebar/type block, the accent glow on the
+//                 verse-for-you card, and the gilded/silver text ramps, each of
+//                 which needs a light-appearance and a prefers-contrast variant.
 // Headroom left is deliberate and small: P1 must stay near these numbers.
-const BUDGETS = { js: 70 * KB, css: 6 * KB };
+const BUDGETS = { js: 71 * KB, css: 8 * KB };
 
 const gz = (p) => gzipSync(readFileSync(p), { level: 9 }).length;
 const files = readdirSync(assets);
