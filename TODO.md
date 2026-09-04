@@ -87,3 +87,8 @@ marked SUPERSEDED were written against the earlier warm-paper direction.
 
 - [ ] Verse context menu (Copy verse, Copy translation, Share) behind a hover-revealed ellipsis.
 - [ ] Rail marker view-transition (`view-transition-name: rail-marker`) so the active row slides rather than cuts.
+- [ ] 1.13 has no Telugu translation (te.wikisource carried only bhāṣya for it) — source a rendering
+- [ ] 13.1 translation_english is an editorial note, not a translation (Gambhirananda omits the verse)
+- [ ] transliteration field is a ṛi/ṣh/ch hybrid, not IAST — decide: rename the field or convert all 701
+- [ ] 220 `?` in commentary_english sit before a capital — comma or real question is undecidable, left alone
+- [ ] combined-verse groups (1.32-34, 1.38-39, 2.42-43, 5.8-9, 5.27-28, 10.12-13) repeat one English blob, unmarked

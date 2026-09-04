@@ -3,6 +3,25 @@
 Import scripts and their raw output. These run by hand, not in the build — the
 build reads `src/data/verses.json`, which is the checked-in result.
 
+## The pipeline, in order
+
+Run it end to end, or not at all: an import re-introduces the defects that
+`fix-corpus` exists to remove, so `fix-corpus` must always follow a merge.
+
+```
+node scripts/data-sources/fetch-telugu-wikisource.mjs   # -> telugu-wikisource.json
+node scripts/data-sources/merge-telugu.mjs              # -> verses.json
+node scripts/data-sources/merge-kannada.mjs             # -> verses.json
+node scripts/data-sources/fix-corpus.mjs                # mechanical repairs, idempotent
+node scripts/data-sources/check-corpus.mjs              # must report 0 blocking defects
+node scripts/build-data.mjs                             # -> public/data/v1
+```
+
+`fix-corpus.mjs --dry` reports without writing; `check-corpus.mjs --verbose`
+lists the verse ids behind each count. `check-corpus` exits non-zero on a
+blocking defect and zero on a warning — the standing warnings are recorded at
+the bottom of this file, so a new one means something changed.
+
 ## Telugu — `fetch-telugu-wikisource.mjs`
 
 Fetches all 701 verses from te.wikisource.org
@@ -67,3 +86,30 @@ reference to any copyrighted Kannada edition. Every verse carries
 `translation_kannada` is therefore machine-assisted, rendered from the Sanskrit
 with the English and the Telugu alongside it, and every verse carries
 `translation_kannada_source` saying so. The reader is told in the UI.
+
+## Standing warnings
+
+`check-corpus.mjs` reports these every run. They are known and deliberate, not
+a to-do list — investigate only if a count moves.
+
+- **220 ambiguous `?`** in `commentary_english`. The Sivananda mirror this
+  corpus came from replaced 3,805 commas with `?` and deleted every `qu`
+  digraph. Both were repaired mechanically; these 220 sit before a capital
+  letter, where a comma and a genuine question mark are indistinguishable
+  without the original edition.
+- **664 non-IAST transliterations.** The corpus uses a consistent hybrid
+  scheme (`ṛi`, `ṣh`, `śh`, `ch`) rather than strict IAST. Consistency makes it
+  a scheme decision, not a defect; converting all 701 is a separate call.
+- **6 combined-verse groups** — 1.32–34, 1.38–39, 2.42–43, 5.8–9, 5.27–28,
+  10.12–13 — where the source edition translates several ślokas as one unit and
+  repeats that unit under each id. Correct, but the reader is not told; marking
+  it needs a schema field.
+- **1.13 has no Telugu translation.** te.wikisource carried only a bhāṣya for
+  it, which now sits in `context_telugu`. The reader gets the English with the
+  "available in English only" note. Composing a translation would be fabrication.
+- **13.1 `translation_english`** is an editorial note — the English edition
+  omits the verse that opens this recension's chapter 13. Left as it stands,
+  because it is honest about itself.
+- **70 `commentary_english` nulled.** They held Devanagari word-gloss lists,
+  not commentary. Every one of those verses still has `context_english`, so no
+  verse lost its whole reference section.
