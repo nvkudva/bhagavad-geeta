@@ -11,8 +11,8 @@ import { VerseViewer } from "./components/VerseViewer";
 import { getChapterMeta, getChapters, loadChapter, peekChapter } from "./lib/gita";
 import type { Language, Verse } from "./lib/gita.types";
 import { navigate, useRoute, useScrollRestoration } from "./lib/router";
-import type { SectionKey } from "./lib/settings";
-import { SECTION_KEYS, SettingsProvider, useSettings } from "./lib/settings";
+import type { FontKey, SectionKey } from "./lib/settings";
+import { FONT_KEYS, SECTION_KEYS, SettingsProvider, useSettings } from "./lib/settings";
 
 const chapters = getChapters();
 const NO_VERSES: readonly Verse[] = [];
@@ -111,8 +111,16 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   words: "Word meanings",
 };
 
+const FONT_LABELS: Record<FontKey, string> = {
+  literata: "Literata",
+  source: "Source Serif 4",
+  newsreader: "Newsreader",
+  faustina: "Faustina",
+  system: "System",
+};
+
 const SettingsScreen: React.FC = () => {
-  const { theme, toggleTheme, language, setLanguage, sections, toggleSection } = useSettings();
+  const { theme, toggleTheme, language, setLanguage, sections, toggleSection, font, setFont } = useSettings();
 
   return (
     <div className="animate-fade-in settings-screen">
@@ -139,6 +147,18 @@ const SettingsScreen: React.FC = () => {
           {theme === "light" && <Check size={18} aria-hidden />}
         </button>
       </div>
+
+      <p className="settings-group-label">Reading face</p>
+      <div className="settings-group">
+        {FONT_KEYS.map((key) => (
+          <button key={key} type="button" className="settings-row pressable" aria-pressed={font === key} onClick={() => setFont(key)}>
+            {/* Each option is set in itself — the label is the specimen. */}
+            <span data-font-sample={key}>{FONT_LABELS[key]}</span>
+            {font === key && <Check size={18} aria-hidden />}
+          </button>
+        ))}
+      </div>
+      <p className="settings-note">Applies to English only. Kannada and Telugu keep Noto Sans.</p>
 
       <p className="settings-group-label">Show in each verse</p>
       <div className="settings-group">

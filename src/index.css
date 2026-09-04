@@ -5,25 +5,75 @@
    screen from pulling any Indic face; the browser fetches Kannada or Telugu
    only when a glyph in that range is actually painted.
 
-   Inter and the Noto Sans family are both SIL Open Font License 1.1, so
-   self-hosting and redistribution inside this app are permitted. */
+   The UI ships no webfont at all — it takes the platform's own face, which is
+   already resident, already hinted for that screen, and costs nothing. Only
+   the reading faces and the Indic scripts are downloaded.
+
+   All faces here are SIL Open Font License 1.1, so self-hosting and
+   redistribution inside this app are permitted. */
 
 @font-face {
-  font-family: "Inter";
+  font-family: "Literata";
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url("/fonts/inter-latin.woff2") format("woff2");
+  src: url("/fonts/literata-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  /* IAST transliteration lives almost entirely in U+1E00-1E9F, so this face is
-     the one that carries ā ṛ ṣ ṃ — it loads on the reader, not on the shell. */
-  font-family: "Inter";
+  font-family: "Literata";
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url("/fonts/inter-latin-ext.woff2") format("woff2");
+  src: url("/fonts/literata-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/source-serif-4-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/source-serif-4-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Newsreader";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/newsreader-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Newsreader";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/newsreader-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Faustina";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/faustina-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Faustina";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/faustina-latin-ext.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
@@ -61,15 +111,41 @@
   /* Deliberately no Indic family here: the language <select> carries Kannada and
      Telugu labels, so a fallback in the UI stack would pull both faces on every
      screen and defeat the per-script loading that unicode-range exists for. */
-  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  /* Scripture and long-form translation share the UI face: on a near-black
-     ground a serif's hairlines bloom and break up, while Inter and Noto Sans
-     hold an even stroke at every optical size (DESIGN_PLAN §2.2). */
-  --font-read: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* The platform's own UI face: SF on Apple, Roboto on Android and ChromeOS,
+     Segoe on Windows. Never downloaded — it is what "System" resolves to, and
+     the last resort behind every reading face. */
+  --font-sys: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
+
+  /* One face for the whole Latin app. The reader picks it in Settings and it
+     applies everywhere — verse, translation, commentary, nav, tab bar, buttons
+     — because a UI set in one face around a page set in another is the mix-up
+     this token exists to prevent. The only exceptions are the scripts below:
+     [lang="sa"], [lang="kn"] and [lang="te"] override font-family outright, so
+     Devanagari, Kannada and Telugu always get the face drawn for them. */
+  --font-read: "Literata", Georgia, "Times New Roman", serif;
+  --font-ui: var(--font-read);
+
   --font-deva: "Noto Sans Devanagari", "Devanagari Sangam MN", "Nirmala UI", sans-serif;
   --font-knda: "Noto Sans Kannada", "Kannada Sangam MN", "Nirmala UI", sans-serif;
   --font-telu: "Noto Sans Telugu", "Telugu Sangam MN", "Nirmala UI", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+}
+
+[data-font="source"] {
+  --font-read: "Source Serif 4", Georgia, "Times New Roman", serif;
+}
+[data-font="newsreader"] {
+  --font-read: "Newsreader", Georgia, "Times New Roman", serif;
+}
+[data-font="faustina"] {
+  --font-read: "Faustina", Georgia, "Times New Roman", serif;
+}
+/* Not a webfont: "System" sets the whole app in the platform's own face. */
+[data-font="system"] {
+  --font-read: var(--font-sys);
+}
+
+:root {
 
   /* ---------- Type scale ---------- */
   --fs-caption2: 0.6875rem;
@@ -90,9 +166,9 @@
      sits on the same scale as the UI above: Title2 / Body / Subheadline. */
   --fs-verse: calc(1.3125rem * var(--reading-scale)); /* 21px */
   --fs-translit: calc(0.8125rem * var(--reading-scale)); /* 13px — Footnote */
-  --fs-trans: calc(0.875rem * var(--reading-scale)); /* 14px */
-  --fs-comment: calc(0.75rem * var(--reading-scale)); /* 12px */
-  --fs-gloss: calc(0.6875rem * var(--reading-scale)); /* 11px */
+  --fs-trans: calc(1rem * var(--reading-scale)); /* 16px */
+  --fs-comment: calc(0.875rem * var(--reading-scale)); /* 14px */
+  --fs-gloss: calc(0.8125rem * var(--reading-scale)); /* 13px */
 
   /* ---------- Line heights ---------- */
   --lh-tight: 1.2;
@@ -109,7 +185,7 @@
   --lh-verse: 1.72;
 
   /* ---------- Tracking ---------- */
-  /* Inter is drawn slightly wide for UI; display sizes need negative tracking. */
+  /* UI faces are drawn wide for small sizes; display sizes need negative tracking. */
   --tr-large: -0.03em;
   --tr-title: -0.018em;
   --tr-body: -0.01em;
@@ -262,6 +338,19 @@
   --ramp-trans-glow: drop-shadow(0 1px 0 #00000066) drop-shadow(0 0 7px #e2eaf533);
   --ramp-trans-fallback: #e6ebf2;
 
+  /* Three metals, one construction (see the .verse-block/.verse-of-moment/
+     .saved-item-link rule). Each is a pair: -face is the raking sheen laid over
+     the glass, -edge is the hairline, lit at the top-left and shadowed at the
+     bottom-right. Only the colours differ; the mechanics live in one place. */
+  --metal-oxblood-face: linear-gradient(152deg, rgba(96, 20, 42, 0.5), rgba(30, 14, 20, 0.44) 36%, rgba(150, 44, 76, 0.26) 52%, rgba(24, 12, 17, 0.46) 72%, rgba(74, 16, 34, 0.48));
+  --metal-oxblood-edge: linear-gradient(152deg, rgba(236, 138, 162, 0.42), rgba(150, 44, 76, 0.14) 44%, rgba(0, 0, 0, 0.32));
+  --metal-brass-face: linear-gradient(152deg, rgba(78, 56, 22, 0.55), rgba(30, 22, 12, 0.42) 34%, rgba(120, 92, 40, 0.3) 52%, rgba(24, 18, 10, 0.44) 70%, rgba(62, 45, 18, 0.5));
+  --metal-brass-edge: linear-gradient(152deg, rgba(240, 205, 122, 0.55), rgba(184, 132, 47, 0.16) 42%, rgba(0, 0, 0, 0.3));
+  /* Lighter than the preview: a saved row is a small tile in a list, and the
+     full-strength graphite made the list read as a wall of dark slabs. */
+  --metal-graphite-face: linear-gradient(152deg, rgba(84, 90, 102, 0.42), rgba(38, 41, 48, 0.34) 36%, rgba(126, 134, 150, 0.24) 52%, rgba(34, 37, 43, 0.36) 72%, rgba(74, 80, 92, 0.4));
+  --metal-graphite-edge: linear-gradient(152deg, rgba(224, 231, 241, 0.42), rgba(126, 134, 150, 0.16) 44%, rgba(0, 0, 0, 0.26));
+
   /* On a near-black ground a drop shadow is invisible; separation comes from
      the surface step and a hairline, and the shadow only anchors what floats. */
   --el-0: none;
@@ -366,6 +455,16 @@
   --ramp-trans: linear-gradient(135deg, #687083, #4a5262 24%, #1b2028 50%, #4a5262 76%, #687083);
   --ramp-trans-glow: drop-shadow(0 1px 0 #ffffff73);
   --ramp-trans-fallback: #33383f;
+
+  /* Metal on a light ground is a pale brushed surface, not a dark wash: the
+     face lightens where the dark one darkens, and the hairline's lit end is
+     white rather than a tint. */
+  --metal-oxblood-face: linear-gradient(152deg, rgba(161, 29, 51, 0.14), rgba(255, 255, 255, 0.5) 36%, rgba(226, 120, 160, 0.16) 52%, rgba(255, 255, 255, 0.46) 72%, rgba(161, 29, 51, 0.12));
+  --metal-oxblood-edge: linear-gradient(152deg, rgba(255, 255, 255, 0.95), rgba(161, 29, 51, 0.16) 44%, rgba(38, 16, 54, 0.14));
+  --metal-brass-face: linear-gradient(152deg, rgba(168, 122, 30, 0.16), rgba(255, 255, 255, 0.52) 34%, rgba(226, 190, 110, 0.2) 52%, rgba(255, 255, 255, 0.46) 70%, rgba(168, 122, 30, 0.14));
+  --metal-brass-edge: linear-gradient(152deg, rgba(255, 255, 255, 0.95), rgba(168, 122, 30, 0.2) 42%, rgba(38, 16, 54, 0.14));
+  --metal-graphite-face: linear-gradient(152deg, rgba(70, 76, 90, 0.1), rgba(255, 255, 255, 0.5) 36%, rgba(120, 130, 150, 0.12) 52%, rgba(255, 255, 255, 0.46) 72%, rgba(70, 76, 90, 0.09));
+  --metal-graphite-edge: linear-gradient(152deg, rgba(255, 255, 255, 0.95), rgba(70, 76, 90, 0.12) 44%, rgba(38, 16, 54, 0.12));
 }
 
 /* ------------------------------------------------------------------- base */
@@ -913,6 +1012,21 @@ body::before {
   color: var(--ink-1);
 }
 
+/* Each row is set in the face it names, so the label is the specimen. */
+[data-font-sample="literata"] { font-family: "Literata", Georgia, serif; }
+[data-font-sample="source"] { font-family: "Source Serif 4", Georgia, serif; }
+[data-font-sample="newsreader"] { font-family: "Newsreader", Georgia, serif; }
+[data-font-sample="faustina"] { font-family: "Faustina", Georgia, serif; }
+[data-font-sample="system"] { font-family: var(--font-sys); }
+
+.settings-note {
+  margin: var(--sp-2) 0 var(--sp-2);
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-body);
+  color: var(--ink-3);
+}
+
 .settings-group-label {
   margin: 0 0 var(--sp-2) var(--sp-3);
   color: var(--ink-3);
@@ -994,6 +1108,51 @@ body::before {
   padding-top: var(--sp-4);
 }
 
+/* ------------------------------------------------------------------ metal
+   The one place the metal surface is built. Every card that wants one points
+   --metal-face / --metal-edge at a pair from the token block and inherits the
+   whole construction from here, so the mechanics change in a single edit.
+   background-origin: border-box with a two-value background-clip is what lets
+   one declaration paint the face inside the padding box and the hairline in
+   the border box. */
+.verse-block,
+.verse-of-moment,
+.saved-item-link {
+  background-color: var(--glass);
+  background-image: var(--metal-face), var(--metal-edge);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  border: 1px solid transparent;
+}
+
+.verse-block {
+  --metal-face: var(--metal-oxblood-face);
+  --metal-edge: var(--metal-oxblood-edge);
+}
+
+.verse-of-moment {
+  --metal-face: var(--metal-brass-face);
+  --metal-edge: var(--metal-brass-edge);
+}
+
+.saved-item-link {
+  --metal-face: var(--metal-graphite-face);
+  --metal-edge: var(--metal-graphite-edge);
+}
+
+/* No backdrop to sample and no gradient to lay over it: Increase Contrast and
+   Reduce Transparency both want a flat, opaque card. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .verse-block,
+  .verse-of-moment,
+  .saved-item-link {
+    background-image: none;
+    border-color: var(--glass-border);
+  }
+}
+
 /* ------------------------------------------------------- verse for you */
 
 /* Holds the card's height before the chapter lands, so the chapter grid does
@@ -1006,10 +1165,6 @@ body::before {
 .verse-of-moment {
   display: block;
   padding: var(--pad-card);
-  background: var(--glass);
-  -webkit-backdrop-filter: var(--mat-blur-thin);
-  backdrop-filter: var(--mat-blur-thin);
-  border: 1px solid var(--accent-line);
   border-radius: var(--r-xl);
   box-shadow: var(--spec), var(--glow-accent);
   color: var(--ink-1);
@@ -1216,10 +1371,6 @@ body::before {
   scroll-margin-top: calc(var(--nav-total) + var(--sp-3));
   margin-top: var(--gap-verse);
   padding: var(--pad-card);
-  background: var(--glass);
-  -webkit-backdrop-filter: var(--mat-blur-thin);
-  backdrop-filter: var(--mat-blur-thin);
-  border: 1px solid var(--glass-border);
   border-radius: var(--r-xl);
   box-shadow: var(--spec);
   /* ARCHITECTURE_PLAN §4.1: the CSS answer to 78 verses in one document, not a
@@ -1259,7 +1410,9 @@ body::before {
 
 .verse-text-wrapper {
   text-align: center;
-  margin-bottom: var(--gap-section);
+  /* The transliteration is the same words again, so it belongs to the sloka
+     rather than following it as a section of its own. */
+  margin-bottom: var(--sp-2);
 }
 
 /* The reason the app exists: highest contrast, no accent, regular weight —
@@ -1288,7 +1441,7 @@ body::before {
   margin-bottom: var(--gap-section);
 }
 
-/* Inter ships no italic here, and a browser-slanted sans is worse than none.
+/* A browser-slanted sans is worse than no italic at all.
    The transliteration is set apart by colour and tracking instead. */
 .verse-transliteration {
   font-family: var(--font-read);
@@ -1308,9 +1461,11 @@ body::before {
   padding: var(--pad-card);
   background: var(--well);
   border: 1px solid var(--well-border);
-  /* Concentric with the .verse-block that contains it: an inner radius must be
-     the outer radius minus the gap between them, or the two curves fight. */
-  border-radius: calc(var(--r-xl) - var(--pad-card));
+  /* Strict concentricity — outer radius minus the 16px gap — lands on 8px, and
+     8px inside a 24px parent reads as a square box in a rounded one. Half the
+     gap instead: the curves still agree in direction, and the inner corner is
+     legibly a corner of the same family. */
+  border-radius: calc(var(--r-xl) - var(--pad-card) / 2);
 }
 
 .verse-section-card.commentary {
@@ -1341,17 +1496,6 @@ body::before {
   color: var(--accent);
 }
 
-.verse-section-title {
-  margin-bottom: var(--sp-2);
-  /* Title case, not all-caps: --tr-caps exists to open up uppercase and reads
-     as loose spacing on mixed case, so the tracking goes back to normal too. */
-  font-size: var(--fs-footnote);
-  font-weight: var(--fw-semibold);
-  letter-spacing: var(--tr-body);
-  /* ink-2, not ink-3: the recessed well costs the label ~1.3:1 against the card
-     it used to sit on, and ink-3 falls under 4.5:1 in light. */
-  color: var(--ink-2);
-}
 
 .verse-section-content {
   background-image: var(--ramp-trans);
@@ -1609,10 +1753,6 @@ body::before {
   flex-direction: column;
   gap: var(--sp-2);
   padding: var(--sp-3);
-  background: var(--glass);
-  -webkit-backdrop-filter: var(--mat-blur-thin);
-  backdrop-filter: var(--mat-blur-thin);
-  border: 1px solid var(--glass-border);
   border-radius: var(--r-lg);
   color: var(--ink-1);
   text-decoration: none;
@@ -1819,9 +1959,9 @@ body::before {
 
     --fs-verse: calc(1.8125rem * var(--reading-scale)); /* 29px — the sloka is the point */
     --fs-translit: calc(1.0625rem * var(--reading-scale)); /* 17px */
-    --fs-trans: calc(1.25rem * var(--reading-scale)); /* 20px — primary reading size */
-    --fs-comment: calc(1.125rem * var(--reading-scale)); /* 18px */
-    --fs-gloss: calc(1rem * var(--reading-scale)); /* 16px */
+    --fs-trans: calc(1.375rem * var(--reading-scale)); /* 22px — primary reading size */
+    --fs-comment: calc(1.25rem * var(--reading-scale)); /* 20px */
+    --fs-gloss: calc(1.125rem * var(--reading-scale)); /* 18px */
 
     /* 46rem, not the 36rem a 65-character line would want: the Devanagari is
        centred and set as whole padas, and breaking those to protect the

@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <!-- Self-hosted. The Devanagari face is always needed (verse.text is Sanskrit for
          every verse); Kannada and Telugu are pulled by unicode-range on demand. -->
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/literata-latin.woff2" crossorigin />
     <link rel="preload" as="font" type="font/woff2" href="/fonts/noto-sans-devanagari.woff2" crossorigin />
     <meta name="description" content="Geeta — the Bhagavad Gita in Sanskrit, Kannada and Telugu — a quiet, offline-capable reading app." />
     <title>Geeta</title>
@@ -34,6 +34,10 @@
             var m = document.querySelector('meta[name="theme-color"]');
             if (m) m.setAttribute("content", "#FFFFFF");
           }
+          // Same reason for the reading face: a swap after paint reflows every
+          // verse. "literata" is the default and needs no attribute.
+          var f = localStorage.getItem("gita-font");
+          if (f && f !== "literata" && /^[a-z]+$/.test(f)) document.documentElement.dataset.font = f;
         } catch (e) {
           document.documentElement.dataset.theme = "dark";
         }

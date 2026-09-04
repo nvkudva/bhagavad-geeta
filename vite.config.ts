@@ -67,12 +67,21 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest,woff2}", "data/v1/manifest.json", "data/v1/chapters.json", "data/v1/chapter-01.json"],
-        // Precaching every face pulls all 458 KB of fonts on first visit, which undoes
-        // the per-script @font-face loading. Only the two faces the first paint actually
-        // needs stay precached: inter-latin for the shell, noto-sans-devanagari because
-        // every verse.text is Sanskrit. Kannada, Telugu and the latin-ext face that
-        // carries the IAST diacritics are runtime-cached on first use.
-        globIgnores: ["**/fonts/noto-sans-kannada.woff2", "**/fonts/noto-sans-telugu.woff2", "**/fonts/inter-latin-ext.woff2"],
+        // Precaching every face pulls all of fonts/ on first visit, which undoes the
+        // per-script @font-face loading. Only the two the first paint actually needs
+        // stay precached: literata-latin (the default reading face — the UI takes the
+        // platform's own face and downloads nothing) and noto-sans-devanagari, because
+        // every verse.text is Sanskrit. Kannada, Telugu, the latin-ext files that carry
+        // the IAST diacritics, and the three alternative reading faces are all
+        // runtime-cached the first time a reader actually asks for them.
+        globIgnores: [
+          "**/fonts/noto-sans-kannada.woff2",
+          "**/fonts/noto-sans-telugu.woff2",
+          "**/fonts/*-latin-ext.woff2",
+          "**/fonts/source-serif-4-*.woff2",
+          "**/fonts/newsreader-*.woff2",
+          "**/fonts/faustina-*.woff2",
+        ],
         navigateFallback: "index.html",
         // Never serve index.html for a missing JSON: the loader would die in JSON.parse.
         navigateFallbackDenylist: [/^\/data\//],

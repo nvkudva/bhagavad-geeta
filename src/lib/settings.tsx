@@ -10,6 +10,12 @@ export type Theme = "light" | "dark";
 /** The five parts of a verse the reader can turn off independently. Someone
  *  memorising works from the sloka alone; someone studying wants the glosses
  *  and nothing else. */
+/** The Latin reading face. Kannada and Telugu are unaffected — [lang] rules in
+ *  index.css override font-family for those scripts whatever this says. */
+export type FontKey = "literata" | "source" | "newsreader" | "faustina" | "system";
+
+export const FONT_KEYS: readonly FontKey[] = ["literata", "source", "newsreader", "faustina", "system"];
+
 export type SectionKey = "text" | "transliteration" | "translation" | "commentary" | "words";
 export type Sections = Record<SectionKey, boolean>;
 
@@ -22,6 +28,8 @@ interface Settings {
   setLanguage: (lang: Language) => void;
   sections: Sections;
   toggleSection: (key: SectionKey) => void;
+  font: FontKey;
+  setFont: (key: FontKey) => void;
 }
 
 const SettingsContext = createContext<Settings | null>(null);
@@ -34,6 +42,13 @@ const readTheme = (): Theme => (document.documentElement.dataset.theme === "ligh
 const THEME_COLOR: Record<Theme, string> = { dark: "#0A0A0B", light: "#FFFFFF" };
 const paintThemeColor = (theme: Theme): void => {
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLOR[theme]);
+};
+
+// The pre-paint script in index.html has already applied the face, the same way
+// it applies the theme; "literata" is the default and carries no attribute.
+const readFont = (): FontKey => {
+  const saved = document.documentElement.dataset.font;
+  return FONT_KEYS.includes(saved as FontKey) ? (saved as FontKey) : "literata";
 };
 
 const ALL_ON: Sections = { text: true, transliteration: true, translation: true, commentary: true, words: true };
@@ -59,6 +74,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [theme, setTheme] = useState<Theme>(readTheme);
   const [language, setLanguageState] = useState<Language>(readLanguage);
   const [sections, setSections] = useState<Sections>(readSections);
+  const [font, setFontState] = useState<FontKey>(readFont);
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => {
@@ -83,9 +99,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   }, []);
 
+  const setFont = useCallback((key: FontKey) => {
+    setFontState(key);
+    document.documentElement.dataset.font = key;
+    localStorage.setItem("gita-font", key);
+  }, []);
+
   const value = useMemo<Settings>(
-    () => ({ theme, toggleTheme, language, setLanguage, sections, toggleSection }),
-    [theme, toggleTheme, language, setLanguage, sections, toggleSection],
+    () => ({ theme, toggleTheme, language, setLanguage, sections, toggleSection, font, setFont }),
+    [theme, toggleTheme, language, setLanguage, sections, toggleSection, font, setFont],
   );
 
   return <SettingsContext value={value}>{children}</SettingsContext>;
