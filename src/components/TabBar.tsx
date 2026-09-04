@@ -1,7 +1,9 @@
-import { Bookmark, House, Search, Settings2 } from "lucide-react";
+import { Bookmark, House, Minus, Plus, Search, Settings2, SunMoon } from "lucide-react";
 import type React from "react";
+import { modKeyLabel } from "../lib/keys";
 import type { Route } from "../lib/router";
 import { Link, navigate } from "../lib/router";
+import { READING_SCALES, useSettings } from "../lib/settings";
 import { Logo } from "./Logo";
 
 type TabId = "read" | "search" | "saved" | "settings";
@@ -62,8 +64,10 @@ export const TabBar: React.FC<{ route: Route }> = ({ route }) => {
    persistent sidebar is what a Mac or an iPad in landscape expects, and a
    floating bottom capsule is what a phone expects. One TABS table, two
    presentations — which one is visible is decided entirely in CSS. */
-export const Sidebar: React.FC<{ route: Route; title: string }> = ({ route, title }) => {
+export const Sidebar: React.FC<{ route: Route; title: string; onOpenPalette: () => void }> = ({ route, title, onOpenPalette }) => {
   const active = activeTab(route);
+  const { theme, toggleTheme, readingScale, setReadingScale } = useSettings();
+  const scaleIndex = READING_SCALES.indexOf(readingScale);
 
   return (
     <nav className="app-sidebar" aria-label="Primary">
@@ -71,7 +75,16 @@ export const Sidebar: React.FC<{ route: Route; title: string }> = ({ route, titl
         <Logo size={28} />
         <span className="app-sidebar-wordmark">{title}</span>
       </div>
-      {TABS.map(({ id, label, Icon, to }) => {
+
+      {/* The palette is the desktop's front door to search; the Search tab
+          below it is still the results page. */}
+      <button type="button" className="sidebar-search pressable" data-current={active === "search" ? "true" : undefined} onClick={onOpenPalette} aria-keyshortcuts="Meta+K Control+K">
+        <Search size={20} strokeWidth={1.8} aria-hidden />
+        <span className="sidebar-search-label">Search</span>
+        <kbd>{modKeyLabel()}</kbd>
+      </button>
+      {/* Search is the launcher above, not a fifth row saying the same word. */}
+      {TABS.filter((tab) => tab.id !== "search").map(({ id, label, Icon, to }) => {
         const isActive = active === id;
         return (
           <Link
@@ -91,6 +104,25 @@ export const Sidebar: React.FC<{ route: Route; title: string }> = ({ route, titl
           </Link>
         );
       })}
+
+      {/* The two settings a reader reaches for mid-sentence, kept where the
+          cursor already is rather than three clicks away in Settings. */}
+      <div className="app-sidebar-foot">
+        <div className="sidebar-scale">
+          <span className="sidebar-scale-label">Reading size</span>
+          <button type="button" className="sidebar-step" aria-label="Smaller reading size" disabled={scaleIndex <= 0} onClick={() => setReadingScale(READING_SCALES[Math.max(0, scaleIndex - 1)])}>
+            <Minus size={14} aria-hidden />
+          </button>
+          <button type="button" className="sidebar-step" aria-label="Larger reading size" disabled={scaleIndex >= READING_SCALES.length - 1} onClick={() => setReadingScale(READING_SCALES[Math.min(READING_SCALES.length - 1, scaleIndex + 1)])}>
+            <Plus size={14} aria-hidden />
+          </button>
+        </div>
+        <button type="button" className="sidebar-search pressable" onClick={toggleTheme} aria-keyshortcuts="t">
+          <SunMoon size={20} strokeWidth={1.8} aria-hidden />
+          <span className="sidebar-search-label">{theme === "dark" ? "Dark" : "Light"}</span>
+          <kbd>T</kbd>
+        </button>
+      </div>
     </nav>
   );
 };

@@ -2,7 +2,7 @@
 // Theme and language are durable user preferences, not routing state. They live here
 // so that changing them does not re-render the router (ARCHITECTURE_PLAN §3.3).
 import type React from "react";
-import { createContext, use, useCallback, useMemo, useState } from "react";
+import { createContext, use, useCallback, useEffect, useMemo, useState } from "react";
 import type { Language } from "./gita.types";
 
 export type Theme = "light" | "dark";
@@ -30,6 +30,9 @@ interface Settings {
   toggleSection: (key: SectionKey) => void;
   font: FontKey;
   setFont: (key: FontKey) => void;
+  /** Multiplier on every reading size. Drives --reading-scale on the root. */
+  readingScale: number;
+  setReadingScale: (scale: number) => void;
 }
 
 const SettingsContext = createContext<Settings | null>(null);
@@ -49,6 +52,14 @@ const paintThemeColor = (theme: Theme): void => {
 const readFont = (): FontKey => {
   const saved = document.documentElement.dataset.font;
   return FONT_KEYS.includes(saved as FontKey) ? (saved as FontKey) : "literata";
+};
+
+/** Five steps either side of 1.0, coarse enough that a step is visible. */
+export const READING_SCALES: readonly number[] = [0.85, 0.925, 1, 1.1, 1.2, 1.35];
+
+const readReadingScale = (): number => {
+  const saved = Number(localStorage.getItem("gita-reading-scale"));
+  return READING_SCALES.includes(saved) ? saved : 1;
 };
 
 const ALL_ON: Sections = { text: true, transliteration: true, translation: true, commentary: true, words: true };
@@ -75,6 +86,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [language, setLanguageState] = useState<Language>(readLanguage);
   const [sections, setSections] = useState<Sections>(readSections);
   const [font, setFontState] = useState<FontKey>(readFont);
+  const [readingScale, setReadingScaleState] = useState<number>(readReadingScale);
+
+  // Applied here rather than in a pre-paint script: the scale only affects the
+  // reading sizes, so a first paint at 1.0 reflows text but never the shell.
+  useEffect(() => {
+    document.documentElement.style.setProperty("--reading-scale", String(readingScale));
+  }, [readingScale]);
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => {
@@ -99,16 +117,18 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   }, []);
 
+  const setReadingScale = useCallback((scale: number) => {
+    setReadingScaleState(scale);
+    localStorage.setItem("gita-reading-scale", String(scale));
+  }, []);
+
   const setFont = useCallback((key: FontKey) => {
     setFontState(key);
     document.documentElement.dataset.font = key;
     localStorage.setItem("gita-font", key);
   }, []);
 
-  const value = useMemo<Settings>(
-    () => ({ theme, toggleTheme, language, setLanguage, sections, toggleSection, font, setFont }),
-    [theme, toggleTheme, language, setLanguage, sections, toggleSection, font, setFont],
-  );
+  const value = useMemo<Settings>(() => ({ theme, toggleTheme, language, setLanguage, sections, toggleSection, font, setFont, readingScale, setReadingScale }), [theme, toggleTheme, language, setLanguage, sections, toggleSection, font, setFont, readingScale, setReadingScale]);
 
   return <SettingsContext value={value}>{children}</SettingsContext>;
 };

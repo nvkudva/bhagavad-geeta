@@ -2249,12 +2249,16 @@ body::before {
 }
 
 /* ------------------------------------------------------- wide-window layout
-   1024px is iPad-landscape and the smallest laptop. Width only, deliberately
-   not ANDed with (pointer: fine): a trackpad-less iPad in landscape has the
-   room for a sidebar and expects one. Everything narrower — phones and iPad
-   portrait — keeps the bottom capsule, which is still the correct HIG
-   presentation there. Pointer affordances live in the (hover: hover) block. */
-@media (min-width: 1024px) {
+   900px is the smallest window with room for a sidebar and a reading column
+   beside it. Width only, deliberately not ANDed with (pointer: fine): a
+   trackpad-less iPad in landscape has the room and expects the layout.
+   Everything narrower — phones and iPad portrait — keeps the bottom capsule,
+   which is still the correct HIG presentation there. Pointer affordances live
+   in the (hover: hover) block.
+
+   Nothing below 900px is touched by the desktop pass: every rule it adds lives
+   in this block, in the 1280px one, or in the section appended at the end. */
+@media (min-width: 900px) {
   /* A Mac is read at ~60cm, a phone at ~30cm, so desktop type is *larger* in
      CSS px, not smaller — the iOS scale shrunk to macOS proportions is the
      usual mistake. Roughly one step up the scale across the board. */
@@ -2421,5 +2425,896 @@ body::before {
     bottom: var(--sp-6);
     max-width: calc(var(--measure) + 2 * var(--sp-10));
     margin-inline: auto;
+  }
+}
+
+/* ================================================================= desktop
+   Everything from here down is gated on 900px or 1280px and is purely
+   additive: below 900px not one declaration in this section applies, so the
+   phone rendering is byte-for-byte what it was before the desktop pass.
+   These blocks come last on purpose — they must win over the [lang] rules
+   above, which are otherwise the last word on Indic type. */
+
+@media (min-width: 900px) {
+  :root {
+    /* Density. A cursor does not need a thumb's clearance, but a 27" display
+       does need the card to stop looking like a phone screenshot. */
+    --pad-card: var(--sp-6);
+    --pad-tile: var(--sp-6);
+    --gap-section: var(--sp-6);
+    --gap-verse: var(--sp-10);
+    /* A pointer row, not a tap row. --tap-min itself stays 44px so nothing
+       below 900px moves. */
+    --row-min: 36px;
+    --control-round: 32px;
+
+    /* Measure by role. One width cannot serve centred Devanagari padas, a
+       translation and a page of commentary at the same time. */
+    --measure-script: 46rem;
+    --measure-read: 64ch;
+    --measure-prose: 74ch;
+
+    /* Tighter than the mobile matra floor, which was measured at 21px; at the
+       desktop 29px that leading reads as a ladder. Overridden here rather
+       than at the token definition so the documented mobile floor stands. */
+    --lh-indic: 1.62;
+    --lh-verse: 1.58;
+
+    /* A field centred in a 1400px-tall window looks unanchored. */
+    --search-rise: 14vh;
+
+    accent-color: var(--accent);
+    caret-color: var(--accent);
+  }
+
+  /* ---------------------------------------------------------- reader ----
+     The horizontal snap pager is a phone gesture. With a cursor and a scroll
+     wheel the chapter is one continuous column, which is also what makes the
+     verse rail and the keyboard layer possible. */
+  .verse-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-verse);
+  }
+
+  /* The mobile card is a viewport-tall slide; in a column that would make
+     every verse a forced screenful of dead space. No content-visibility here:
+     skipped blocks are measured at their placeholder size, so a deep link into
+     a long chapter lands on an estimate and then drifts as the real heights
+     arrive. A chapter is 78 cards at most, which is cheap next to that. */
+  .verse-column .verse-block {
+    min-height: 0;
+    scroll-margin-top: calc(var(--nav-total) + var(--sp-6));
+  }
+
+  .verse-viewer-container {
+    max-width: var(--measure);
+    padding-bottom: var(--sp-10);
+  }
+
+  .verse-text-wrapper,
+  .verse-transliteration-wrapper {
+    max-width: var(--measure-script);
+    margin-inline: auto;
+  }
+
+  .verse-section-content {
+    max-width: var(--measure-read);
+    text-wrap: pretty;
+  }
+
+  .commentary .verse-section-content,
+  .verse-glosses {
+    max-width: var(--measure-prose);
+  }
+
+  /* The divider scales with the card instead of staying a 24px stub. */
+  .verse-viewer-title-wrapper::before,
+  .verse-viewer-title-wrapper::after {
+    width: 64px;
+    background: linear-gradient(to right, transparent, var(--accent-line));
+  }
+  .verse-viewer-title-wrapper::after {
+    background: linear-gradient(to left, transparent, var(--accent-line));
+  }
+
+  /* Indic shaping at display sizes. */
+  [lang="sa"],
+  [lang="kn"],
+  [lang="te"] {
+    font-feature-settings:
+      "kern" 1,
+      "calt" 1;
+    font-variant-ligatures: common-ligatures;
+    letter-spacing: 0;
+  }
+  .verse-text {
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ------------------------------------------------------ chapter grid ---
+     auto-fill inside a capped column flips between two and three columns as
+     the window moves. An editorial set is a decision, not an accident. */
+  .chapter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+
+  .chapter-card {
+    padding: var(--sp-6);
+    border-radius: var(--r-xl);
+    min-height: 200px;
+  }
+
+  .chapter-summary {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+
+  /* ------------------------------------------------------------ search ---
+     A one-column stack of 90-character snippets inside a 60rem column is a
+     wall. Two columns, each a real card. */
+  .search-field {
+    max-width: 46rem;
+  }
+
+  .search-results {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-3);
+    align-items: start;
+  }
+
+  .search-result {
+    padding: var(--sp-4);
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--spec);
+  }
+
+  .search-result-snippet {
+    font-size: var(--fs-callout);
+    line-height: var(--lh-read);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+
+  .search-result-snippet mark {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  .search-recent {
+    min-height: var(--row-min);
+  }
+
+  /* ------------------------------------------------------------- saved ---*/
+  .saved-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+    align-items: start;
+  }
+
+  .saved-item-link {
+    padding: var(--sp-4);
+  }
+
+  .saved-item-text {
+    font-size: var(--fs-trans);
+  }
+
+  /* A trash can floating on every card is the cheapest thing on the screen.
+     Under a pointer it appears when the card is engaged; a trackpad-less
+     iPad still gets :focus-within, and nothing below 900px hides it. */
+  .saved-item-remove,
+  .verse-save {
+    opacity: 0;
+    transition:
+      opacity var(--dur-fast) var(--ease-out-ios),
+      color var(--dur-fast) var(--ease-out-ios);
+  }
+  .saved-item:hover .saved-item-remove,
+  .saved-item:focus-within .saved-item-remove,
+  .saved-item-remove:focus-visible,
+  .verse-block:hover .verse-save,
+  .verse-block:focus-within .verse-save,
+  .verse-save:focus-visible,
+  .verse-save[aria-pressed="true"] {
+    opacity: 1;
+  }
+
+  /* ---------------------------------------------------------- settings ---
+     The iOS capsule-for-a-lone-control is a phone idiom; at width it reads as
+     a toy. A settings screen on a desktop is a form with an index. */
+  .settings-screen {
+    max-width: 62rem;
+    display: grid;
+    grid-template-columns: 14rem minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: var(--sp-10);
+    align-items: start;
+  }
+
+  .settings-heading {
+    grid-column: 1 / -1;
+  }
+
+  .settings-index {
+    position: sticky;
+    top: var(--sp-8);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    grid-row: 2;
+  }
+
+  .settings-index-link {
+    display: block;
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-md);
+    background: none;
+    border: 0;
+    color: var(--ink-2);
+    font-family: inherit;
+    font-size: var(--fs-subhead);
+    font-weight: var(--fw-medium);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .settings-index-link[aria-current="true"] {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .settings-body {
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-8);
+  }
+
+  .settings-section {
+    scroll-margin-top: var(--sp-8);
+  }
+
+  /* No capsule, no pill: every group is the same rounded panel. */
+  .settings-group,
+  .settings-group:has(> .settings-row:only-child) {
+    --group-r: var(--r-lg);
+  }
+  .settings-group:has(> .settings-row:only-child) .settings-row {
+    padding-inline: var(--sp-5);
+  }
+
+  .settings-row {
+    min-height: var(--row-min);
+    padding: var(--sp-2) var(--sp-5);
+  }
+
+  .settings-group-label {
+    font-size: var(--fs-subhead);
+    font-weight: var(--fw-semibold);
+    color: var(--ink-1);
+  }
+
+  /* -------------------------------------------------- empty placeholder ---*/
+  .screen-placeholder {
+    max-width: 34rem;
+    margin: var(--sp-16) auto;
+    padding: var(--sp-12) var(--sp-8);
+    border: 1px dashed var(--separator);
+    border-radius: var(--r-xl);
+  }
+
+  /* ------------------------------------------------------- desktop title --
+     The nav bar collapses on every root screen at this width, which took the
+     large title with it. The heading comes back inside the content column. */
+  .screen-title {
+    margin: 0 0 var(--sp-6);
+    font-family: var(--font-read);
+    font-size: var(--fs-title1);
+    font-weight: var(--fw-bold);
+    letter-spacing: var(--tr-large);
+    line-height: 1.15;
+    color: var(--ink-1);
+  }
+
+  /* ---------------------------------------------------------- sidebar ----*/
+  .app-sidebar .tab-item {
+    position: relative;
+    min-height: var(--row-min);
+  }
+
+  .app-sidebar .tab-item[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: 22%;
+    bottom: 22%;
+    width: 3px;
+    border-radius: var(--r-pill);
+    background: var(--accent);
+  }
+
+  .sidebar-search {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    min-height: var(--row-min);
+    margin-bottom: var(--sp-2);
+    padding: 0 var(--sp-3);
+    background: none;
+    border: 0;
+    border-radius: var(--r-md);
+    color: var(--ink-2);
+    font-family: inherit;
+    font-size: var(--fs-subhead);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+  }
+
+  .sidebar-search-label {
+    flex: 1;
+    text-align: left;
+  }
+
+  .sidebar-search[data-current="true"] {
+    color: var(--accent);
+  }
+
+  kbd,
+  .kbd {
+    padding: 1px 5px;
+    background: var(--surface-2);
+    border: 0.5px solid var(--mat-border);
+    border-radius: var(--r-xs);
+    color: var(--ink-4);
+    font-family: var(--font-sys);
+    font-size: var(--fs-caption2);
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  .app-sidebar-foot {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding-top: var(--sp-4);
+    border-top: 0.5px solid var(--mat-border);
+  }
+
+  .sidebar-scale {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 0 var(--sp-3);
+    color: var(--ink-3);
+    font-size: var(--fs-caption1);
+  }
+
+  .sidebar-scale-label {
+    flex: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sidebar-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: var(--surface-2);
+    border: 0.5px solid var(--mat-border);
+    border-radius: var(--r-sm);
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+  .sidebar-step:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* --------------------------------------------------------- selection ---
+     The default blue lands on gold background-clip:text and reads as broken.
+     Those elements paint their colour through the background, so the fill
+     colour has to be restated or the selection shows transparent glyphs. */
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--ink-1);
+    text-shadow: none;
+  }
+  .verse-text::selection,
+  .verse-of-moment-text::selection,
+  .saved-item-text::selection {
+    background: rgba(240, 205, 122, 0.28);
+    -webkit-text-fill-color: var(--ramp-verse-fallback);
+  }
+  .verse-section-content::selection,
+  .verse-of-moment-translation::selection {
+    background: var(--accent-soft);
+    -webkit-text-fill-color: var(--ramp-trans-fallback);
+  }
+
+  /* ------------------------------------------------------------ focus ----
+     border-radius: inherit, so the ring follows a pill or an --r-xl card
+     instead of squaring off at --r-sm. */
+  .pressable:focus-visible,
+  .icon-button:focus-visible,
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: inherit;
+    box-shadow: 0 0 0 5px var(--accent-soft);
+  }
+
+  /* -------------------------------------------------------- scrollbars ---*/
+  html {
+    scrollbar-color: color-mix(in srgb, var(--ink-4) 60%, transparent) transparent;
+    scrollbar-width: thin;
+  }
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--ink-4) 55%, transparent);
+    background-clip: content-box;
+    border: 3px solid transparent;
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ink-3);
+  }
+
+  /* ----------------------------------------------------- light appearance
+     The blooms are sized in percentages, so on a 2560px window the phone's
+     soft wash becomes a 1300px smear, and the card border — a white hairline
+     — disappears entirely against a pale ground. Both are width problems, so
+     both are fixed at width and the mobile light theme is untouched. */
+  [data-theme="light"] {
+    --bloom-1: rgba(226, 120, 196, 0.4);
+    --bloom-1-at: 34% 40% at 16% 10%;
+    --bloom-2: rgba(150, 90, 230, 0.3);
+    --bloom-2-at: 30% 36% at 48% 46%;
+    --bloom-3: rgba(160, 150, 245, 0.28);
+    --bloom-3-at: 36% 40% at 86% 80%;
+
+    /* A card at 56% white is a tint on a phone and a muddy panel at 700px
+       wide. Opaque enough to read as paper, still translucent enough that the
+       ground's colour comes through it. */
+    --glass: rgba(255, 255, 255, 0.72);
+    --glass-hover: rgba(255, 255, 255, 0.86);
+    --mat-chrome: rgba(250, 250, 252, 0.82);
+
+    --glass-border: rgba(38, 16, 54, 0.1);
+    --glass-border-hover: rgba(161, 29, 51, 0.3);
+    --el-2: 0 3px 12px rgba(38, 16, 54, 0.09), 0 1px 3px rgba(38, 16, 54, 0.06);
+    --el-3: 0 18px 44px rgba(38, 16, 54, 0.14), 0 3px 8px rgba(38, 16, 54, 0.07);
+  }
+
+  /* ------------------------------------------------------------ dialog ---
+     One material for the command palette and the shortcuts sheet. */
+  .desk-dialog {
+    width: min(640px, 92vw);
+    max-height: 70vh;
+    margin: 12vh auto auto;
+    padding: 0;
+    background: var(--mat-chrome);
+    -webkit-backdrop-filter: var(--mat-blur);
+    backdrop-filter: var(--mat-blur);
+    border: 0.5px solid var(--mat-border);
+    border-radius: var(--r-xl);
+    box-shadow: var(--spec), var(--el-3);
+    color: var(--ink-1);
+    overflow: hidden;
+  }
+  .desk-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.44);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+  }
+
+  .palette-field {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-4) var(--sp-5);
+    border-bottom: 0.5px solid var(--mat-border);
+    color: var(--ink-3);
+  }
+
+  .palette-input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: 0;
+    outline: none;
+    color: var(--ink-1);
+    font-family: inherit;
+    font-size: var(--fs-body);
+  }
+  .palette-input::placeholder {
+    color: var(--ink-4);
+  }
+  /* The dialog is the focused thing; a ring around the field inside it is a
+     second, smaller box saying the same. */
+  .palette-input:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .palette-list {
+    max-height: calc(70vh - 64px);
+    overflow-y: auto;
+    padding: var(--sp-2);
+    margin: 0;
+    list-style: none;
+  }
+
+  .palette-group {
+    padding: var(--sp-3) var(--sp-3) var(--sp-1);
+    color: var(--ink-4);
+    font-size: var(--fs-caption2);
+    font-weight: var(--fw-semibold);
+    letter-spacing: var(--tr-caps);
+    text-transform: uppercase;
+  }
+
+  .palette-option {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-md);
+    color: var(--ink-1);
+    cursor: pointer;
+  }
+
+  .palette-option[data-active="true"] {
+    background: var(--accent-soft);
+  }
+
+  .palette-option-ref {
+    flex: 0 0 auto;
+    min-width: 3.5rem;
+    color: var(--accent);
+    font-size: var(--fs-caption1);
+    font-weight: var(--fw-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .palette-option-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--fs-subhead);
+  }
+
+  .palette-empty {
+    padding: var(--sp-6) var(--sp-5);
+    color: var(--ink-3);
+    font-size: var(--fs-subhead);
+    text-align: center;
+  }
+
+  /* ------------------------------------------------- shortcuts sheet -----*/
+  .shortcuts-sheet {
+    padding: var(--sp-6);
+    max-height: 78vh;
+    overflow-y: auto;
+  }
+  .shortcuts-title {
+    margin: 0 0 var(--sp-4);
+    font-size: var(--fs-title3);
+    font-weight: var(--fw-bold);
+    letter-spacing: var(--tr-title);
+  }
+  .shortcuts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-2) var(--sp-6);
+  }
+  .shortcuts-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    padding: var(--sp-1) 0;
+    font-size: var(--fs-subhead);
+    color: var(--ink-2);
+  }
+}
+
+/* --------------------------------------------------------- pointer only --
+   Hover fills, hover-revealed actions and tooltips need a real cursor as well
+   as the width, so they sit in their own block. */
+@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
+  .search-result:hover,
+  .search-reference:hover,
+  .saved-item-link:hover,
+  .search-recent:hover,
+  .settings-row:hover,
+  .settings-index-link:hover,
+  .sidebar-search:hover,
+  .palette-option:hover {
+    background-color: var(--glass-hover);
+    border-color: var(--glass-border-hover);
+  }
+
+  .verse-rail-item:hover {
+    background-color: var(--glass-hover);
+    color: var(--ink-1);
+  }
+
+  .pager-btn:hover:not(:disabled),
+  .nav-back-button:hover,
+  .sidebar-step:hover {
+    background-color: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  /* -2px, not -4px: at 180ms under a cursor that is an affordance; the larger
+     lift is the web card cliché DESIGN_PLAN already rejected. */
+  .chapter-card.pressable:hover,
+  .verse-of-moment:hover {
+    transform: translateY(-2px);
+  }
+  .chapter-card,
+  .verse-of-moment {
+    transition:
+      transform var(--dur-base) var(--spring-gentle),
+      background-color var(--dur-fast) var(--ease-out-ios),
+      border-color var(--dur-fast) var(--ease-out-ios),
+      box-shadow var(--dur-fast) var(--ease-out-ios);
+  }
+
+  /* A 3% squash under a cursor is a thumb gesture. */
+  .pressable:active {
+    transform: scale(0.99);
+  }
+
+  /* Tooltips, so an icon-only control names itself and its shortcut without a
+     native title= delay. Pseudo-element, so the accessible name is still the
+     aria-label and nothing is announced twice. */
+  [data-tip] {
+    position: relative;
+  }
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    z-index: 200;
+    transform: translateX(-50%);
+    padding: var(--sp-1) var(--sp-2);
+    background: var(--surface-3);
+    border: 0.5px solid var(--mat-border);
+    border-radius: var(--r-sm);
+    box-shadow: var(--el-2);
+    color: var(--ink-1);
+    font-size: var(--fs-caption1);
+    font-weight: var(--fw-medium);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-fast) var(--ease-out-ios) 400ms;
+  }
+  [data-tip]:hover::after,
+  [data-tip]:focus-visible::after {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------- 1280px --
+   The tier with room for a two-pane reader: a sticky verse index beside the
+   reading column, which retires the floating pager entirely. */
+@media (min-width: 1280px) {
+  :root {
+    --gutter: var(--sp-8);
+    --pad-card: var(--sp-8);
+    --gap-verse: var(--sp-12);
+    --w-content: 76rem;
+    --sidebar-w: 18rem;
+
+    --fs-verse: calc(2.125rem * var(--reading-scale));
+    --lh-indic: 1.52;
+    --lh-verse: 1.48;
+  }
+
+  .chapter-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-5);
+  }
+
+  .saved-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* --------------------------------------------- verse-of-the-moment -----
+     At 76rem with a four-line clamp the card is a letterbox. Two columns:
+     the sloka reads left, the translation sits beside it. */
+  .verse-of-moment {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    column-gap: var(--sp-8);
+    align-items: center;
+    padding: var(--sp-8);
+    min-height: 280px;
+  }
+  .verse-of-moment-head {
+    grid-column: 1 / -1;
+  }
+  .verse-of-moment-text {
+    text-align: left;
+    margin-bottom: 0;
+  }
+  .verse-of-moment-translation {
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+    margin-top: 0;
+  }
+  .verse-of-moment-placeholder {
+    min-height: 280px;
+  }
+
+  /* ------------------------------------------------------- two-pane -----*/
+  .verse-viewer-container {
+    display: grid;
+    grid-template-columns: 12rem minmax(0, var(--measure));
+    gap: var(--sp-10);
+    justify-content: center;
+    max-width: none;
+  }
+
+  .verse-rail {
+    position: sticky;
+    top: calc(var(--nav-total) + var(--sp-6));
+    align-self: start;
+    max-height: calc(100dvh - var(--nav-total) - 2 * var(--sp-6));
+    overflow-y: auto;
+    scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding-bottom: var(--sp-4);
+  }
+  .verse-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .verse-rail-label {
+    padding: 0 var(--sp-3) var(--sp-2);
+    color: var(--ink-4);
+    font-size: var(--fs-caption2);
+    font-weight: var(--fw-semibold);
+    letter-spacing: var(--tr-caps);
+    text-transform: uppercase;
+  }
+
+  .verse-rail-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 30px;
+    padding: 0 var(--sp-3);
+    background: none;
+    border: 0;
+    border-radius: var(--r-sm);
+    color: var(--ink-3);
+    font-family: inherit;
+    font-size: var(--fs-footnote);
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .verse-rail-item[aria-current="true"] {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: var(--fw-semibold);
+  }
+
+  .verse-rail-chapter {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 30px;
+    padding: 0 var(--sp-3);
+    background: none;
+    border: 0;
+    border-radius: var(--r-sm);
+    color: var(--ink-2);
+    font-family: inherit;
+    font-size: var(--fs-caption1);
+    font-weight: var(--fw-medium);
+    text-align: left;
+    cursor: pointer;
+  }
+  .verse-rail-chapter:disabled {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  /* The rail is the pager now. */
+  .verse-viewer-container .verse-pager {
+    display: none;
+  }
+
+  /* Room for both, so the tab bar inside the commentary card is a phone
+     compromise the desktop does not have to make. */
+  .verse-panes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-5);
+    align-items: start;
+  }
+  .verse-panes .verse-section-card.commentary {
+    margin-top: 0;
+  }
+  .verse-panes .commentary .verse-section-content,
+  .verse-panes .verse-glosses {
+    max-width: none;
+  }
+  .verse-pane-label {
+    margin: 0 0 var(--sp-3);
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px solid var(--separator);
+    color: var(--accent);
+    font-size: var(--fs-footnote);
+    font-weight: var(--fw-semibold);
+  }
+}
+
+/* The whole-viewport blur crossfade is a phone transition: at 2560px it is an
+   expensive full-screen filter and it blinks the sidebar, which never changed.
+   Scope it to the content column instead. */
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .app-main {
+    view-transition-name: main;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+  ::view-transition-old(main),
+  ::view-transition-new(main) {
+    animation-duration: var(--dur-fast);
+    animation-timing-function: var(--ease-out-ios);
+    mix-blend-mode: normal;
+  }
+  ::view-transition-old(main) {
+    animation-name: desk-fade-out;
+  }
+  ::view-transition-new(main) {
+    animation-name: desk-fade-in;
+  }
+}
+
+@keyframes desk-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes desk-fade-in {
+  from {
+    opacity: 0;
   }
 }
