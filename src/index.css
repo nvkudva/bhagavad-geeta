@@ -3183,6 +3183,12 @@ body::before {
     max-width: none;
   }
 
+  /* No rail is rendered until the chapter arrives, so the loading line would
+     otherwise be placed in the 12rem rail track and squeezed to its width. */
+  .verse-viewer-loading {
+    grid-column: 1 / -1;
+  }
+
   .verse-rail {
     position: sticky;
     top: calc(var(--nav-total) + var(--sp-6));
