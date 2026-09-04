@@ -1,10 +1,26 @@
+import { copyFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
+import type { Plugin } from "vite";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+
+// SPA deep links on a first visit (before the service worker controls the page) need a
+// host rewrite. public/_redirects covers Netlify and Cloudflare Pages; GitHub Pages has
+// no rewrite at all and falls back to a byte copy of index.html at 404.html.
+const spaFallback = (): Plugin => ({
+  name: "spa-404-fallback",
+  apply: "build",
+  closeBundle() {
+    const index = resolve(__dirname, "dist/index.html");
+    if (existsSync(index)) copyFileSync(index, resolve(__dirname, "dist/404.html"));
+  },
+});
 
 export default defineConfig({
   plugins: [
     react(),
+    spaFallback(),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
@@ -21,16 +37,18 @@ export default defineConfig({
         ],
       },
       workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest,woff2}", "data/v1/manifest.json", "data/v1/chapters.json", "data/v1/chapter-01.json"],
+        navigateFallback: "index.html",
+        // Never serve index.html for a missing JSON: the loader would die in JSON.parse.
+        navigateFallbackDenylist: [/^\/data\//],
+        cleanupOutdatedCaches: true,
+        maximumFileSizeToCacheInBytes: 3_000_000,
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            // Corpus data is immutable within a version directory.
+            urlPattern: /\/data\/v1\/.*\.json$/,
             handler: "CacheFirst",
-            options: { cacheName: "google-fonts-cache", expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }, cacheableResponse: { statuses: [0, 200] } },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: "CacheFirst",
-            options: { cacheName: "gstatic-fonts-cache", expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }, cacheableResponse: { statuses: [0, 200] } },
+            options: { cacheName: "gita-data-v1", cacheableResponse: { statuses: [200] } },
           },
         ],
       },

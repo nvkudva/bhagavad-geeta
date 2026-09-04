@@ -10,7 +10,7 @@ interface Chapter {
 }
 
 interface ChapterListProps {
-  chapters: Chapter[];
+  chapters: readonly Chapter[];
   onSelectChapter: (id: number) => void;
 }
 

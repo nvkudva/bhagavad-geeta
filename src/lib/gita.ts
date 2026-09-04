@@ -1,0 +1,71 @@
+import chaptersData from "../data/chapters.json";
+import type { ChapterId, ChapterMeta, Verse } from "./gita.types";
+
+export type { ChapterId, ChapterMeta, Language, Verse } from "./gita.types";
+
+const chapters: readonly ChapterMeta[] = chaptersData as ChapterMeta[];
+const chapterById = new Map<ChapterId, ChapterMeta>(chapters.map((c) => [c.id, c]));
+
+const memo = new Map<ChapterId, readonly Verse[]>();
+/** Stable promise identity per chapter: doubles as the in-flight de-duplication map
+ *  and as the resolved resource `use()` needs to see the same object every render. */
+const inflight = new Map<ChapterId, Promise<readonly Verse[]>>();
+
+const dataUrl = (id: ChapterId): string => `${import.meta.env.BASE_URL}data/v1/chapter-${String(id).padStart(2, "0")}.json`;
+
+/** Sync. Bundled (5 KB). Safe to call during render. */
+export function getChapters(): readonly ChapterMeta[] {
+  return chapters;
+}
+
+export function getChapterMeta(id: ChapterId): ChapterMeta | undefined {
+  return chapterById.get(id);
+}
+
+/** Sync cache probe. Returns undefined if the chapter is not resident. */
+export function peekChapter(id: ChapterId): readonly Verse[] | undefined {
+  return memo.get(id);
+}
+
+export function peekVerse(c: ChapterId, v: number): Verse | undefined {
+  return memo.get(c)?.find((x) => x.verse_number === v);
+}
+
+/** Async load, memoised by chapter id and de-duplicated in flight. */
+export function loadChapter(id: ChapterId): Promise<readonly Verse[]> {
+  const existing = inflight.get(id);
+  if (existing) return existing;
+
+  const request = fetch(dataUrl(id))
+    .then((res) => {
+      if (!res.ok) throw new Error(`Failed to load chapter ${id}: ${res.status}`);
+      return res.json() as Promise<Verse[]>;
+    })
+    .then((verses) => {
+      memo.set(id, verses);
+      return verses as readonly Verse[];
+    })
+    .catch((err: unknown) => {
+      // A failed load must not be cached, or the chapter is permanently broken.
+      inflight.delete(id);
+      throw err;
+    });
+
+  inflight.set(id, request);
+  return request;
+}
+
+export function loadVerse(c: ChapterId, v: number): Promise<Verse | undefined> {
+  return loadChapter(c).then((verses) => verses.find((x) => x.verse_number === v));
+}
+
+/** Fire-and-forget warm-up. Never rejects, never blocks. Idempotent. */
+export function prefetchChapter(id: ChapterId): void {
+  if (!chapterById.has(id) || inflight.has(id)) return;
+  void loadChapter(id).catch(() => undefined);
+}
+
+/** Suspense-friendly resource: the SAME promise identity per id, which `use()` requires. */
+export function chapterResource(id: ChapterId): Promise<readonly Verse[]> {
+  return loadChapter(id);
+}

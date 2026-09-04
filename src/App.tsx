@@ -1,98 +1,111 @@
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import { ChapterList } from "./components/ChapterList";
-import type { Language } from "./components/Header";
 import { Header } from "./components/Header";
 import { VerseViewer } from "./components/VerseViewer";
+import { getChapterMeta, getChapters, loadChapter, peekChapter } from "./lib/gita";
+import type { Verse } from "./lib/gita.types";
+import { navigate, useRoute, useScrollRestoration } from "./lib/router";
+import { SettingsProvider, useSettings } from "./lib/settings";
 
-import chaptersData from "./data/chapters.json";
-import versesData from "./data/verses.json";
+const chapters = getChapters();
+const NO_VERSES: readonly Verse[] = [];
+const FIRST_CHAPTER = chapters[0].id;
+const LAST_CHAPTER = chapters[chapters.length - 1].id;
 
-type Theme = "light" | "dark";
+const Home: React.FC = () => (
+  <div className="animate-fade-in home-container">
+    <h2 className="home-title">Bhagavad-Geeta</h2>
+    <p className="home-description">Explore the divine wisdom of the Bhagavad-Geeta through a beautifully designed, distraction-free reading experience.</p>
+    <ChapterList chapters={chapters} onSelectChapter={(id) => navigate({ name: "verse", chapter: id, verse: 1 })} />
+  </div>
+);
 
-export const App: React.FC = () => {
-  const [theme, setTheme] = useState<Theme>("light");
-  const [language, setLanguage] = useState<Language>("en");
-  const [selectedChapterId, setSelectedChapterId] = useState<number | null>(null);
-  const [selectedVerseId, setSelectedVerseId] = useState<number | null>(null);
+const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }) => {
+  const { language } = useSettings();
+  const [, onChapterLoaded] = useReducer((n: number) => n + 1, 0);
 
-  // Initialize theme from system preference or localStorage
+  // Sync read of the resident chapter; the effect only wakes the component once a
+  // cold chapter has arrived, so nothing is set synchronously during an effect.
+  const verses = peekChapter(chapter) ?? NO_VERSES;
+
   useEffect(() => {
-    const savedTheme = localStorage.getItem("gita-theme") as Theme;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute("data-theme", savedTheme);
-    } else if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
-      document.documentElement.setAttribute("data-theme", "dark");
-    }
+    if (peekChapter(chapter)) return;
+    let cancelled = false;
+    loadChapter(chapter)
+      .then(() => {
+        if (!cancelled) onChapterLoaded();
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [chapter]);
 
-    // Also init language if saved
-    const savedLanguage = localStorage.getItem("gita-language") as Language;
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
-    }
-  }, []);
+  const index = verses.findIndex((v) => v.verse_number === verse);
 
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-    localStorage.setItem("gita-theme", newTheme);
+  // A deep link to a verse number this chapter does not have lands on the nearest one.
+  useEffect(() => {
+    if (verses.length === 0 || index !== -1) return;
+    const nearest = verses.reduce((best, v) => (Math.abs(v.verse_number - verse) < Math.abs(best.verse_number - verse) ? v : best), verses[0]);
+    navigate({ name: "verse", chapter, verse: nearest.verse_number }, { replace: true, scroll: "preserve" });
+  }, [verses, index, chapter, verse]);
+
+  const current = index !== -1 ? verses[index] : null;
+  // Prev/next run past a chapter boundary: the last verse of n leads into n+1.
+  const hasPrev = index > 0 || chapter > FIRST_CHAPTER;
+  const hasNext = (index !== -1 && index < verses.length - 1) || chapter < LAST_CHAPTER;
+
+  // The previous chapter's last verse number, best-effort: the resident array is
+  // authoritative, metadata is the fallback, and the Reader clamps to the nearest
+  // real verse once that chapter arrives.
+  const lastVerseOf = (id: number): number => {
+    const resident = peekChapter(id);
+    if (resident && resident.length > 0) return resident[resident.length - 1].verse_number;
+    return getChapterMeta(id)?.verses_count ?? 1;
   };
 
-  const handleLanguageChange = (lang: Language) => {
-    setLanguage(lang);
-    localStorage.setItem("gita-language", lang);
+  const goNext = () => {
+    if (index !== -1 && index < verses.length - 1) return navigate({ name: "verse", chapter, verse: verses[index + 1].verse_number });
+    if (chapter < LAST_CHAPTER) navigate({ name: "verse", chapter: chapter + 1, verse: 1 });
   };
 
-  const currentChapterVerses = selectedChapterId ? versesData.filter((v) => v.chapter_id === selectedChapterId) : [];
-
-  const currentIndex = currentChapterVerses.findIndex((v) => v.verse_number === selectedVerseId);
-  const currentVerse = currentIndex !== -1 ? currentChapterVerses[currentIndex] : null;
-
-  const handleSelectChapter = (id: number) => {
-    setSelectedChapterId(id);
-
-    const chapterVerses = versesData.filter((v) => v.chapter_id === id);
-    if (chapterVerses.length > 0) {
-      setSelectedVerseId(chapterVerses[0].verse_number);
-    } else {
-      setSelectedVerseId(null);
-    }
-  };
-
-  const handleNextVerse = () => {
-    if (currentIndex < currentChapterVerses.length - 1) {
-      setSelectedVerseId(currentChapterVerses[currentIndex + 1].verse_number);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const handlePrevVerse = () => {
-    if (currentIndex > 0) {
-      setSelectedVerseId(currentChapterVerses[currentIndex - 1].verse_number);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+  const goPrev = () => {
+    if (index > 0) return navigate({ name: "verse", chapter, verse: verses[index - 1].verse_number });
+    if (chapter > FIRST_CHAPTER) navigate({ name: "verse", chapter: chapter - 1, verse: lastVerseOf(chapter - 1) });
   };
 
   return (
-    <>
-      <Header theme={theme} toggleTheme={toggleTheme} onHomeClick={() => setSelectedChapterId(null)} language={language} setLanguage={handleLanguageChange} />
+    <VerseViewer
+      verse={current}
+      language={language}
+      onNext={goNext}
+      onPrev={goPrev}
+      onBackToChapters={() => navigate({ name: "home" })}
+      hasNext={hasNext}
+      hasPrev={hasPrev}
+    />
+  );
+};
 
-      <main className="app-main">
-        {!selectedChapterId ? (
-          <div className="animate-fade-in home-container">
-            <h2 className="home-title">Bhagavad-Geeta</h2>
-            <p className="home-description">Explore the divine wisdom of the Bhagavad-Geeta through a beautifully designed, distraction-free reading experience.</p>
-            <ChapterList chapters={chaptersData} onSelectChapter={handleSelectChapter} />
-          </div>
-        ) : (
-          <VerseViewer verse={currentVerse} language={language} onNext={handleNextVerse} onPrev={handlePrevVerse} onBackToChapters={() => setSelectedChapterId(null)} hasNext={currentIndex < currentChapterVerses.length - 1} hasPrev={currentIndex > 0} />
-        )}
-      </main>
+const AppShell: React.FC = () => {
+  const route = useRoute();
+  const { theme, toggleTheme, language, setLanguage } = useSettings();
+  useScrollRestoration(route);
+
+  return (
+    <>
+      <Header theme={theme} toggleTheme={toggleTheme} onHomeClick={() => navigate({ name: "home" })} language={language} setLanguage={setLanguage} />
+
+      <main className="app-main">{route.name === "verse" && getChapterMeta(route.chapter) ? <Reader chapter={route.chapter} verse={route.verse} /> : <Home />}</main>
     </>
   );
 };
+
+export const App: React.FC = () => (
+  <SettingsProvider>
+    <AppShell />
+  </SettingsProvider>
+);
 
 export default App;

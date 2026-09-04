@@ -5,10 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "predev": "npm run build:data",
     "build": "tsc -b && vite build",
+    "prebuild": "npm run build:data",
+    "build:data": "node scripts/build-data.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "size": "node scripts/check-size.mjs",
+    "postbuild": "npm run size"
   },
   "dependencies": {
     "lucide-react": "^0.575.0",

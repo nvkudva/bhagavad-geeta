@@ -5,8 +5,24 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/outfit-latin.woff2" crossorigin />
     <meta name="description" content="A premium, Apple Glass styled Bhagavad-Geeta Progressive Web App." />
     <title>Bhagavad-Geeta</title>
+    <script>
+      // Resolve the theme before first paint: doing this in a useEffect guarantees a
+      // light-theme flash for every dark-mode user on every cold start.
+      (function () {
+        try {
+          var t = localStorage.getItem("gita-theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          document.documentElement.dataset.theme = t;
+        } catch (e) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
   </head>
 
   <body>
