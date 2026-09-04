@@ -24,7 +24,7 @@ marked SUPERSEDED were written against the earlier warm-paper direction.
 ## Design — P1, pending
 
 - [ ] Build the Settings screen — currently a placeholder. Move language and theme out of Header.tsx and delete the native <select>.
-- [ ] Add a reading-size control writing --reading-scale to documentElement, persisted to gita-reading-scale. The token exists in CSS; no control drives it.
+- [x] Add a reading-size control writing --reading-scale to documentElement, persisted to gita-reading-scale.
 - [ ] Add a System theme option with a live prefers-color-scheme listener. Today the theme is a light/dark toggle only, defaulting to dark, with no way to follow the OS.
 - [ ] Implement scroll-away nav bar and pager in the reader (hide on scroll down, show on scroll up, always show at top).
 - [ ] Build a bottom-sheet primitive on <dialog> with grabber, scrim, drag-to-dismiss and spring presentation.
@@ -37,7 +37,7 @@ marked SUPERSEDED were written against the earlier warm-paper direction.
 - [ ] Add double-tap-to-bookmark on the scripture with a bloom animation and navigator.vibrate?.(10).
 - [ ] Add a verse action sheet (Share via navigator.share, Copy verse, Copy translation, Reading size).
 - [ ] Add per-screen skeleton loaders shaped like their real content, disabled under reduced motion.
-- [ ] Add a >=900px sidebar layout replacing the bottom tab bar.
+- [x] Add a >=900px sidebar layout replacing the bottom tab bar.
 - [ ] Add a long-press context sheet on chapter rows (Start from verse 1, Bookmark chapter).
 - [ ] Add document.startViewTransition around navigation, feature-detected and gated on prefers-reduced-motion.
 - [ ] Inline all CSS into index.html and add a static app-shell skeleton; drop the CSS request.
@@ -69,3 +69,20 @@ marked SUPERSEDED were written against the earlier warm-paper direction.
 - [x] Fixed: #root grid column sized to --measure, making the shell 568px wide in a 375px viewport.
 - [x] Fixed: prev/next did not cross chapter boundaries.
 - [x] Fixed: chapters.json chapter 13 count.
+
+## Desktop — done in the desktop-ui pass
+
+- [x] Re-base the desktop layer from 1024px to 900px and add a 1280px tier.
+- [x] Replace the horizontal snap pager with a continuous verse column at >=900px; the pager stays below it.
+- [x] Two-pane reader at >=1280px: sticky verse rail beside the reading column, commentary and word meanings side by side.
+- [x] Keyboard layer (j/k, arrows, gg/G/gh, b, t, /, ?, Esc) and a Cmd-K command palette, both desktop-only.
+- [x] Sidebar search launcher, active-row indicator, and a footer with the reading-size stepper and theme toggle.
+- [x] Settings as a two-column form with a scroll-spy index at >=900px.
+- [x] Two-column search results and a 2/3-column saved grid; hover-revealed remove and save controls.
+- [x] Light-appearance fixes at width: tightened blooms, real card edges, firmer glass.
+- [x] Selection colours, focus rings, scrollbars, tooltips and pointer hover states.
+
+## Desktop — still open
+
+- [ ] Verse context menu (Copy verse, Copy translation, Share) behind a hover-revealed ellipsis.
+- [ ] Rail marker view-transition (`view-transition-name: rail-marker`) so the active row slides rather than cuts.

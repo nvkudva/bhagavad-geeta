@@ -31,8 +31,17 @@ const KB = 1024;
 //   CSS +1.0 KB — the min-width:1024px sidebar/type block, the accent glow on the
 //                 verse-for-you card, and the gilded/silver text ramps, each of
 //                 which needs a light-appearance and a prefers-contrast variant.
+// Raised from 71/8 KB when the desktop pass landed (main was already over both
+// rows at 71.6/8.7 before it):
+//   JS  +4.0 KB — the useWide/useWidePlus media store, the keyboard layer, the
+//                 command palette and the shortcuts sheet, the verse rail and
+//                 the continuous-scroll reader branch, plus six more lucide icons.
+//                 All of it is desktop-only behaviour but it ships in the shell:
+//                 splitting it would cost a chunk request on every wide load.
+//   CSS +3.0 KB — the 900px and 1280px blocks, the pointer-only hover/tooltip
+//                 block, and the light-appearance overrides each of those needs.
 // Headroom left is deliberate and small: P1 must stay near these numbers.
-const BUDGETS = { js: 71 * KB, css: 8 * KB };
+const BUDGETS = { js: 76 * KB, css: 12 * KB };
 
 const gz = (p) => gzipSync(readFileSync(p), { level: 9 }).length;
 const files = readdirSync(assets);
