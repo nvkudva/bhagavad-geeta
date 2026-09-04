@@ -141,6 +141,10 @@
   --gap-section: var(--sp-5); /* between blocks inside a verse, was 32 */
   --gap-verse: var(--sp-8); /* between consecutive verses in a chapter */
   --measure: 34rem;
+  /* Two widths, by role: --measure is a reading column, --w-content is a list
+     or grid screen. Both apply only in the desktop layout — below it every
+     screen fills the viewport. */
+  --w-content: 60rem;
 
   /* ---------- Radii ---------- */
   --r-xs: 6px;
@@ -493,7 +497,8 @@ h6 {
   /* A gradient fill has no computable contrast ratio, so Increase Contrast gets
      an opaque colour instead — the ramp's own safe stop, not a different hue. */
   .verse-text,
-  .verse-of-moment-text {
+  .verse-of-moment-text,
+  .saved-item-text {
     background-image: none;
     color: var(--ramp-verse-fallback);
   }
@@ -896,7 +901,6 @@ body::before {
 }
 
 .settings-screen {
-  max-width: 560px;
   margin: 0 auto;
   padding-top: var(--sp-4);
 }
@@ -986,7 +990,6 @@ body::before {
 }
 
 .home-container {
-  max-width: 60rem;
   margin: 0 auto;
   padding-top: var(--sp-4);
 }
@@ -1079,7 +1082,6 @@ body::before {
 /* --------------------------------------------------------- chapter list */
 
 .chapter-list-container {
-  max-width: 60rem;
   margin: 0 auto;
   padding: var(--sp-4) 0 0;
 }
@@ -1500,7 +1502,6 @@ body::before {
    Routes exist so the tab bar works; content is P1/P2. */
 
 .screen-placeholder {
-  max-width: var(--measure);
   margin: 0 auto;
   padding: var(--sp-16) var(--sp-2);
   text-align: center;
@@ -1528,7 +1529,6 @@ body::before {
 
 .search-screen,
 .saved-screen {
-  max-width: var(--measure);
   margin: 0 auto;
   padding-top: var(--sp-4);
 }
@@ -1669,20 +1669,21 @@ body::before {
 }
 
 .saved-item {
-  display: flex;
-  align-items: stretch;
-  gap: var(--sp-2);
+  position: relative;
 }
 
 .saved-item-link {
-  flex: 1;
-  min-width: 0;
+  padding-right: calc(var(--sp-3) + 34px);
 }
 
 .saved-item-text {
+  background-image: var(--ramp-verse);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: var(--ramp-verse-glow);
   font-size: var(--fs-verse);
   line-height: var(--lh-verse);
-  color: var(--ink-1);
+  color: transparent;
   white-space: pre-wrap;
 }
 
@@ -1698,16 +1699,20 @@ body::before {
 }
 
 .saved-item-remove {
-  flex: none;
-  width: var(--tap-min);
+  position: absolute;
+  top: calc(var(--sp-3) - 8px);
+  right: calc(var(--sp-3) - 8px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--r-lg);
-  color: var(--ink-3);
+  width: 34px;
+  height: 34px;
+  background: none;
+  border: 0;
+  border-radius: var(--r-pill);
+  color: var(--ink-4);
   cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out-ios);
 }
 
 /* -------------------------------------------------------------- save verse */
@@ -1824,7 +1829,19 @@ body::before {
     --measure: 46rem;
   }
 
-  .verse-viewer-container {
+  /* Capped only here. A list screen and a grid screen share --w-content so
+     they line up column-for-column when you switch tabs; the reader and the
+     single-column screens share the narrower --measure. */
+  .home-container,
+  .chapter-list-container,
+  .search-screen,
+  .saved-screen {
+    max-width: var(--w-content);
+  }
+
+  .verse-viewer-container,
+  .settings-screen,
+  .screen-placeholder {
     max-width: var(--measure);
   }
 
