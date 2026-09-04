@@ -375,6 +375,10 @@
   --nav-h: 44px;
   /* 44px controls plus 6px of breathing room above and below them. */
   --pager-h: 56px;
+  /* The height of one verse page: the screen, less the sticky nav, less the
+     floating pager and its insets, less the gutter above and below the card.
+     One token so the track, the card and the shell's padding cannot drift. */
+  --reader-h: calc(100dvh - var(--nav-total) - var(--pager-h) - var(--float-gap) - var(--sa-bottom) - 2 * var(--gutter));
   --large-title-h: 52px;
   --tabbar-h: 56px;
   /* Floating chrome hovers this far off the bottom edge, above the inset. */
@@ -761,8 +765,12 @@ body::before {
   padding-bottom: calc(var(--tabbar-h) + var(--float-gap) + var(--sa-bottom) + var(--sp-6));
 }
 
+/* The pager track runs edge to edge — a swiped card has to leave the screen,
+   not stop at a gutter — so the screen's side padding moves onto the slide. */
 .app-main[data-reader="true"] {
-  padding-bottom: calc(var(--pager-h) + var(--float-gap) + var(--sa-bottom) + var(--sp-6));
+  padding-left: 0;
+  padding-right: 0;
+  padding-bottom: calc(var(--pager-h) + var(--float-gap) + var(--sa-bottom) + var(--gutter));
 }
 
 
@@ -1487,50 +1495,62 @@ body::before {
   font-size: var(--fs-subhead);
 }
 
-/* ------------------------------------------------------ continuous scroll
-   One chapter, all its verses, one scroll. `/chapter/:n/verse/:m` means
-   "chapter n, scrolled to verse m", so each block is an anchor: scroll-margin-top
-   clears the sticky nav instead of a hand-computed offset at the call site. */
+/* ------------------------------------------------------- horizontal pager
+   One chapter, one page per verse. The track is a horizontal scroll-snap
+   container, so the swipe is the browser's own: momentum, rubber-band and the
+   snap all run off the main thread, and prev/next is the same motion driven by
+   scrollTo. Only five slides are mounted at a time (VerseViewer's WINDOW); two
+   flex spacers hold the width of the rest, so the scroll extent — and with it
+   the snap arithmetic and scrollLeft/width rounding — spans the whole chapter. */
 
+.verse-track {
+  display: flex;
+  /* Each slide is as tall as its own verse, and the track is as tall as the one
+     being read — VerseViewer measures it into --track-h. Left to size itself the
+     track would take the tallest slide mounted, and a short verse beside a long
+     one would trail a screenful of empty scroll. A taller neighbour is clipped
+     until you land on it, which is below the fold: every card is at least a page
+     tall and each verse starts at its own top. */
+  align-items: flex-start;
+  height: var(--track-h, auto);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  /* A swipe past the last verse must not hand the gesture to the browser's
+     back navigation. */
+  overscroll-behavior-x: contain;
+  /* Windowing swaps slides in and out mid-gesture; the spacers already keep the
+     extent exact, and scroll anchoring on top of that would fight them. */
+  overflow-anchor: none;
+  scrollbar-width: none;
+}
+
+.verse-track::-webkit-scrollbar {
+  display: none;
+}
+
+/* Percentage flex-basis on a flex item resolves against the container's own
+   content width — one track width per unmounted verse, no JS measurement. */
+.verse-track-spacer {
+  flex: 0 0 auto;
+}
+
+.verse-slide {
+  flex: 0 0 100%;
+  padding-left: max(var(--gutter), var(--sa-left));
+  padding-right: max(var(--gutter), var(--sa-right));
+  scroll-snap-align: start;
+  /* A flick advances exactly one verse rather than skating past three. */
+  scroll-snap-stop: always;
+}
+
+/* Sized by its own text: a card at least fills the page, and a long verse runs
+   past it and is read by scrolling the page, not a second bar inside the card. */
 .verse-block {
-  /* Each verse is its own card, so the anchor must clear the header AND the
-     card's own top edge, not just the text inside it. */
-  scroll-margin-top: calc(var(--nav-total) + var(--gutter));
-  margin-top: var(--gap-verse);
+  min-height: var(--reader-h);
   padding: var(--pad-card);
   border-radius: var(--r-xl);
   box-shadow: var(--spec);
-  /* ARCHITECTURE_PLAN §4.1: the CSS answer to 78 verses in one document, not a
-     virtualiser. `auto` in contain-intrinsic-size makes the browser remember each
-     block's real size after its first render, so anchors stop drifting; 560px is
-     the measured median block height and only ever affects never-yet-rendered
-     blocks. 640px is the measured median block content height at 375px wide. */
-  content-visibility: auto;
-  contain-intrinsic-size: auto 640px;
-}
-
-/* The masthead is gone, so the first card is what sits under the nav bar; the
-   container's own padding is all the air it needs. */
-.verse-block:first-of-type {
-  margin-top: 0;
-}
-
-/* One verse, one screenful. Below the sidebar breakpoint the card is sized by
-   the viewport rather than by its text: the height left between the sticky nav
-   and the floating pager, so a card never runs on behind the bar and the next
-   one always starts at the top of a screen. Verses longer than that scroll
-   inside the card. */
-@media (max-width: 1023.98px) {
-  .verse-block {
-    height: calc(100dvh - var(--nav-total) - var(--pager-h) - var(--float-gap) - var(--sa-bottom) - 2 * var(--gutter));
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    /* The height is fixed, so there is no unknown block height left for
-       content-visibility to estimate — and its size containment would collapse
-       the card's own scroll extent. */
-    content-visibility: visible;
-    contain-intrinsic-size: none;
-  }
 }
 
 
@@ -2241,6 +2261,9 @@ body::before {
     --fs-comment: calc(1.25rem * var(--reading-scale)); /* 20px */
     --fs-gloss: calc(1.125rem * var(--reading-scale)); /* 18px */
 
+    /* The pager sits on --sp-6 here, not on the home indicator. */
+    --reader-h: calc(100dvh - var(--nav-total) - var(--pager-h) - var(--sp-6) - 2 * var(--gutter));
+
     /* 46rem, not the 36rem a 65-character line would want: the Devanagari is
        centred and set as whole padas, and breaking those to protect the
        translation's measure is the wrong trade. ~67 characters per line. */
@@ -2363,7 +2386,7 @@ body::before {
   }
 
   .app-main[data-reader="true"] {
-    padding-bottom: calc(var(--pager-h) + var(--sp-8));
+    padding-bottom: calc(var(--pager-h) + var(--sp-6) + var(--gutter));
   }
 
   /* The pager floats over the content column only — it must not slide under

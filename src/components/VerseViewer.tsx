@@ -3,7 +3,7 @@ import type React from "react";
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toggleBookmark, useIsSaved } from "../lib/bookmarks";
 import type { Verse } from "../lib/gita.types";
-import { getNavKind, syncVerseUrl } from "../lib/router";
+import { syncVerseUrl } from "../lib/router";
 import type { Language } from "../lib/gita.types";
 import type { Sections } from "../lib/settings";
 import { useSettings } from "../lib/settings";
@@ -11,7 +11,7 @@ import { useSettings } from "../lib/settings";
 interface VerseViewerProps {
   chapter: number;
   verses: readonly Verse[];
-  /** The verse the URL points at: "render chapter n, scrolled to verse m". */
+  /** The verse the URL points at: "render chapter n, paged to verse m". */
   targetVerse: number;
   language: Language;
   onGoToVerse: (verse: number) => void;
@@ -41,6 +41,13 @@ const WORD_MEANINGS_LABEL = "Word meanings";
 const SECTION_LANG: Record<Language, string> = { en: "en", kn: "kn", te: "te" };
 
 const verseDomId = (chapter: number, verse: number): string => `c${chapter}v${verse}`;
+
+/** Slides kept either side of the active verse. One: scroll-snap-stop makes a
+ *  gesture reach exactly one neighbour, so that neighbour is always painted
+ *  before the finger moves — and the track is only ever as tall as the tallest
+ *  slide mounted, so a wider window would strand the short card in a tall one's
+ *  dead space. */
+const WINDOW = 1;
 
 const reducedMotion = (): boolean => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -160,115 +167,141 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
 });
 VerseBlock.displayName = "VerseBlock";
 
-/** The whole chapter in one scroll. `/chapter/:n/verse/:m` means "render chapter
- *  n, scrolled to verse m"; prev/next scrolls between verses instead of swapping
- *  content, and an IntersectionObserver replaceStates the URL back as you scroll. */
+/** One chapter, one horizontal pager. `/chapter/:n/verse/:m` means "render
+ *  chapter n, paged to verse m": each verse is a full-width slide on a
+ *  scroll-snap track, so a swipe is native scrolling — momentum, rubber-band
+ *  and the snap itself all run off the main thread — and prev/next is the same
+ *  motion driven by scrollTo. Only WINDOW*2+1 slides are ever mounted; two flex
+ *  spacers stand in for the rest so the scroll extent still spans the chapter. */
 export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targetVerse, language, onGoToVerse, onPrevChapter, onNextChapter, hasPrevChapter, hasNextChapter }) => {
   const { sections } = useSettings();
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  /** The verse currently positioned under the header. Mirrors `active` without
-   *  the render lag, so the scroll effect can tell an external nav from a scroll-spy one. */
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const activeSlideRef = useRef<HTMLDivElement | null>(null);
+  /** The verse currently under the snap point. Mirrors `active` without the
+   *  render lag, so the scroll listener can tell a settled page from a new one. */
   const activeRef = useRef<number | null>(null);
   const chapterRef = useRef<number>(chapter);
   const [active, setActive] = useState(targetVerse);
   // Adjusting state during render, the React-sanctioned way to follow a changed
   // prop: when the URL moves the target verse, the pager follows it. A move that
-  // came from the scroll-spy below has already set `active`, so this bails out.
+  // came from the scroll listener below has already set `active`, so this bails out.
   const [seenTarget, setSeenTarget] = useState(targetVerse);
   if (seenTarget !== targetVerse) {
     setSeenTarget(targetVerse);
     setActive(targetVerse);
   }
 
-  const first = verses.length > 0 ? verses[0].verse_number : 1;
-  const last = verses.length > 0 ? verses[verses.length - 1].verse_number : 1;
+  const count = verses.length;
+  const first = count > 0 ? verses[0].verse_number : 1;
+  const last = count > 0 ? verses[count - 1].verse_number : 1;
 
-  const scrollToVerse = useCallback(
-    (verse: number, smooth: boolean) => {
-      const el = document.getElementById(verseDomId(chapter, verse));
-      if (!el) return;
-      el.scrollIntoView({ behavior: smooth && !reducedMotion() ? "smooth" : "auto", block: "start" });
-      // `content-visibility: auto` sizes off-screen blocks from
-      // contain-intrinsic-size, so a long jump lands approximately and the real
-      // heights resolve a frame later. Re-anchor once the neighbours are laid out.
-      if (!smooth) requestAnimationFrame(() => document.getElementById(verseDomId(chapter, verse))?.scrollIntoView({ block: "start" }));
-    },
-    [chapter],
-  );
+  const index = Math.max(0, verses.findIndex((v) => v.verse_number === active));
+  const start = Math.max(0, index - WINDOW);
+  const end = Math.min(count - 1, index + WINDOW);
 
-  // Route -> viewport. Runs before paint so a deep link never shows the top first.
+  // Route -> track. Layout effect so a deep link never paints the wrong verse
+  // first, and after the render that put the target slide in the window.
   useLayoutEffect(() => {
-    if (verses.length === 0) return;
+    const track = trackRef.current;
+    if (!track || count === 0) return;
+
     if (chapterRef.current !== chapter) {
       chapterRef.current = chapter;
       activeRef.current = null;
     }
-    if (activeRef.current === targetVerse) return; // already there (scroll-spy)
-
     const cold = activeRef.current === null;
-    activeRef.current = targetVerse;
+    activeRef.current = active;
 
-    // Back/forward: the router's manual scroll restoration owns the viewport.
-    if (getNavKind() === "pop") return;
-    // Opening a chapter at its first verse means the top of the chapter, header included.
-    if (cold && targetVerse === first) return;
-    scrollToVerse(targetVerse, !cold);
-  }, [chapter, targetVerse, verses, first, scrollToVerse]);
+    const width = track.clientWidth;
+    if (width === 0) return;
+    const at = Math.round(track.scrollLeft / width);
+    if (at === index) return;
 
-  // Viewport -> route. replaceState only: scrolling must never push history.
+    // One page animates; a jump of several would be a blur, and a cold open has
+    // nothing to animate from.
+    const smooth = !cold && Math.abs(at - index) === 1 && !reducedMotion();
+    track.scrollTo({ left: index * width, behavior: smooth ? "smooth" : "auto" });
+  }, [chapter, index, active, count]);
+
+  // The track can only be one height, and it has to be the height of the verse
+  // being read. Observed rather than computed once: the card resizes when the
+  // reading face, the shown sections or the window width change.
+  useLayoutEffect(() => {
+    const track = trackRef.current;
+    const slide = activeSlideRef.current;
+    if (!track || !slide) return;
+    const write = (): void => track.style.setProperty("--track-h", `${slide.offsetHeight}px`);
+    write();
+    const observer = new ResizeObserver(write);
+    observer.observe(slide);
+    return () => observer.disconnect();
+    // `count` because the track only exists once the chapter has arrived, which
+    // is a render later than the one that set `active` on a cold open.
+  }, [chapter, active, count]);
+
+  // A card is as tall as its verse, so the page's scroll extent changes with the
+  // page. Every verse starts at its own top: without this the browser would clamp
+  // a deep scroll position against a shorter neighbour and jog the view sideways
+  // mid-swipe.
   useEffect(() => {
-    const root = containerRef.current;
-    if (!root || verses.length === 0) return;
+    if (window.scrollY !== 0) window.scrollTo(0, 0);
+  }, [active]);
 
-    // The spy's decision line must be the SAME line scroll-margin-top anchors to,
-    // or a verse scrolled to by prev/next sits just below the line and the spy
-    // reports its predecessor. Read it off the block rather than re-deriving it.
-    const anchor = Number.parseFloat(getComputedStyle(root.querySelector("[data-verse]") as HTMLElement).scrollMarginTop) || 60;
-    const line = anchor + 4;
-    const visible = new Set<HTMLElement>();
+  // Track -> route. replaceState only: paging must never push history.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || count === 0) return;
     let frame = 0;
 
-    const flush = (): void => {
+    const read = (): void => {
       frame = 0;
-      if (visible.size === 0) return;
-      const sorted = [...visible].sort((a, b) => Number(a.dataset.verse) - Number(b.dataset.verse));
-      // The block occupying the band is the last one that starts above it.
-      let chosen = sorted[0];
-      for (const el of sorted) if (el.getBoundingClientRect().top <= line) chosen = el;
-      const verse = Number(chosen.dataset.verse);
-      if (!Number.isFinite(verse) || verse === activeRef.current) return;
+      const width = track.clientWidth;
+      if (width === 0) return;
+      const i = Math.min(count - 1, Math.max(0, Math.round(track.scrollLeft / width)));
+      const verse = verses[i].verse_number;
+      if (verse === activeRef.current) return;
       activeRef.current = verse;
       setActive(verse);
       syncVerseUrl(chapter, verse);
     };
 
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) visible.add(entry.target as HTMLElement);
-          else visible.delete(entry.target as HTMLElement);
-        }
-        if (!frame) frame = requestAnimationFrame(flush);
-      },
-      { rootMargin: `-${Math.round(line)}px 0px -70% 0px`, threshold: 0 },
-    );
-
-    for (const el of root.querySelectorAll<HTMLElement>("[data-verse]")) io.observe(el);
-    return () => {
-      io.disconnect();
-      if (frame) cancelAnimationFrame(frame);
+    const onScroll = (): void => {
+      if (frame === 0) frame = requestAnimationFrame(read);
     };
-  }, [chapter, verses]);
+
+    track.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      track.removeEventListener("scroll", onScroll);
+      if (frame !== 0) cancelAnimationFrame(frame);
+    };
+  }, [chapter, verses, count]);
+
+  // Slide width is the track width, so a rotation or a window resize leaves
+  // scrollLeft pointing between two verses. Re-anchor on the active one.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    let width = track.clientWidth;
+    const observer = new ResizeObserver(() => {
+      const next = track.clientWidth;
+      if (next === 0 || next === width) return;
+      width = next;
+      const i = verses.findIndex((v) => v.verse_number === activeRef.current);
+      track.scrollLeft = Math.max(0, i) * next;
+    });
+    observer.observe(track);
+    return () => observer.disconnect();
+  }, [verses]);
 
   const goPrev = useCallback(() => {
-    const index = verses.findIndex((v) => v.verse_number === active);
-    if (index > 0) return onGoToVerse(verses[index - 1].verse_number);
+    const i = verses.findIndex((v) => v.verse_number === active);
+    if (i > 0) return onGoToVerse(verses[i - 1].verse_number);
     onPrevChapter();
   }, [active, verses, onGoToVerse, onPrevChapter]);
 
   const goNext = useCallback(() => {
-    const index = verses.findIndex((v) => v.verse_number === active);
-    if (index !== -1 && index < verses.length - 1) return onGoToVerse(verses[index + 1].verse_number);
+    const i = verses.findIndex((v) => v.verse_number === active);
+    if (i !== -1 && i < verses.length - 1) return onGoToVerse(verses[i + 1].verse_number);
     onNextChapter();
   }, [active, verses, onGoToVerse, onNextChapter]);
 
@@ -276,11 +309,22 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
   const hasNext = active < last || hasNextChapter;
 
   return (
-    <div className="verse-viewer-container" ref={containerRef}>
-      {verses.length === 0 ? (
+    <div className="verse-viewer-container">
+      {count === 0 ? (
         <p className="verse-viewer-loading">Loading chapter…</p>
       ) : (
-        verses.map((verse) => <VerseBlock key={verse.verse_number} chapter={chapter} verse={verse} language={language} sections={sections} />)
+        <div className="verse-track" ref={trackRef}>
+          {/* Percentage flex-basis resolves against the track's own width, so
+              the unmounted verses cost exactly their page each and no layout
+              measurement is needed to size them. */}
+          <div className="verse-track-spacer" style={{ flexBasis: `${start * 100}%` }} aria-hidden />
+          {verses.slice(start, end + 1).map((verse) => (
+            <div className="verse-slide" key={verse.verse_number} ref={verse.verse_number === active ? activeSlideRef : undefined}>
+              <VerseBlock chapter={chapter} verse={verse} language={language} sections={sections} />
+            </div>
+          ))}
+          <div className="verse-track-spacer" style={{ flexBasis: `${(count - 1 - end) * 100}%` }} aria-hidden />
+        </div>
       )}
 
       <div className="verse-pager">
