@@ -153,9 +153,15 @@ const setRouteAnimated = (route: Route, kind: "push" | "pop" | "replace"): void 
     return;
   }
   document.documentElement.dataset.nav = "lateral";
-  doc.startViewTransition(() => {
+  const transition = doc.startViewTransition(() => {
     flushSync(() => setRoute(route));
-  });
+  }) as { ready?: Promise<void>; finished?: Promise<void> } | undefined;
+  // A transition interrupted by the next one rejects `ready` and `finished`
+  // with AbortError. Nothing here awaits them, so without this the browser
+  // reports an unhandled rejection every time two navigations overlap — which
+  // holding down J does constantly.
+  transition?.ready?.catch(() => undefined);
+  transition?.finished?.catch(() => undefined);
 };
 
 function boot(): void {

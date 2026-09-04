@@ -1,15 +1,22 @@
 import { Check, Settings2 } from "lucide-react";
 import type React from "react";
-import { useEffect, useReducer } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { ChapterList } from "./components/ChapterList";
+import { CommandPalette } from "./components/CommandPalette";
+import { ShortcutsSheet } from "./components/ShortcutsSheet";
 import { Header } from "./components/Header";
 import { SavedScreen } from "./components/SavedScreen";
 import { SearchScreen } from "./components/SearchScreen";
 import { Sidebar, TabBar } from "./components/TabBar";
 import { VerseOfMoment } from "./components/VerseOfMoment";
 import { VerseViewer } from "./components/VerseViewer";
+import { toggleBookmark } from "./lib/bookmarks";
 import { getChapterMeta, getChapters, loadChapter, peekChapter } from "./lib/gita";
 import type { Language, Verse } from "./lib/gita.types";
+import type { KeyActions } from "./lib/keys";
+import { installKeys } from "./lib/keys";
+import { useWide } from "./lib/media";
+import type { Route } from "./lib/router";
 import { Link, navigate, useRoute, useScrollRestoration } from "./lib/router";
 import type { FontKey, SectionKey } from "./lib/settings";
 import { FONT_KEYS, SECTION_KEYS, SettingsProvider, useSettings } from "./lib/settings";
@@ -24,9 +31,12 @@ const APP_NAME: Record<Language, string> = { en: "Bhagavad Geeta", kn: "ಭಗ�
 
 /** No title or corpus line: the nav bar already names the app, and the random
  *  verse is what should greet the reader. */
-const Home: React.FC<{ language: Language }> = ({ language }) => {
+const Home: React.FC<{ language: Language; wide: boolean }> = ({ language, wide }) => {
   return (
     <div className="animate-fade-in home-container">
+      {/* The nav bar collapses on every root screen at desktop width, which
+          took the large title with it. The heading returns inside the column. */}
+      {wide && <h1 className="screen-title">{APP_NAME[language]}</h1>}
       <VerseOfMoment language={language} />
       <ChapterList chapters={chapters} onSelectChapter={(id) => navigate({ name: "verse", chapter: id, verse: 1 })} />
     </div>
@@ -35,6 +45,7 @@ const Home: React.FC<{ language: Language }> = ({ language }) => {
 
 const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }) => {
   const { language } = useSettings();
+  const wide = useWide();
   const [, onChapterLoaded] = useReducer((n: number) => n + 1, 0);
 
   // Sync read of the resident chapter; the effect only wakes the component once a
@@ -73,7 +84,7 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
     return getChapterMeta(id)?.verses_count ?? 1;
   };
 
-  if (!meta) return <Home language={language} />;
+  if (!meta) return <Home language={language} wide={wide} />;
 
   return (
     <VerseViewer
@@ -121,8 +132,8 @@ const FONT_LABELS: Record<FontKey, string> = {
 /** A grouped-inset settings list: sections carry a header and, where a rule
  *  needs stating, a footer; exclusive choices are a radio group with a tinted
  *  checkmark, and booleans are switches. */
-const SettingsSection: React.FC<{ header: string; footer?: string; radio?: boolean; children: React.ReactNode }> = ({ header, footer, radio, children }) => (
-  <section className="settings-section">
+const SettingsSection: React.FC<{ id?: string; header: string; footer?: string; radio?: boolean; children: React.ReactNode }> = ({ id, header, footer, radio, children }) => (
+  <section className="settings-section" id={id}>
     <h3 className="settings-group-label">{header}</h3>
     <div className="settings-group" role={radio ? "radiogroup" : undefined} aria-label={radio ? header : undefined}>
       {children}
@@ -147,46 +158,85 @@ const SettingsSwitch: React.FC<{ on: boolean; onToggle: () => void; label: strin
   </button>
 );
 
+const SETTINGS_SECTIONS: readonly { id: string; label: string }[] = [
+  { id: "language", label: "Language" },
+  { id: "appearance", label: "Appearance" },
+  { id: "reading-face", label: "Reading face" },
+  { id: "sections", label: "Show in each verse" },
+];
+
 const SettingsScreen: React.FC = () => {
   const { theme, toggleTheme, language, setLanguage, sections, toggleSection, font, setFont } = useSettings();
+  const wide = useWide();
+  const [current, setCurrent] = useState(SETTINGS_SECTIONS[0].id);
+
+  // Scroll-spy for the desktop index. No observer below the breakpoint, where
+  // the index is not rendered at all.
+  useEffect(() => {
+    if (!wide) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const top = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (top) setCurrent(top.target.id);
+      },
+      { rootMargin: "-10% 0px -70% 0px" },
+    );
+    for (const { id } of SETTINGS_SECTIONS) {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, [wide]);
 
   return (
     <div className="animate-fade-in settings-screen">
       <h2 className="settings-heading">Settings</h2>
 
-      <SettingsSection header="Language" radio>
-        {LANGUAGES.map((lang) => (
-          <SettingsChoice key={lang} selected={language === lang} onSelect={() => setLanguage(lang)}>
-            {LANGUAGE_LABELS[lang]}
-          </SettingsChoice>
-        ))}
-      </SettingsSection>
+      {wide && (
+        <nav className="settings-index" aria-label="Settings sections">
+          {SETTINGS_SECTIONS.map(({ id, label }) => (
+            <button key={id} type="button" className="settings-index-link" aria-current={current === id ? "true" : undefined} onClick={() => document.getElementById(id)?.scrollIntoView({ block: "start", behavior: "smooth" })}>
+              {label}
+            </button>
+          ))}
+        </nav>
+      )}
 
-      <SettingsSection header="Appearance">
-        {/* Two mutually exclusive rows for a binary is a radio group doing a
+      <div className="settings-body">
+        <SettingsSection id="language" header="Language" radio>
+          {LANGUAGES.map((lang) => (
+            <SettingsChoice key={lang} selected={language === lang} onSelect={() => setLanguage(lang)}>
+              {LANGUAGE_LABELS[lang]}
+            </SettingsChoice>
+          ))}
+        </SettingsSection>
+
+        <SettingsSection id="appearance" header="Appearance">
+          {/* Two mutually exclusive rows for a binary is a radio group doing a
             switch's job; one switch says the same thing in half the height. */}
-        <SettingsSwitch on={theme === "dark"} onToggle={toggleTheme} label="Dark mode" />
-      </SettingsSection>
+          <SettingsSwitch on={theme === "dark"} onToggle={toggleTheme} label="Dark mode" />
+        </SettingsSection>
 
-      <SettingsSection header="Reading face" footer="Applies to English only. Kannada and Telugu keep Noto Sans." radio>
-        {FONT_KEYS.map((key) => (
-          <SettingsChoice key={key} selected={font === key} onSelect={() => setFont(key)}>
-            {/* Each option is set in itself — the label is the specimen. */}
-            <span data-font-sample={key}>{FONT_LABELS[key]}</span>
-          </SettingsChoice>
-        ))}
-      </SettingsSection>
+        <SettingsSection id="reading-face" header="Reading face" footer="Applies to English only. Kannada and Telugu keep Noto Sans." radio>
+          {FONT_KEYS.map((key) => (
+            <SettingsChoice key={key} selected={font === key} onSelect={() => setFont(key)}>
+              {/* Each option is set in itself — the label is the specimen. */}
+              <span data-font-sample={key}>{FONT_LABELS[key]}</span>
+            </SettingsChoice>
+          ))}
+        </SettingsSection>
 
-      <SettingsSection header="Show in each verse" footer="Hidden sections stay in the verse for search, they are only left out of the reading view.">
-        {SECTION_KEYS.map((key) => (
-          <SettingsSwitch key={key} on={sections[key]} onToggle={() => toggleSection(key)} label={SECTION_LABELS[key]} />
-        ))}
-      </SettingsSection>
+        <SettingsSection id="sections" header="Show in each verse" footer="Hidden sections stay in the verse for search, they are only left out of the reading view.">
+          {SECTION_KEYS.map((key) => (
+            <SettingsSwitch key={key} on={sections[key]} onToggle={() => toggleSection(key)} label={SECTION_LABELS[key]} />
+          ))}
+        </SettingsSection>
+      </div>
     </div>
   );
 };
 
-const Screen: React.FC<{ route: ReturnType<typeof useRoute>; language: Language }> = ({ route, language }) => {
+const Screen: React.FC<{ route: ReturnType<typeof useRoute>; language: Language; wide: boolean }> = ({ route, language, wide }) => {
   switch (route.name) {
     case "verse":
       return <Reader chapter={route.chapter} verse={route.verse} />;
@@ -198,20 +248,118 @@ const Screen: React.FC<{ route: ReturnType<typeof useRoute>; language: Language 
     case "settings":
       return <SettingsScreen />;
     default:
-      return <Home language={language} />;
+      return <Home language={language} wide={wide} />;
   }
 };
 
 const AppShell: React.FC = () => {
   const route = useRoute();
-  const { language } = useSettings();
+  const { language, toggleTheme } = useSettings();
+  const wide = useWide();
   useScrollRestoration(route);
+
+  const [palette, setPalette] = useState(false);
+  const [shortcuts, setShortcuts] = useState(false);
 
   const inReader = route.name === "verse";
 
+  /* The keyboard layer. Read through a ref so the listener is installed once
+     and never re-bound as the route moves, and installed only at desktop
+     width — on a phone no handler exists at all. */
+  const routeRef = useRef(route);
+  useEffect(() => {
+    routeRef.current = route;
+  }, [route]);
+
+  const step = useCallback((delta: number) => {
+    const current = routeRef.current;
+    if (current.name !== "verse") return;
+    const resident = peekChapter(current.chapter);
+    if (!resident || resident.length === 0) return;
+    const i = resident.findIndex((v) => v.verse_number === current.verse);
+    const next = resident[Math.max(0, Math.min(resident.length - 1, (i === -1 ? 0 : i) + delta))];
+    if (!next || next.verse_number === current.verse) return;
+    const to: Route = { name: "verse", chapter: current.chapter, verse: next.verse_number };
+    // Written here as well as in the effect below: two j presses inside one
+    // frame must not both read the same starting verse.
+    routeRef.current = to;
+    navigate(to, { scroll: "preserve" });
+  }, []);
+
+  const edge = useCallback((which: "first" | "last") => {
+    const current = routeRef.current;
+    if (current.name !== "verse") return;
+    const resident = peekChapter(current.chapter);
+    if (!resident || resident.length === 0) return;
+    const target = which === "first" ? resident[0] : resident[resident.length - 1];
+    const to: Route = { name: "verse", chapter: current.chapter, verse: target.verse_number };
+    routeRef.current = to;
+    navigate(to, { scroll: "preserve" });
+  }, []);
+
+  const chapterStep = useCallback((delta: number) => {
+    const current = routeRef.current;
+    if (current.name !== "verse") return;
+    const next = current.chapter + delta;
+    if (next < FIRST_CHAPTER || next > LAST_CHAPTER) return;
+    const resident = peekChapter(next);
+    const verse = delta < 0 && resident && resident.length > 0 ? resident[resident.length - 1].verse_number : 1;
+    const to: Route = { name: "verse", chapter: next, verse };
+    routeRef.current = to;
+    navigate(to);
+  }, []);
+
+  const actions = useCallback(
+    (): KeyActions => ({
+      nextVerse: () => step(1),
+      prevVerse: () => step(-1),
+      nextChapter: () => chapterStep(1),
+      prevChapter: () => chapterStep(-1),
+      firstVerse: () => edge("first"),
+      lastVerse: () => edge("last"),
+      toggleSave: () => {
+        const current = routeRef.current;
+        if (current.name === "verse") toggleBookmark(current.chapter, current.verse);
+      },
+      openPalette: () => {
+        setShortcuts(false);
+        setPalette(true);
+      },
+      focusSearch: () => {
+        const field = document.querySelector<HTMLInputElement>(".search-input");
+        if (field) field.focus();
+        else {
+          setShortcuts(false);
+          setPalette(true);
+        }
+      },
+      toggleTheme,
+      openShortcuts: () => {
+        setPalette(false);
+        setShortcuts(true);
+      },
+      goHome: () => navigate({ name: "home" }),
+      escape: () => {
+        setPalette(false);
+        setShortcuts(false);
+      },
+    }),
+    [step, edge, chapterStep, toggleTheme],
+  );
+
+  const actionsRef = useRef(actions);
+  useEffect(() => {
+    actionsRef.current = actions;
+  }, [actions]);
+
+  useEffect(() => {
+    if (!wide) return;
+    return installKeys(() => actionsRef.current());
+  }, [wide]);
+
   return (
     <>
-      <Sidebar route={route} title={APP_NAME[language]} />
+      <Sidebar route={route} title={APP_NAME[language]} onOpenPalette={() => setPalette(true)} />
 
       <Header
         onHomeClick={() => navigate({ name: "home" })}
@@ -234,10 +382,15 @@ const AppShell: React.FC = () => {
       />
 
       <main className="app-main" data-reader={inReader ? "true" : "false"}>
-        <Screen route={route} language={language} />
+        <Screen route={route} language={language} wide={wide} />
       </main>
 
       {!inReader && <TabBar route={route} />}
+
+      {/* Desktop only: below the breakpoint neither dialog is ever mounted and
+          no keyboard listener exists to open them. */}
+      {wide && palette && <CommandPalette onClose={() => setPalette(false)} />}
+      {wide && <ShortcutsSheet open={shortcuts} onClose={() => setShortcuts(false)} />}
     </>
   );
 };

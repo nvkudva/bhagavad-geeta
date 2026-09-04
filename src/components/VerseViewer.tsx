@@ -2,6 +2,7 @@ import { Bookmark, ChevronLeft, ChevronRight } from "lucide-react";
 import type React from "react";
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toggleBookmark, useIsSaved } from "../lib/bookmarks";
+import { useWide, useWidePlus } from "../lib/media";
 import type { Verse } from "../lib/gita.types";
 import { syncVerseUrl } from "../lib/router";
 import type { Language } from "../lib/gita.types";
@@ -59,6 +60,8 @@ const SaveButton: React.FC<{ chapter: number; verse: number }> = ({ chapter, ver
     <button
       type="button"
       className="verse-save pressable"
+      data-tip={saved ? "Saved — B" : "Save verse — B"}
+      aria-keyshortcuts="b"
       aria-pressed={saved}
       aria-label={saved ? `Remove verse ${chapter}.${verse} from saved` : `Save verse ${chapter}.${verse}`}
       onClick={() => toggleBookmark(chapter, verse)}>
@@ -69,7 +72,7 @@ const SaveButton: React.FC<{ chapter: number; verse: number }> = ({ chapter, ver
 
 /** One verse. Memoised: prev/next re-renders the whole chapter, and a 78-verse
  *  chapter must bail out of all of them cheaply (ARCHITECTURE_PLAN §4.2). */
-const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sections: Sections }>(({ chapter, verse, language, sections }) => {
+const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sections: Sections; panes: boolean }>(({ chapter, verse, language, sections, panes }) => {
   // Scripture: Devanagari is the source text; kn/te are transliterations of it.
   const scripture = pick(language, verse.text, verse.text_kannada, verse.text_telugu, "sa") as Tagged;
   const translation = pick(language, verse.translation_english, verse.translation_kannada, verse.translation_telugu, "en") as Tagged;
@@ -78,7 +81,10 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
   const wordMeanings = sections.words && language === "en" ? verse.context_english : undefined;
   const [tab, setTab] = useState<"words" | "commentary">(commentary ? "commentary" : "words");
   // "term—gloss; term—gloss" from the source, split to one term per line.
-  const glosses = wordMeanings?.split(";").map((g) => g.trim().replace(/\s*—\s*/, ": ")).filter(Boolean);
+  const glosses = wordMeanings
+    ?.split(";")
+    .map((g) => g.trim().replace(/\s*—\s*/, ": "))
+    .filter(Boolean);
 
   return (
     <article className="verse-block" id={verseDomId(chapter, verse.verse_number)} data-verse={verse.verse_number}>
@@ -113,54 +119,64 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
         </div>
       )}
 
-      {(wordMeanings || commentary) && (
-        <div className="verse-section-card commentary">
-          <div className="verse-tabs" role="tablist">
-            {commentary && (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={tab === "commentary"}
-                className="verse-tab"
-                onClick={() => setTab("commentary")}
-                lang={SECTION_LANG[language]}
-              >
-                {COMMENTARY_LABEL[language]}
-              </button>
-            )}
-            {wordMeanings && (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={tab === "words"}
-                className="verse-tab"
-                onClick={() => setTab("words")}
-                lang="en"
-              >
-                {WORD_MEANINGS_LABEL}
-              </button>
-            )}
+      {/* At 1280 there is room for the commentary and the glosses at once, so
+          the tab bar — a phone compromise — is dropped and both are shown. */}
+      {panes && wordMeanings && commentary && glosses ? (
+        <div className="verse-panes">
+          <div className="verse-section-card commentary">
+            <h3 className="verse-pane-label" lang={SECTION_LANG[language]}>
+              {COMMENTARY_LABEL[language]}
+            </h3>
+            <p className="verse-section-content" lang={commentary.lang}>
+              {commentary.text}
+            </p>
+            {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
           </div>
-
-          {tab === "words" && glosses ? (
+          <div className="verse-section-card commentary">
+            <h3 className="verse-pane-label" lang="en">
+              {WORD_MEANINGS_LABEL}
+            </h3>
             <ul className="verse-glosses" lang="en">
-              {glosses.map((g) => (
-                <li key={g}>{g}</li>
+              {glosses.map((g, i) => (
+                <li key={`${i}-${g}`}>{g}</li>
               ))}
             </ul>
-          ) : (
-            commentary && (
-              <>
-                <p className="verse-section-content" lang={commentary.lang}>
-                  {commentary.text}
-                </p>
-                {commentary.lang === "en" && verse.commentary_author && (
-                  <p className="verse-section-attribution">{verse.commentary_author}</p>
-                )}
-              </>
-            )
-          )}
+          </div>
         </div>
+      ) : (
+        (wordMeanings || commentary) && (
+          <div className="verse-section-card commentary">
+            <div className="verse-tabs" role="tablist">
+              {commentary && (
+                <button type="button" role="tab" aria-selected={tab === "commentary"} className="verse-tab" onClick={() => setTab("commentary")} lang={SECTION_LANG[language]}>
+                  {COMMENTARY_LABEL[language]}
+                </button>
+              )}
+              {wordMeanings && (
+                <button type="button" role="tab" aria-selected={tab === "words"} className="verse-tab" onClick={() => setTab("words")} lang="en">
+                  {WORD_MEANINGS_LABEL}
+                </button>
+              )}
+            </div>
+
+            {tab === "words" && glosses ? (
+              <ul className="verse-glosses" lang="en">
+                {glosses.map((g, i) => (
+                  <li key={`${i}-${g}`}>{g}</li>
+                ))}
+              </ul>
+            ) : (
+              commentary && (
+                <>
+                  <p className="verse-section-content" lang={commentary.lang}>
+                    {commentary.text}
+                  </p>
+                  {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
+                </>
+              )
+            )}
+          </div>
+        )
       )}
     </article>
   );
@@ -175,7 +191,11 @@ VerseBlock.displayName = "VerseBlock";
  *  spacers stand in for the rest so the scroll extent still spans the chapter. */
 export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targetVerse, language, onGoToVerse, onPrevChapter, onNextChapter, hasPrevChapter, hasNextChapter }) => {
   const { sections } = useSettings();
+  const wide = useWide();
+  const widePlus = useWidePlus();
   const trackRef = useRef<HTMLDivElement | null>(null);
+  const columnRef = useRef<HTMLDivElement | null>(null);
+  const railRef = useRef<HTMLElement | null>(null);
   const activeSlideRef = useRef<HTMLDivElement | null>(null);
   /** The verse currently under the snap point. Mirrors `active` without the
    *  render lag, so the scroll listener can tell a settled page from a new one. */
@@ -186,22 +206,32 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
   // prop: when the URL moves the target verse, the pager follows it. A move that
   // came from the scroll listener below has already set `active`, so this bails out.
   const [seenTarget, setSeenTarget] = useState(targetVerse);
+  /** Bumped only when the target changed because something outside the reader
+   *  asked for it — a rail click, the pager, a keystroke, a deep link. The
+   *  scroll-spy below never bumps it, so following the reader's own scroll
+   *  cannot fight the reader. */
+  const [targetNonce, setTargetNonce] = useState(0);
   if (seenTarget !== targetVerse) {
     setSeenTarget(targetVerse);
     setActive(targetVerse);
+    setTargetNonce((n) => n + 1);
   }
 
   const count = verses.length;
   const first = count > 0 ? verses[0].verse_number : 1;
   const last = count > 0 ? verses[count - 1].verse_number : 1;
 
-  const index = Math.max(0, verses.findIndex((v) => v.verse_number === active));
+  const index = Math.max(
+    0,
+    verses.findIndex((v) => v.verse_number === active),
+  );
   const start = Math.max(0, index - WINDOW);
   const end = Math.min(count - 1, index + WINDOW);
 
   // Route -> track. Layout effect so a deep link never paints the wrong verse
   // first, and after the render that put the target slide in the window.
   useLayoutEffect(() => {
+    if (wide) return;
     const track = trackRef.current;
     if (!track || count === 0) return;
 
@@ -221,12 +251,13 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
     // nothing to animate from.
     const smooth = !cold && Math.abs(at - index) === 1 && !reducedMotion();
     track.scrollTo({ left: index * width, behavior: smooth ? "smooth" : "auto" });
-  }, [chapter, index, active, count]);
+  }, [chapter, index, active, count, wide]);
 
   // The track can only be one height, and it has to be the height of the verse
   // being read. Observed rather than computed once: the card resizes when the
   // reading face, the shown sections or the window width change.
   useLayoutEffect(() => {
+    if (wide) return;
     const track = trackRef.current;
     const slide = activeSlideRef.current;
     if (!track || !slide) return;
@@ -237,18 +268,20 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
     return () => observer.disconnect();
     // `count` because the track only exists once the chapter has arrived, which
     // is a render later than the one that set `active` on a cold open.
-  }, [chapter, active, count]);
+  }, [chapter, active, count, wide]);
 
   // A card is as tall as its verse, so the page's scroll extent changes with the
   // page. Every verse starts at its own top: without this the browser would clamp
   // a deep scroll position against a shorter neighbour and jog the view sideways
   // mid-swipe.
   useEffect(() => {
+    if (wide) return;
     if (window.scrollY !== 0) window.scrollTo(0, 0);
-  }, [active]);
+  }, [active, wide]);
 
   // Track -> route. replaceState only: paging must never push history.
   useEffect(() => {
+    if (wide) return;
     const track = trackRef.current;
     if (!track || count === 0) return;
     let frame = 0;
@@ -274,11 +307,12 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
       track.removeEventListener("scroll", onScroll);
       if (frame !== 0) cancelAnimationFrame(frame);
     };
-  }, [chapter, verses, count]);
+  }, [chapter, verses, count, wide]);
 
   // Slide width is the track width, so a rotation or a window resize leaves
   // scrollLeft pointing between two verses. Re-anchor on the active one.
   useEffect(() => {
+    if (wide) return;
     const track = trackRef.current;
     if (!track) return;
     let width = track.clientWidth;
@@ -291,7 +325,72 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
     });
     observer.observe(track);
     return () => observer.disconnect();
-  }, [verses]);
+  }, [verses, wide]);
+
+  /* ---------------------------------------------------------- wide reader
+     A continuous column, so paging is scrolling and the four track effects
+     above are all inert. */
+
+  // Route -> column. Only an external move scrolls; the scroll-spy below never
+  // sets wantScrollRef, so following the reader cannot fight the reader.
+  useLayoutEffect(() => {
+    if (!wide || count === 0) return;
+    // Already the verse under the reading position — this is the URL catching
+    // up with the scroll, not a request to move.
+    if (activeRef.current === targetVerse) return;
+    const el = document.getElementById(verseDomId(chapter, targetVerse));
+    if (!el) return;
+    // A jump from a link or a cold open is instant; stepping to a neighbour
+    // animates, which is what makes j/k read as movement rather than a cut.
+    const near = activeRef.current !== null && Math.abs(targetVerse - activeRef.current) <= 1;
+    activeRef.current = targetVerse;
+    el.scrollIntoView({ block: "start", behavior: near && !reducedMotion() ? "smooth" : "auto" });
+  }, [wide, chapter, count, targetVerse, targetNonce]);
+
+  // The rail is an index of 78 rows in a 700px-tall box: the row for the verse
+  // being read has to come to the reader.
+  useEffect(() => {
+    const rail = railRef.current;
+    const row = rail?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (!rail || !row) return;
+    // scrollTop rather than scrollIntoView: the latter walks up and scrolls the
+    // page too, which would fight the column's own scroll position.
+    const top = row.offsetTop - rail.clientHeight / 2 + row.offsetHeight / 2;
+    if (Math.abs(rail.scrollTop - top) > rail.clientHeight / 3) rail.scrollTop = top;
+  }, [active, count]);
+
+  // Column -> route. The band is the middle of the viewport: a verse owns the
+  // URL while its top third is in the reading position.
+  useLayoutEffect(() => {
+    if (!wide) return;
+    if (chapterRef.current !== chapter) {
+      chapterRef.current = chapter;
+      activeRef.current = null;
+    }
+  }, [wide, chapter]);
+
+  useEffect(() => {
+    if (!wide || count === 0) return;
+    const column = columnRef.current;
+    if (!column) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Topmost intersecting block wins, so scrolling up and down agree.
+        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (!visible) return;
+        const verse = Number((visible.target as HTMLElement).dataset.verse);
+        if (!Number.isFinite(verse) || verse === activeRef.current) return;
+        activeRef.current = verse;
+        setActive(verse);
+        syncVerseUrl(chapter, verse);
+      },
+      { rootMargin: "-40% 0px -55% 0px", threshold: 0 },
+    );
+
+    for (const block of column.querySelectorAll(".verse-block")) observer.observe(block);
+    return () => observer.disconnect();
+  }, [wide, chapter, count]);
 
   const goPrev = useCallback(() => {
     const i = verses.findIndex((v) => v.verse_number === active);
@@ -308,6 +407,61 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
   const hasPrev = active > first || hasPrevChapter;
   const hasNext = active < last || hasNextChapter;
 
+  if (wide) {
+    return (
+      <div className="verse-viewer-container">
+        {widePlus && count > 0 && (
+          <nav className="verse-rail" aria-label={`Verses in chapter ${chapter}`} ref={railRef}>
+            <button type="button" className="verse-rail-chapter pressable" onClick={onPrevChapter} disabled={!hasPrevChapter}>
+              <ChevronLeft size={14} aria-hidden /> Previous chapter
+            </button>
+            <div className="verse-rail-label">Chapter {chapter}</div>
+            {verses.map((v) => (
+              <a
+                key={v.verse_number}
+                href={`#${verseDomId(chapter, v.verse_number)}`}
+                className="verse-rail-item"
+                aria-current={v.verse_number === active ? "true" : undefined}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onGoToVerse(v.verse_number);
+                }}>
+                Verse {v.verse_number}
+              </a>
+            ))}
+            <button type="button" className="verse-rail-chapter pressable" onClick={onNextChapter} disabled={!hasNextChapter}>
+              Next chapter <ChevronRight size={14} aria-hidden />
+            </button>
+          </nav>
+        )}
+
+        {count === 0 ? (
+          <p className="verse-viewer-loading">Loading chapter…</p>
+        ) : (
+          <div className="verse-column" ref={columnRef}>
+            {verses.map((verse) => (
+              <VerseBlock key={verse.verse_number} chapter={chapter} verse={verse} language={language} sections={sections} panes={widePlus} />
+            ))}
+          </div>
+        )}
+
+        {/* The rail is the pager at 1280; below that the floating capsule is
+            still the only chapter-level control on the screen. */}
+        <div className="verse-pager">
+          <button type="button" className="pager-btn pressable" data-tip="Previous verse — K" aria-keyshortcuts="k" onClick={goPrev} disabled={!hasPrev} aria-label="Previous verse">
+            <ChevronLeft size={18} strokeWidth={2.5} aria-hidden />
+          </button>
+          <span className="verse-pager-label" aria-live="polite">
+            {chapter}.{active} <span className="verse-pager-total">of {last}</span>
+          </span>
+          <button type="button" className="pager-btn pressable" data-tip="Next verse — J" aria-keyshortcuts="j" onClick={goNext} disabled={!hasNext} aria-label="Next verse">
+            <ChevronRight size={18} strokeWidth={2.5} aria-hidden />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="verse-viewer-container">
       {count === 0 ? (
@@ -320,7 +474,7 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
           <div className="verse-track-spacer" style={{ flexBasis: `${start * 100}%` }} aria-hidden />
           {verses.slice(start, end + 1).map((verse) => (
             <div className="verse-slide" key={verse.verse_number} ref={verse.verse_number === active ? activeSlideRef : undefined}>
-              <VerseBlock chapter={chapter} verse={verse} language={language} sections={sections} />
+              <VerseBlock chapter={chapter} verse={verse} language={language} sections={sections} panes={false} />
             </div>
           ))}
           <div className="verse-track-spacer" style={{ flexBasis: `${(count - 1 - end) * 100}%` }} aria-hidden />
