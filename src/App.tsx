@@ -170,22 +170,32 @@ const SettingsScreen: React.FC = () => {
   const wide = useWide();
   const [current, setCurrent] = useState(SETTINGS_SECTIONS[0].id);
 
-  // Scroll-spy for the desktop index. No observer below the breakpoint, where
-  // the index is not rendered at all.
+  // Scroll-spy for the desktop index. Nothing runs below the breakpoint, where
+  // the index is not rendered at all. Reading position rather than
+  // intersection: this screen is barely taller than the window, so the last
+  // sections can never reach a band and an observer would strand the highlight
+  // on whichever one happens to sit there.
   useEffect(() => {
     if (!wide) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const top = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (top) setCurrent(top.target.id);
-      },
-      { rootMargin: "-10% 0px -70% 0px" },
-    );
-    for (const { id } of SETTINGS_SECTIONS) {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    }
-    return () => observer.disconnect();
+    const pick = (): void => {
+      const doc = document.documentElement;
+      // At the end of the scroll the last section owns the index, however
+      // little of it the window had room to bring up.
+      if (window.scrollY >= doc.scrollHeight - window.innerHeight - 2) {
+        setCurrent(SETTINGS_SECTIONS[SETTINGS_SECTIONS.length - 1].id);
+        return;
+      }
+      const line = window.innerHeight * 0.3;
+      let id = SETTINGS_SECTIONS[0].id;
+      for (const section of SETTINGS_SECTIONS) {
+        const el = document.getElementById(section.id);
+        if (el && el.getBoundingClientRect().top <= line) id = section.id;
+      }
+      setCurrent(id);
+    };
+    pick();
+    window.addEventListener("scroll", pick, { passive: true });
+    return () => window.removeEventListener("scroll", pick);
   }, [wide]);
 
   return (
