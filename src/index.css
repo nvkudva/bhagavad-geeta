@@ -88,7 +88,7 @@
   --reading-scale: 1;
   /* Snapped to iOS Dynamic Type steps at the Large default, so the reading ramp
      sits on the same scale as the UI above: Title2 / Body / Subheadline. */
-  --fs-verse: calc(1.125rem * var(--reading-scale)); /* 18px */
+  --fs-verse: calc(1.3125rem * var(--reading-scale)); /* 21px */
   --fs-translit: calc(0.8125rem * var(--reading-scale)); /* 13px — Footnote */
   --fs-trans: calc(0.875rem * var(--reading-scale)); /* 14px */
   --fs-comment: calc(0.75rem * var(--reading-scale)); /* 12px */
@@ -492,11 +492,13 @@ h6 {
   }
   /* A gradient fill has no computable contrast ratio, so Increase Contrast gets
      an opaque colour instead — the ramp's own safe stop, not a different hue. */
-  .verse-text {
+  .verse-text,
+  .verse-of-moment-text {
     background-image: none;
     color: var(--ramp-verse-fallback);
   }
-  .verse-section-content {
+  .verse-section-content,
+  .verse-of-moment-translation {
     background-image: none;
     color: var(--ramp-trans-fallback);
   }
@@ -1044,18 +1046,26 @@ body::before {
 }
 
 .verse-of-moment-text {
+  background-image: var(--ramp-verse);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: var(--ramp-verse-glow);
   font-size: var(--fs-verse);
   line-height: var(--lh-verse);
-  color: var(--ink-1);
+  color: transparent;
   white-space: pre-wrap;
   text-align: center;
   margin-bottom: var(--sp-3);
 }
 
 .verse-of-moment-translation {
+  background-image: var(--ramp-trans);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: var(--ramp-trans-glow);
   font-size: var(--fs-trans);
   line-height: var(--lh-body);
-  color: var(--ink-2);
+  color: transparent;
   text-align: center;
   /* An invitation, not the reading surface: long translations are cut rather
      than pushing the chapter list off the first screen. */
@@ -1802,7 +1812,7 @@ body::before {
     --fs-title1: 2rem; /* 32px — screen titles */
     --fs-large: 2.5rem; /* 40px — display */
 
-    --fs-verse: calc(1.625rem * var(--reading-scale)); /* 26px — the sloka is the point */
+    --fs-verse: calc(1.8125rem * var(--reading-scale)); /* 29px — the sloka is the point */
     --fs-translit: calc(1.0625rem * var(--reading-scale)); /* 17px */
     --fs-trans: calc(1.25rem * var(--reading-scale)); /* 20px — primary reading size */
     --fs-comment: calc(1.125rem * var(--reading-scale)); /* 18px */
