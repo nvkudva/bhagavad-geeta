@@ -6,7 +6,7 @@ import type React from "react";
 import { useCallback, useLayoutEffect, useSyncExternalStore } from "react";
 import { getChapterMeta, getChapters } from "./gita";
 
-export type Route = { name: "home" } | { name: "verse"; chapter: number; verse: number } | { name: "search"; q: string };
+export type Route = { name: "home" } | { name: "verse"; chapter: number; verse: number } | { name: "search"; q: string } | { name: "saved" } | { name: "settings" };
 
 type NavigateOptions = {
   replace?: boolean;
@@ -38,6 +38,9 @@ export function parseLocation(pathname: string, search: string): Route {
     return { name: "search", q: new URLSearchParams(search).get("q") ?? "" };
   }
 
+  if (segments[0] === "saved") return { name: "saved" };
+  if (segments[0] === "settings") return { name: "settings" };
+
   if (segments[0] === "chapter") {
     const chapter = Number(segments[1]);
     if (!getChapterMeta(chapter)) return { name: "home" };
@@ -56,6 +59,10 @@ export function toPath(route: Route): string {
       return `${BASE}/chapter/${route.chapter}/verse/${route.verse}`;
     case "search":
       return route.q ? `${BASE}/search?q=${encodeURIComponent(route.q)}` : `${BASE}/search`;
+    case "saved":
+      return `${BASE}/saved`;
+    case "settings":
+      return `${BASE}/settings`;
   }
 }
 
@@ -68,6 +75,13 @@ let currentKey = newKey();
 /** Set immediately before a commit that must move the viewport; consumed by
  *  useScrollRestoration in a layout effect so the user never sees a flash. */
 let pendingScroll: number | null = null;
+/** How the current route was reached. The reader consults this to decide whether
+ *  it owns the viewport (a push/replace) or scroll restoration does (a pop). */
+let navKind: "boot" | "push" | "replace" | "pop" = "boot";
+
+export function getNavKind(): "boot" | "push" | "replace" | "pop" {
+  return navKind;
+}
 
 function initScroll(): void {
   if (typeof window === "undefined") return;
@@ -150,6 +164,7 @@ function boot(): void {
   window.addEventListener("popstate", (event) => {
     const state = event.state as { key?: string } | null;
     currentKey = state?.key ?? newKey();
+    navKind = "pop";
     pendingScroll = positions.get(currentKey) ?? 0;
     setRoute(parseLocation(location.pathname, location.search));
   });
@@ -163,6 +178,8 @@ export function navigate(to: Route, opts: NavigateOptions = {}): void {
 
   positions.set(currentKey, window.scrollY);
 
+  navKind = opts.replace ? "replace" : "push";
+
   if (opts.replace) {
     history.replaceState({ key: currentKey }, "", url);
   } else {
@@ -174,6 +191,19 @@ export function navigate(to: Route, opts: NavigateOptions = {}): void {
   pendingScroll = scroll === "preserve" ? null : scroll === "restore" ? (positions.get(currentKey) ?? 0) : 0;
 
   setRoute(to);
+}
+
+/** Scroll-spy hook: point the URL at the verse now under the header without
+ *  touching the back stack and without waking React. `replaceState` keeps the
+ *  same history key, so the saved scroll offset for this entry stays valid, and
+ *  the store is updated silently — re-rendering 78 verse blocks on every scroll
+ *  tick is exactly the work continuous scroll exists to avoid. */
+export function syncVerseUrl(chapter: number, verse: number): void {
+  const route: Route = { name: "verse", chapter, verse };
+  const url = toPath(route);
+  if (url === location.pathname + location.search) return;
+  history.replaceState({ key: currentKey }, "", url);
+  current = route;
 }
 
 const subscribe = (listener: () => void): (() => void) => {

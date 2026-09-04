@@ -1,337 +1,723 @@
-/* Self-hosted Outfit (ARCHITECTURE_PLAN §5.6/P0.7). A CSS @import to Google Fonts
-   cost three serialised RTTs on the critical path and could not be guaranteed
-   offline on a first visit. Same typeface, same weights (300-700 variable). */
+/* ------------------------------------------------------------------ fonts
+   Self-hosted woff2 (ARCHITECTURE_PLAN §5.6/P0.7, DESIGN_PLAN §2.2). No
+   @import, no fonts.googleapis.com link: the offline guarantee depends on
+   every byte of the shell being precached. unicode-range keeps a Latin-only
+   screen from pulling any Indic face; the browser fetches Kannada or Telugu
+   only when a glyph in that range is actually painted.
+
+   Inter and the Noto Sans family are both SIL Open Font License 1.1, so
+   self-hosting and redistribution inside this app are permitted. */
+
 @font-face {
-  font-family: "Outfit";
+  font-family: "Inter";
   font-style: normal;
-  font-weight: 300 700;
+  font-weight: 400 700;
   font-display: swap;
-  src: url("/fonts/outfit-latin.woff2") format("woff2");
+  src: url("/fonts/inter-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: "Outfit";
+  /* IAST transliteration lives almost entirely in U+1E00-1E9F, so this face is
+     the one that carries ā ṛ ṣ ṃ — it loads on the reader, not on the shell. */
+  font-family: "Inter";
   font-style: normal;
-  font-weight: 300 700;
+  font-weight: 400 700;
   font-display: swap;
-  src: url("/fonts/outfit-latin-ext.woff2") format("woff2");
+  src: url("/fonts/inter-latin-ext.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-:root {
-  /* Light Theme Variables */
-  --bg-gradient: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-  --text-primary: #1a1a1a;
-  --text-secondary: #4a4a4a;
-  --accent-color: #f77062;
-  --accent-gradient: linear-gradient(135deg, #fe5196 0%, #f77062 100%);
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.5);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-  --glass-highlight: rgba(255, 255, 255, 1);
-  --card-hover-translate: translateY(-4px);
-  --transition-speed: 0.3s;
+@font-face {
+  font-family: "Noto Sans Devanagari";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/noto-sans-devanagari.woff2") format("woff2");
+  unicode-range: U+0900-097F, U+1CD0-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839, U+A8E0-A8FF, U+11B00-11B09;
+}
+@font-face {
+  font-family: "Noto Sans Kannada";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/noto-sans-kannada.woff2") format("woff2");
+  unicode-range: U+0951-0952, U+0964-0965, U+0C80-0CF3, U+1CD0, U+1CD2-1CD3, U+1CDA, U+1CF2, U+1CF4, U+200C-200D, U+20B9, U+25CC, U+A830-A835;
+}
+@font-face {
+  font-family: "Noto Sans Telugu";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/noto-sans-telugu.woff2") format("woff2");
+  unicode-range: U+0951-0952, U+0964-0965, U+0C00-0C7F, U+1CDA, U+1CF2, U+200C-200D, U+25CC;
 }
 
-[data-theme="dark"] {
-  /* Dark Theme Variables */
-  --bg-gradient: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-  --text-primary: #ffffff;
-  --text-secondary: #c9d1d9;
-  --accent-color: #f77062; /* Kept vivid for contrast */
-  --glass-bg: rgba(30, 41, 59, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --glass-highlight: rgba(255, 255, 255, 0.05);
+/* ------------------------------------------------------------------ tokens
+   DESIGN_PLAN §2.3 — dark-first. A near-black ground, one violet accent, and
+   scripture set in white so it reads as the lit object on the page. */
+
+:root {
+  /* ---------- Font stacks ---------- */
+  /* Deliberately no Indic family here: the language <select> carries Kannada and
+     Telugu labels, so a fallback in the UI stack would pull both faces on every
+     screen and defeat the per-script loading that unicode-range exists for. */
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Scripture and long-form translation share the UI face: on a near-black
+     ground a serif's hairlines bloom and break up, while Inter and Noto Sans
+     hold an even stroke at every optical size (DESIGN_PLAN §2.2). */
+  --font-read: var(--font-ui);
+  --font-deva: "Noto Sans Devanagari", "Devanagari Sangam MN", "Nirmala UI", sans-serif;
+  --font-knda: "Noto Sans Kannada", "Kannada Sangam MN", "Nirmala UI", sans-serif;
+  --font-telu: "Noto Sans Telugu", "Telugu Sangam MN", "Nirmala UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  /* ---------- Type scale ---------- */
+  --fs-caption2: 0.6875rem;
+  --fs-caption1: 0.75rem;
+  --fs-footnote: 0.8125rem;
+  --fs-subhead: 0.9375rem;
+  --fs-callout: 1rem;
+  --fs-body: 1.0625rem;
+  --fs-headline: 1.0625rem;
+  --fs-title3: 1.25rem;
+  --fs-title2: 1.375rem;
+  --fs-title1: 1.75rem;
+  --fs-large: 2.125rem;
+
+  /* Scripture ramp, driven by the reading-size control (P1, §3.10). */
+  --reading-scale: 1;
+  --fs-verse: calc(1.3125rem * var(--reading-scale)); /* 21px */
+  --fs-translit: calc(0.9375rem * var(--reading-scale)); /* 15px */
+  --fs-trans: calc(1rem * var(--reading-scale)); /* 16px */
+  --fs-comment: calc(0.9375rem * var(--reading-scale)); /* 15px */
+
+  /* ---------- Line heights ---------- */
+  --lh-tight: 1.2;
+  --lh-snug: 1.3;
+  --lh-body: 1.5;
+  --lh-read: 1.55;
+  /* Noto Sans Devanagari/Kannada/Telugu stack matras above and below the base
+     line. 1.72 is the measured floor at the smaller --fs-verse/--fs-trans: the
+     ascending matra of one line and the descending one of the next clear each
+     other in all three scripts. Do not go below this. */
+  --lh-indic: 1.72;
+  --lh-verse: 1.72;
+
+  /* ---------- Tracking ---------- */
+  /* Inter is drawn slightly wide for UI; display sizes need negative tracking. */
+  --tr-large: -0.03em;
+  --tr-title: -0.018em;
+  --tr-body: -0.01em;
+  --tr-caps: 0.08em;
+
+  /* ---------- Weights ---------- */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* ---------- Spacing ---------- */
+  --sp-0: 0;
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+  --sp-16: 4rem;
+  /* Screen gutter, card padding and section rhythm all read through these —
+     tighten them here rather than patching use sites. */
+  --gutter: var(--sp-3); /* 12px, was 16 */
+  --pad-card: var(--sp-4); /* verse section cards, was 20 */
+  --pad-tile: var(--sp-3); /* chapter tiles, was 16 */
+  --gap-section: var(--sp-5); /* between blocks inside a verse, was 32 */
+  --gap-verse: var(--sp-8); /* between consecutive verses in a chapter */
+  --measure: 34rem;
+
+  /* ---------- Radii ---------- */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-pill: 999px;
+
+  /* ---------- Hit targets ---------- */
+  --tap-min: 44px;
+  --tap-comfortable: 48px;
+
+  /* ---------- Motion ---------- */
+  --ease-out-ios: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-in-out-ios: cubic-bezier(0.42, 0, 0.58, 1);
+  /* cubic-bezier fallbacks first: linear() is Chrome 113+ / Safari 17.2+ (§3.12). */
+  --spring-gentle: cubic-bezier(0.32, 0.72, 0, 1);
+  --spring-gentle: linear(0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 18.9%, 0.721 25.3%, 0.849 31.5%, 0.937 38.1%, 0.968 41.8%, 0.991 45.7%, 1.006 50.1%, 1.015 60%, 1.006 80%, 1);
+  --spring-snappy: cubic-bezier(0.17, 0.89, 0.32, 1.28);
+  --spring-snappy: linear(0, 0.045, 0.19 6%, 0.62 15%, 0.86 22%, 0.98 28%, 1.04 34%, 1.05 42%, 1.01 60%, 1);
+  --dur-instant: 100ms;
+  --dur-fast: 180ms;
+  --dur-base: 280ms;
+  --dur-slow: 400ms;
+  --dur-sheet: 480ms;
+
+  /* ---------- Dark appearance (the default; see the pre-paint script in
+       index.html — a first-time visitor gets dark whatever the OS says) ---- */
+  color-scheme: dark;
+
+  --paper: #0a0a0b;
+  --surface-1: #141416;
+  --surface-2: #1c1c1f;
+  --surface-3: #26262a;
+  --separator: rgba(255, 255, 255, 0.09);
+  --separator-opaque: #26262a;
+
+  /* Contrast against --paper / --surface-1: 19.8 / 18.4, 7.7 / 7.2,
+     5.9 / 5.5, 3.3 / 3.1. ink-4 is icons and disabled chrome only. */
+  --ink-1: #ffffff;
+  --ink-2: #a1a1aa;
+  --ink-3: #8b8b94;
+  --ink-4: #63636b;
+
+  --accent: #a78bfa;
+  --accent-hi: #c4b5fd;
+  --accent-soft: rgba(167, 139, 250, 0.16);
+  --accent-line: rgba(167, 139, 250, 0.35);
+  --on-accent: #0a0a0b;
+
+  --danger: #f87171;
+  --success: #4ade80;
+
+  /* Materials — floating chrome ONLY. */
+  --mat-chrome: rgba(10, 10, 11, 0.72);
+  --mat-blur: saturate(180%) blur(20px);
+  --mat-border: rgba(255, 255, 255, 0.08);
+
+  /* On a near-black ground a drop shadow is invisible; separation comes from
+     the surface step and a hairline, and the shadow only anchors what floats. */
+  --el-0: none;
+  --el-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --el-2: 0 2px 8px rgba(0, 0, 0, 0.55);
+  --el-3: 0 12px 32px rgba(0, 0, 0, 0.65);
+  --el-sheet: 0 -8px 40px rgba(0, 0, 0, 0.7);
+
+  /* Safe areas — always read through these, never env() at the use site. */
+  --sa-top: env(safe-area-inset-top, 0px);
+  --sa-right: env(safe-area-inset-right, 0px);
+  --sa-bottom: env(safe-area-inset-bottom, 0px);
+  --sa-left: env(safe-area-inset-left, 0px);
+
+  --nav-h: 44px;
+  --tab-h: 49px;
+  /* 44px controls plus 6px of breathing room above and below them. */
+  --pager-h: 56px;
+  --large-title-h: 52px;
+  /* Real height of the sticky nav, for scroll-margin-top on verse anchors. */
+  --nav-total: calc(var(--nav-h) + max(var(--sp-2), var(--sa-top)) + var(--sp-2));
 }
+
+/* ---------- Light appearance — secondary, and fully correct ---------- */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --paper: #ffffff;
+  --surface-1: #f4f4f5;
+  --surface-2: #ebebee;
+  --surface-3: #e2e2e6;
+  --separator: rgba(10, 10, 11, 0.1);
+  --separator-opaque: #e2e2e6;
+
+  /* Contrast against --paper / --surface-1: 19.8 / 18.0, 9.0 / 8.2,
+     6.2 / 5.6, 3.6 / 3.3. */
+  --ink-1: #0a0a0b;
+  --ink-2: #46464f;
+  --ink-3: #62626b;
+  --ink-4: #85858e;
+
+  --accent: #7c3aed;
+  --accent-hi: #6d28d9;
+  /* 0.07, not 0.10: at 0.10 the accent-on-soft pill lands at 4.49:1. */
+  --accent-soft: rgba(124, 58, 237, 0.07);
+  --accent-line: rgba(124, 58, 237, 0.28);
+  --on-accent: #ffffff;
+
+  --danger: #dc2626;
+  --success: #15803d;
+
+  --mat-chrome: rgba(255, 255, 255, 0.72);
+  --mat-border: rgba(10, 10, 11, 0.07);
+
+  --el-1: 0 1px 2px rgba(10, 10, 11, 0.05);
+  --el-2: 0 2px 8px rgba(10, 10, 11, 0.06), 0 1px 2px rgba(10, 10, 11, 0.04);
+  --el-3: 0 12px 32px rgba(10, 10, 11, 0.1), 0 2px 6px rgba(10, 10, 11, 0.05);
+  --el-sheet: 0 -8px 40px rgba(10, 10, 11, 0.16);
+}
+
+/* ------------------------------------------------------------------- base */
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  /* No tap flash, anywhere. This one line does the most for native feel. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
+  scroll-behavior: auto;
 }
 
 body {
-  font-family: "Outfit", sans-serif;
-  background-image: var(--bg-gradient);
-  background-attachment: fixed;
-  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--tr-body);
+  background: var(--paper);
+  color: var(--ink-1);
   min-height: 100vh;
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-synthesis-weight: none;
   transition:
-    background-image var(--transition-speed) ease,
-    color var(--transition-speed) ease;
+    background-color var(--dur-base) var(--ease-out-ios),
+    color var(--dur-base) var(--ease-out-ios);
 }
 
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+button,
+a,
+[role="button"] {
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-/* Typography */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-  font-weight: 600;
-  line-height: 1.2;
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-title);
 }
 
-.text-gradient {
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  color: transparent;
+/* Text the reader should be able to select and share stays selectable. */
+.verse-text,
+.verse-transliteration,
+.verse-section-content {
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
 }
 
-/* Glassmorphism Utilities */
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  border-radius: 24px;
-  position: relative;
-  overflow: hidden;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
-.glass-panel::before {
-  content: "";
-  position: absolute;
+@media (prefers-contrast: more) {
+  :root {
+    --ink-2: #d4d4d8;
+    --ink-3: #b4b4bd;
+    --ink-4: #86868f;
+    --separator: rgba(255, 255, 255, 0.22);
+    --mat-border: rgba(255, 255, 255, 0.2);
+  }
+  [data-theme="light"] {
+    --ink-2: #27272a;
+    --ink-3: #45454d;
+    --ink-4: #62626b;
+    --separator: rgba(10, 10, 11, 0.28);
+    --mat-border: rgba(10, 10, 11, 0.2);
+  }
+}
+
+@media (display-mode: standalone) {
+  body {
+    overscroll-behavior: none;
+  }
+}
+
+/* Desktop-only scrollbar styling (§3.7). */
+@media (hover: hover) and (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--ink-4);
+    border-radius: 4px;
+  }
+}
+
+.scroll-region {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.scroll-region::-webkit-scrollbar {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ shell
+   DESIGN_PLAN §3.3. max(gutter, safe-inset) — never the sum. */
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  /* minmax(0, 1fr), not the implicit auto track: an auto track sizes to its
+     content's min-content contribution, and --measure (34rem) is wider than a
+     375px viewport, so the shell overflowed horizontally without this. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+}
+
+.app-nav {
+  position: sticky;
   top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(to right, transparent, var(--glass-highlight), transparent);
-  transform: skewX(-20deg);
-  transition: all 0.5s ease;
-  pointer-events: none;
+  z-index: 100;
+  min-height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-top: max(var(--sp-2), var(--sa-top));
+  padding-bottom: var(--sp-2);
+  padding-left: max(var(--gutter), var(--sa-left));
+  padding-right: max(var(--gutter), var(--sa-right));
+  background: var(--mat-chrome);
+  -webkit-backdrop-filter: var(--mat-blur);
+  backdrop-filter: var(--mat-blur);
+  border-bottom: 0.5px solid var(--mat-border);
+  transition: border-color var(--dur-fast) var(--ease-out-ios);
 }
 
-.glass-panel:hover::before {
-  left: 200%;
+.app-nav[data-scrolled="false"] {
+  border-bottom-color: transparent;
 }
 
-.glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  border-radius: 16px;
-  transition: all var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1);
-  cursor: pointer;
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-nav,
+  .app-tabbar {
+    background: var(--surface-1);
+  }
 }
 
-.glass-card:hover {
-  transform: var(--card-hover-translate);
-  box-shadow:
-    0 14px 28px rgba(0, 0, 0, 0.15),
-    0 10px 10px rgba(0, 0, 0, 0.12);
-  border-color: rgba(255, 255, 255, 0.3);
+.app-main {
+  padding-left: max(var(--gutter), var(--sa-left));
+  padding-right: max(var(--gutter), var(--sa-right));
+  padding-bottom: calc(var(--tab-h) + var(--sa-bottom) + var(--sp-6));
 }
 
-.glass-button {
-  background: var(--glass-bg);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--glass-border);
-  color: var(--text-primary);
-  padding: 10px 20px;
-  border-radius: 30px;
-  font-weight: 500;
+/* The reader stacks a pinned pager above the tab bar; the content must clear both. */
+.app-main[data-reader="true"] {
+  padding-bottom: calc(var(--tab-h) + var(--pager-h) + var(--sa-bottom) + var(--sp-4));
+}
+
+.app-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  min-height: calc(var(--tab-h) + var(--sa-bottom));
+  padding-bottom: var(--sa-bottom);
+  padding-left: var(--sa-left);
+  padding-right: var(--sa-right);
+  background: var(--mat-chrome);
+  -webkit-backdrop-filter: var(--mat-blur);
+  backdrop-filter: var(--mat-blur);
+  border-top: 0.5px solid var(--mat-border);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+.tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: var(--tap-min);
+  height: var(--tab-h);
+  padding: var(--sp-1) 0;
+  background: none;
+  border: 0;
+  color: var(--ink-3);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--fs-caption2);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-decoration: none;
   cursor: pointer;
+  transition:
+    color var(--dur-instant) linear,
+    transform var(--dur-instant) var(--ease-out-ios);
+}
+
+.tab-item[aria-current="page"] {
+  color: var(--accent);
+}
+
+.tab-item:active {
+  transform: scale(0.94);
+}
+
+.tab-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--r-xs);
+}
+
+/* --------------------------------------------------------- press & focus */
+
+.pressable {
+  transition:
+    transform var(--dur-instant) var(--ease-out-ios),
+    background-color var(--dur-instant) linear,
+    opacity var(--dur-instant) linear;
+}
+
+.pressable:active {
+  transform: scale(0.97);
+  background-color: var(--surface-2);
+}
+
+.pressable-lg:active {
+  transform: scale(0.985);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pressable:hover {
+    background-color: var(--surface-2);
+  }
+}
+
+.pressable:focus-visible,
+.icon-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+.icon-button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  transition: all var(--transition-speed) ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: var(--sp-3);
+  background: none;
+  border: 0;
+  border-radius: var(--r-pill);
+  color: var(--ink-1);
+  cursor: pointer;
 }
 
-.glass-button:hover {
-  background: var(--glass-highlight);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-5);
+  background: var(--surface-1);
+  border: 1px solid var(--separator);
+  border-radius: var(--r-pill);
+  box-shadow: var(--el-0);
+  color: var(--ink-1);
+  font-family: inherit;
+  font-size: var(--fs-subhead);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
 }
 
-.glass-button:active {
-  transform: translateY(0);
+/* ink-3, not ink-4: a disabled control is exempt from WCAG 1.4.3, but nothing
+   in this app should be unreadable. Dimmer than ink-1 still reads as disabled. */
+.btn:disabled {
+  color: var(--ink-3);
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
 }
 
-/* Animations */
+/* ----------------------------------------------------------------- fade-in */
+
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
+  animation: fadeIn var(--dur-base) var(--ease-out-ios) both;
 }
 
-.delay-100 {
-  animation-delay: 0.1s;
-}
-.delay-200 {
-  animation-delay: 0.2s;
-}
-.delay-300 {
-  animation-delay: 0.3s;
+/* -------------------------------------------------------------- home/nav */
+
+.nav-title {
+  font-family: var(--font-read);
+  font-size: var(--fs-headline);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tr-title);
+  color: var(--ink-1);
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(150, 150, 150, 0.3);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(150, 150, 150, 0.5);
-}
-/* Main App Layout */
-.app-main {
-  padding: 0 1rem;
-  padding-bottom: 4rem;
-  flex-grow: 1;
-}
-
-/* Home Page */
-.home-container {
-  text-align: center;
-  margin-bottom: 3rem;
-  padding-top: 2rem;
-}
-
-.home-title {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  color: transparent;
-}
-
-.home-description {
-  color: var(--text-secondary);
-  font-size: 1.2rem;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-/* Header Component */
-.header-container {
-  margin: 1rem;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 1rem;
-  z-index: 50;
-}
-
-.header-logo-button {
+.nav-logo-button {
   display: flex;
   align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  background: none;
-  border: none;
+  gap: var(--sp-2);
+  min-height: var(--tap-min);
   padding: 0;
-  font-family: inherit;
+  background: none;
+  border: 0;
+  color: var(--accent);
+  cursor: pointer;
   text-align: left;
 }
 
-.header-icon-wrapper {
-  background: var(--accent-gradient);
-  padding: 8px;
-  border-radius: 12px;
+.nav-back-button {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 2px;
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-1) 0 0;
+  margin-left: -4px;
+  background: none;
+  border: 0;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: var(--fs-subhead);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
 }
 
-.header-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0;
+.nav-back-label {
+  letter-spacing: var(--tr-body);
 }
 
-.header-actions {
+/* Centred title needs room the 375px nav does not have next to a back label,
+   a language pill and the theme toggle. */
+.nav-title-centered {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .nav-title-centered {
+    display: block;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 40%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+}
+
+.nav-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--sp-2);
 }
 
 .language-switcher {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--glass-bg);
-  padding: 6px 12px;
-  border-radius: 20px;
-  border: 1px solid var(--glass-border);
+  gap: var(--sp-2);
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-3);
+  background: var(--surface-1);
+  border: 1px solid var(--separator);
+  border-radius: var(--r-pill);
+  color: var(--ink-2);
 }
 
 .language-select {
+  min-height: var(--tap-min);
   background: transparent;
   border: none;
-  color: var(--text-primary);
+  color: var(--ink-1);
   font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: var(--fs-subhead);
+  font-weight: var(--fw-medium);
   outline: none;
   cursor: pointer;
 }
 
-.theme-toggle {
-  padding: 10px;
+.home-container {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding-top: var(--sp-4);
 }
 
-/* Chapter List Component */
+.home-title {
+  font-family: var(--font-read);
+  font-size: var(--fs-large);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tr-large);
+  color: var(--ink-1);
+}
+
+.home-description {
+  margin-top: var(--sp-1);
+  color: var(--ink-3);
+  font-size: var(--fs-subhead);
+}
+
+/* --------------------------------------------------------- chapter list */
+
 .chapter-list-container {
-  max-width: 1200px;
+  max-width: 60rem;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: var(--sp-4) 0 0;
 }
 
 .chapter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--sp-2);
 }
 
 .chapter-card {
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  text-align: left;
+  gap: var(--sp-1);
+  min-height: var(--tap-min);
+  padding: var(--pad-tile);
+  background: var(--surface-1);
+  border: 1px solid var(--separator);
+  border-radius: var(--r-lg);
+  box-shadow: var(--el-0);
+  color: var(--ink-1);
   font-family: inherit;
+  text-align: left;
   width: 100%;
   cursor: pointer;
 }
@@ -340,142 +726,310 @@ h6 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  gap: var(--sp-3);
 }
 
 .chapter-badge {
-  background: var(--accent-gradient);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--sp-2);
+  background: var(--accent-soft);
+  border-radius: var(--r-pill);
+  color: var(--accent);
+  font-size: var(--fs-caption1);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
 }
 
 .chapter-stats {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: var(--text-secondary);
-  font-size: 0.85rem;
+  gap: var(--sp-1);
+  color: var(--ink-3);
+  font-size: var(--fs-footnote);
+  font-variant-numeric: tabular-nums;
 }
 
 .chapter-name {
-  font-size: 1.25rem;
-  margin-bottom: 0.25rem;
+  margin-top: var(--sp-1);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
+  color: var(--ink-1);
 }
 
 .chapter-meaning {
-  font-size: 0.95rem;
-  color: var(--accent-color);
-  margin-bottom: 1rem;
-  font-weight: 500;
+  font-size: var(--fs-subhead);
+  font-weight: var(--fw-regular);
+  color: var(--ink-3);
 }
 
 .chapter-summary {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  line-height: 1.5;
-  flex-grow: 1;
+  margin-top: var(--sp-1);
+  font-family: var(--font-read);
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-read);
+  color: var(--ink-2);
 }
 
-/* Verse Viewer Component */
+/* --------------------------------------------------------- verse reader */
+
+.verse-viewer-container {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--sp-3) 0 0;
+}
+
 .verse-viewer-empty {
   text-align: center;
-  padding: 4rem;
-  color: var(--text-secondary);
+  padding: var(--sp-16) var(--sp-4);
+  color: var(--ink-3);
 }
 
 .verse-viewer-empty-icon {
-  margin: 0 auto 1rem;
-  opacity: 0.5;
+  margin: 0 auto var(--sp-4);
+  color: var(--ink-4);
 }
 
-.verse-viewer-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+.verse-viewer-loading {
+  padding: var(--sp-10) 0;
+  text-align: center;
+  color: var(--ink-3);
+  font-size: var(--fs-subhead);
 }
 
-.verse-viewer-back-btn {
-  margin-bottom: 2rem;
-  font-size: 0.9rem;
+/* Chapter masthead, above the continuous verse scroll. */
+.chapter-head {
+  padding-bottom: var(--gap-section);
+  border-bottom: 1px solid var(--separator);
 }
 
-.verse-viewer-panel {
-  padding: 3rem 2rem !important; /* Force override glass-panel padding if needed */
+.chapter-head-name {
+  margin-top: var(--sp-2);
+  font-family: var(--font-read);
+  font-size: var(--fs-title3);
+  font-weight: var(--fw-semibold);
+  color: var(--ink-1);
+}
+
+/* ------------------------------------------------------ continuous scroll
+   One chapter, all its verses, one scroll. `/chapter/:n/verse/:m` means
+   "chapter n, scrolled to verse m", so each block is an anchor: scroll-margin-top
+   clears the sticky nav instead of a hand-computed offset at the call site. */
+
+.verse-block {
+  scroll-margin-top: calc(var(--nav-total) + var(--sp-3));
+  padding-top: var(--gap-verse);
+  /* ARCHITECTURE_PLAN §4.1: the CSS answer to 78 verses in one document, not a
+     virtualiser. `auto` in contain-intrinsic-size makes the browser remember each
+     block's real size after its first render, so anchors stop drifting; 560px is
+     the measured median block height and only ever affects never-yet-rendered
+     blocks. 640px is the measured median block content height at 375px wide. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 640px;
+}
+
+.verse-block + .verse-block {
+  border-top: 1px solid var(--separator);
 }
 
 .verse-viewer-title-wrapper {
-  text-align: center;
-  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.verse-viewer-title-wrapper::before,
+.verse-viewer-title-wrapper::after {
+  content: "";
+  width: 24px;
+  height: 1px;
+  background: var(--accent-line);
 }
 
 .verse-viewer-title {
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
-  display: inline-block;
+  font-size: var(--fs-caption1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tr-caps);
+  text-transform: uppercase;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
 }
 
 .verse-text-wrapper {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: var(--gap-section);
 }
 
+/* The reason the app exists: highest contrast, no accent, regular weight —
+   Devanagari at semibold muddies conjuncts (DESIGN_PLAN §4.3). */
 .verse-text {
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.8;
-  color: var(--accent-color);
+  font-size: var(--fs-verse);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-verse);
+  letter-spacing: 0;
+  color: var(--ink-1);
   white-space: pre-wrap;
+  /* A Devanagari pada can be one long unbreakable run; breaking it is better
+     than a horizontally scrolling page. */
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 .verse-transliteration-wrapper {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: var(--gap-section);
 }
 
+/* Inter ships no italic here, and a browser-slanted sans is worse than none.
+   The transliteration is set apart by colour and tracking instead. */
 .verse-transliteration {
-  font-size: 1.1rem;
-  font-style: italic;
-  line-height: 1.6;
-  color: var(--text-secondary);
+  font-family: var(--font-read);
+  font-size: var(--fs-translit);
+  font-style: normal;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.01em;
+  line-height: var(--lh-read);
+  color: var(--ink-2);
   white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 
 .verse-section-card {
-  background: rgba(0, 0, 0, 0.03);
-  padding: 2rem;
-  border-radius: 16px;
-  border-left: 4px solid var(--accent-color);
+  padding: var(--pad-card);
+  background: var(--surface-1);
+  border: 1px solid var(--separator);
+  border-radius: var(--r-lg);
 }
 
 .verse-section-card.commentary {
-  margin-top: 1.5rem;
-  border-left: 4px solid var(--text-secondary);
+  margin-top: var(--sp-3);
 }
 
 .verse-section-title {
-  font-size: 1rem;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-caption1);
+  font-weight: var(--fw-semibold);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 1rem;
-  color: var(--text-secondary);
+  letter-spacing: var(--tr-caps);
+  color: var(--ink-3);
 }
 
 .verse-section-content {
-  font-size: 1.15rem;
-  line-height: 1.7;
-  color: var(--text-primary);
+  font-family: var(--font-read);
+  font-size: var(--fs-trans);
+  line-height: var(--lh-read);
+  color: var(--ink-1);
+  text-align: left;
 }
 
 .commentary .verse-section-content {
-  font-size: 1.1rem;
+  font-size: var(--fs-comment);
+  color: var(--ink-2);
 }
 
-.verse-pagination-container {
+/* ------------------------------------------------------------- verse pager
+   Pinned directly above the tab bar rather than replacing it: the tab bar is the
+   app's only global navigation and hiding it strands the reader. Stacked, the
+   two bars are 44 + 49 px plus the home indicator inset — the same bottom
+   chrome iOS Safari itself carries. */
+
+.verse-pager {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--tab-h) + var(--sa-bottom));
+  z-index: 99;
+  height: var(--pager-h);
   display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding-left: max(var(--sp-4), var(--sa-left));
+  padding-right: max(var(--sp-4), var(--sa-right));
+  background: var(--mat-chrome);
+  -webkit-backdrop-filter: var(--mat-blur);
+  backdrop-filter: var(--mat-blur);
+  border-top: 0.5px solid var(--mat-border);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .verse-pager {
+    background: var(--surface-1);
+  }
+}
+
+.verse-pager-label {
+  font-size: var(--fs-footnote);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+  letter-spacing: 0;
+}
+
+.verse-pager-total {
+  color: var(--ink-3);
+  font-weight: var(--fw-regular);
+}
+
+/* 44px stays the target; only the horizontal padding tightens. */
+.btn-compact {
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-footnote);
+}
+
+/* ------------------------------------------------------ placeholder screens
+   Routes exist so the tab bar works; content is P1/P2. */
+
+.screen-placeholder {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--sp-16) var(--sp-2);
+  text-align: center;
+  color: var(--ink-3);
+}
+
+.screen-placeholder-icon {
+  color: var(--ink-4);
+  margin-bottom: var(--sp-4);
+}
+
+.screen-placeholder h2 {
+  font-family: var(--font-read);
+  font-size: var(--fs-title3);
+  color: var(--ink-1);
+  margin-bottom: var(--sp-2);
+}
+
+.screen-placeholder p {
+  font-size: var(--fs-subhead);
+}
+
+/* ------------------------------------------------- per-script typography
+   Driven by the lang attributes set in VerseViewer. Last in the file on
+   purpose: these match on a single pseudo-class, so any component rule that
+   sets font-family (.verse-section-content, .chapter-summary) has equal
+   specificity and would otherwise win on source order — leaving a Kannada or
+   Telugu translation in whatever the OS happens to have installed instead of
+   the face this app actually ships. */
+
+/* Attribute selectors, not :lang() — :lang(sa) also matches lang="sa-Latn",
+   which would drag the IAST transliteration into the Devanagari face. */
+[lang="sa"],
+[lang="hi"],
+.script-deva {
+  font-family: var(--font-deva);
+  line-height: var(--lh-indic);
+  font-feature-settings: "kern" 1;
+}
+[lang="kn"],
+.script-knda {
+  font-family: var(--font-knda);
+  line-height: var(--lh-indic);
+}
+[lang="te"],
+.script-telu {
+  font-family: var(--font-telu);
+  line-height: var(--lh-indic);
 }

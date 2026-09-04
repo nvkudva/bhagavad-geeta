@@ -15,7 +15,14 @@ if (!existsSync(assets)) {
 }
 
 const KB = 1024;
-const BUDGETS = { js: 65 * KB, css: 3 * KB };
+// Raised from 65/3 KB when the DESIGN_PLAN P0 block landed:
+//   JS  +0.9 KB — the bottom tab bar, three routed placeholder screens, four more
+//                 lucide icons, and the react-vendor/app chunk split (§P2.2), which
+//                 trades ~1 KB of gzip for a react chunk that survives app deploys.
+//   CSS +2.0 KB — the §2.3 token set, the §2.4 base rules, the app-nav/main/tabbar
+//                 shell, and seven self-hosted @font-face blocks with unicode-range.
+// Headroom left is deliberate and small: P1 must stay near these numbers.
+const BUDGETS = { js: 70 * KB, css: 6 * KB };
 
 const gz = (p) => gzipSync(readFileSync(p), { level: 9 }).length;
 const files = readdirSync(assets);

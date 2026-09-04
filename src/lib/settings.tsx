@@ -17,7 +17,14 @@ interface Settings {
 const SettingsContext = createContext<Settings | null>(null);
 
 // The pre-paint inline script in index.html has already resolved and applied the theme.
-const readTheme = (): Theme => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+const readTheme = (): Theme => (document.documentElement.dataset.theme === "light" ? "light" : "dark");
+
+// The browser/OS chrome has to follow the app's theme, not the OS setting, because
+// the app is dark by default on a light OS.
+const THEME_COLOR: Record<Theme, string> = { dark: "#0A0A0B", light: "#FFFFFF" };
+const paintThemeColor = (theme: Theme): void => {
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLOR[theme]);
+};
 
 const readLanguage = (): Language => {
   const saved = localStorage.getItem("gita-language");
@@ -32,6 +39,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setTheme((prev) => {
       const next = prev === "light" ? "dark" : "light";
       document.documentElement.dataset.theme = next;
+      paintThemeColor(next);
       localStorage.setItem("gita-theme", next);
       return next;
     });

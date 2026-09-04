@@ -3,23 +3,39 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#ffffff" />
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/outfit-latin.woff2" crossorigin />
-    <meta name="description" content="A premium, Apple Glass styled Bhagavad-Geeta Progressive Web App." />
+    <!-- viewport-fit=cover is what makes env(safe-area-inset-*) return non-zero;
+         without it the whole safe-area system is inert. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- One value, no prefers-color-scheme split: the app is dark by default whatever
+         the OS says, so a light OS must not paint white chrome around a dark app.
+         The pre-paint script below and SettingsProvider rewrite it on an explicit choice. -->
+    <meta name="theme-color" content="#0A0A0B" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Gita" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Self-hosted. The Devanagari face is always needed (verse.text is Sanskrit for
+         every verse); Kannada and Telugu are pulled by unicode-range on demand. -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/noto-sans-devanagari.woff2" crossorigin />
+    <meta name="description" content="The Bhagavad Gita in Sanskrit, Kannada and Telugu — a quiet, offline-capable reading app." />
     <title>Bhagavad-Geeta</title>
     <script>
       // Resolve the theme before first paint: doing this in a useEffect guarantees a
-      // light-theme flash for every dark-mode user on every cold start.
+      // theme flash on every cold start. The app is dark-first, so an unset preference
+      // resolves to dark whatever the OS reports; only an explicit stored choice
+      // selects light.
       (function () {
         try {
-          var t = localStorage.getItem("gita-theme");
-          if (t !== "light" && t !== "dark") {
-            t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-          }
+          var t = localStorage.getItem("gita-theme") === "light" ? "light" : "dark";
           document.documentElement.dataset.theme = t;
+          if (t === "light") {
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute("content", "#FFFFFF");
+          }
         } catch (e) {
-          document.documentElement.dataset.theme = "light";
+          document.documentElement.dataset.theme = "dark";
         }
       })();
     </script>

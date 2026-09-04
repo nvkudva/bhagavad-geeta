@@ -1,7 +1,9 @@
+import { Bookmark, Search, Settings2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useReducer } from "react";
 import { ChapterList } from "./components/ChapterList";
 import { Header } from "./components/Header";
+import { TabBar } from "./components/TabBar";
 import { VerseViewer } from "./components/VerseViewer";
 import { getChapterMeta, getChapters, loadChapter, peekChapter } from "./lib/gita";
 import type { Verse } from "./lib/gita.types";
@@ -12,12 +14,25 @@ const chapters = getChapters();
 const NO_VERSES: readonly Verse[] = [];
 const FIRST_CHAPTER = chapters[0].id;
 const LAST_CHAPTER = chapters[chapters.length - 1].id;
+const TOTAL_VERSES = chapters.reduce((sum, c) => sum + c.verses_count, 0);
 
 const Home: React.FC = () => (
   <div className="animate-fade-in home-container">
-    <h2 className="home-title">Bhagavad-Geeta</h2>
-    <p className="home-description">Explore the divine wisdom of the Bhagavad-Geeta through a beautifully designed, distraction-free reading experience.</p>
+    <h2 className="home-title">Bhagavad Gita</h2>
+    <p className="home-description">
+      {chapters.length} chapters · {TOTAL_VERSES} verses
+    </p>
     <ChapterList chapters={chapters} onSelectChapter={(id) => navigate({ name: "verse", chapter: id, verse: 1 })} />
+  </div>
+);
+
+/** Reachable, routed placeholders so the tab bar is complete. The screens
+ *  themselves are DESIGN_PLAN §4.4–4.6 (P1/P2). */
+const Placeholder: React.FC<{ icon: React.ReactNode; title: string; body: string }> = ({ icon, title, body }) => (
+  <div className="animate-fade-in screen-placeholder">
+    <div className="screen-placeholder-icon">{icon}</div>
+    <h2>{title}</h2>
+    <p>{body}</p>
   </div>
 );
 
@@ -28,6 +43,7 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
   // Sync read of the resident chapter; the effect only wakes the component once a
   // cold chapter has arrived, so nothing is set synchronously during an effect.
   const verses = peekChapter(chapter) ?? NO_VERSES;
+  const meta = getChapterMeta(chapter);
 
   useEffect(() => {
     if (peekChapter(chapter)) return;
@@ -51,11 +67,6 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
     navigate({ name: "verse", chapter, verse: nearest.verse_number }, { replace: true, scroll: "preserve" });
   }, [verses, index, chapter, verse]);
 
-  const current = index !== -1 ? verses[index] : null;
-  // Prev/next run past a chapter boundary: the last verse of n leads into n+1.
-  const hasPrev = index > 0 || chapter > FIRST_CHAPTER;
-  const hasNext = (index !== -1 && index < verses.length - 1) || chapter < LAST_CHAPTER;
-
   // The previous chapter's last verse number, best-effort: the resident array is
   // authoritative, metadata is the fallback, and the Reader clamps to the nearest
   // real verse once that chapter arrives.
@@ -65,27 +76,44 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
     return getChapterMeta(id)?.verses_count ?? 1;
   };
 
-  const goNext = () => {
-    if (index !== -1 && index < verses.length - 1) return navigate({ name: "verse", chapter, verse: verses[index + 1].verse_number });
-    if (chapter < LAST_CHAPTER) navigate({ name: "verse", chapter: chapter + 1, verse: 1 });
-  };
-
-  const goPrev = () => {
-    if (index > 0) return navigate({ name: "verse", chapter, verse: verses[index - 1].verse_number });
-    if (chapter > FIRST_CHAPTER) navigate({ name: "verse", chapter: chapter - 1, verse: lastVerseOf(chapter - 1) });
-  };
+  if (!meta) return <Home />;
 
   return (
     <VerseViewer
-      verse={current}
+      chapter={chapter}
+      meta={meta}
+      verses={verses}
+      targetVerse={verse}
       language={language}
-      onNext={goNext}
-      onPrev={goPrev}
-      onBackToChapters={() => navigate({ name: "home" })}
-      hasNext={hasNext}
-      hasPrev={hasPrev}
+      // "preserve" leaves pendingScroll null so the router's restoration layout
+      // effect (which runs after this child's) does not clobber the scroll the
+      // reader is about to perform itself.
+      onGoToVerse={(next) => navigate({ name: "verse", chapter, verse: next }, { scroll: "preserve" })}
+      onPrevChapter={() => {
+        if (chapter > FIRST_CHAPTER) navigate({ name: "verse", chapter: chapter - 1, verse: lastVerseOf(chapter - 1) }, { scroll: "preserve" });
+      }}
+      onNextChapter={() => {
+        if (chapter < LAST_CHAPTER) navigate({ name: "verse", chapter: chapter + 1, verse: 1 });
+      }}
+      hasPrevChapter={chapter > FIRST_CHAPTER}
+      hasNextChapter={chapter < LAST_CHAPTER}
     />
   );
+};
+
+const Screen: React.FC<{ route: ReturnType<typeof useRoute> }> = ({ route }) => {
+  switch (route.name) {
+    case "verse":
+      return <Reader chapter={route.chapter} verse={route.verse} />;
+    case "search":
+      return <Placeholder icon={<Search size={44} />} title="Search" body="Verse and chapter search is not built yet." />;
+    case "saved":
+      return <Placeholder icon={<Bookmark size={44} />} title="Nothing saved yet" body="Bookmarks will appear here." />;
+    case "settings":
+      return <Placeholder icon={<Settings2 size={44} />} title="Settings" body="Language, appearance and reading size will move here." />;
+    default:
+      return <Home />;
+  }
 };
 
 const AppShell: React.FC = () => {
@@ -93,11 +121,27 @@ const AppShell: React.FC = () => {
   const { theme, toggleTheme, language, setLanguage } = useSettings();
   useScrollRestoration(route);
 
+  const inReader = route.name === "verse";
+
   return (
     <>
-      <Header theme={theme} toggleTheme={toggleTheme} onHomeClick={() => navigate({ name: "home" })} language={language} setLanguage={setLanguage} />
+      <Header
+        theme={theme}
+        toggleTheme={toggleTheme}
+        onHomeClick={() => navigate({ name: "home" })}
+        language={language}
+        setLanguage={setLanguage}
+        // iOS-style contextual leading item: absent on Home, and on a chapter it
+        // is labelled with where it goes back to.
+        back={inReader ? { label: "Chapters", onClick: () => navigate({ name: "home" }) } : undefined}
+        title={inReader ? (getChapterMeta(route.chapter)?.name ?? "Bhagavad Gita") : "Bhagavad Gita"}
+      />
 
-      <main className="app-main">{route.name === "verse" && getChapterMeta(route.chapter) ? <Reader chapter={route.chapter} verse={route.verse} /> : <Home />}</main>
+      <main className="app-main" data-reader={inReader ? "true" : "false"}>
+        <Screen route={route} />
+      </main>
+
+      <TabBar route={route} />
     </>
   );
 };

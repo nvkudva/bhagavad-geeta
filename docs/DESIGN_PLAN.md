@@ -180,311 +180,243 @@ vivid for contrast"). Coral on the dark teal is worse, not better.
 
 ## 2. Design system
 
+> Revised after the first direction was rejected as "not modern". The warm-paper /
+> Literata / saffron system described in the original draft is gone; §2.1–§2.4 below
+> describe what `src/index.css` actually ships. §1's critique still stands — it is the
+> reason the accent is disciplined and the scripture is neutral — only the answer changed.
+
 ### 2.1 Design direction
 
-**Palette concept: ink, paper, and a single saffron.** Paper is a warm near-white; ink is a
-warm near-black. One accent — a deep saffron/marigold — used sparingly for the active tab,
-the bookmark fill, and the selected verse marker. Nothing else is coloured. The scripture
-itself is ink, at the highest contrast on the screen.
+**Dark-first premium.** Reference feel: Arc, Raycast, Linear. A near-black ground, one
+violet accent, and scripture set in pure white so the text is the lit object on an
+otherwise unlit page. Dark is the *primary* theme and the default for a first-time
+visitor whatever the OS reports; light is secondary and fully correct, not an
+afterthought.
 
-Saffron is chosen because it is the colour actually associated with the material, and
-because at the specified values it passes 4.5:1 on both grounds, which the current coral
-does not.
+Two rules keep it from drifting:
 
-### 2.2 Typography: font stacks per script
+1. **The accent is chrome, never content.** `--accent` is allowed on the active tab, the
+   chapter badge, the verse marker, focus rings and hairline rules. It is never used for
+   body text, never for scripture, and never as a gradient.
+2. **Scripture is `--ink-1` at full contrast.** 19.8:1 in dark, 19.8:1 in light. It is the
+   only thing on the screen at that weight of attention.
 
-Four faces, each doing one job. All loaded self-hosted or via Google Fonts with explicit
-`unicode-range` so a Latin-only screen never downloads Kannada.
+Violet rather than saffron because saffron on a near-black ground reads as a warning
+colour; `#A78BFA` is the one hue that stays calm at 7.3:1 on `#0A0A0B` and still has a
+light-theme sibling (`#7C3AED`, 5.7:1 on white) that is recognisably the same accent.
 
-| Role | Family | Why |
-| --- | --- | --- |
-| UI / Latin chrome | `-apple-system` → `SF Pro` on Apple, `Inter var` elsewhere | Native metric match; UI must look like the OS, not like a brand |
-| Latin reading (translation, commentary, transliteration) | **Literata** (Google Fonts, variable 200–900 + italic) | Designed by TypeTogether for Google Play Books; a screen-first text serif with real italics for the transliteration, and it carries the full Latin Extended + combining diacritics IAST needs (ā ī ū ṛ ṝ ḷ ṃ ḥ ṅ ñ ṭ ḍ ṇ ś ṣ) |
-| Devanagari scripture | **Adishila** or **Noto Serif Devanagari** (Google Fonts, variable wght) | Serif Devanagari with proper shirorekha weight; matches Literata's colour on the page. Noto Serif Devanagari is the safe default — it is complete, variable, and hinted |
-| Kannada | **Noto Serif Kannada** (Google Fonts, variable wght 100–900) | Complete conjunct coverage; the serif cut sits with Literata. `Baloo Tamma 2` is the sans alternative if a lighter feel is wanted |
-| Telugu | **Noto Serif Telugu** (Google Fonts, variable wght 100–900) | Same rationale; correct vertical extents for the stacked vowel signs |
+### 2.2 Typography: one sans across every script
 
-**Loading.** Remove the `@import` on `index.css:1`. In `index.html` `<head>`, before the
-stylesheet:
+**The scripture is sans, not serif.** On a near-black ground a text serif's hairlines
+bloom and thin — the exact stroke contrast that makes Literata comfortable on warm paper
+is what breaks it at 24px on `#0A0A0B`. Inter and the Noto Sans Indic faces hold an even
+stroke at every optical size, and using one voice for UI, translation and scripture is
+what separates a modern reading app from a book pastiche. Four families, five files.
 
-```html
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-  rel="stylesheet"
-  href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300..700;1,7..72,300..600&display=swap"
-/>
-```
+| Role | Family | Licence | Why |
+| --- | --- | --- | --- |
+| UI chrome, translation, commentary, IAST transliteration | **Inter** (variable, wght 400–700) | SIL OFL 1.1 | Drawn for screens at UI sizes, carries the full Latin Extended Additional block IAST needs (ā ī ū ṛ ṝ ḷ ṃ ḥ ṅ ñ ṭ ḍ ṇ ś ṣ), and does not read as a brand face |
+| Devanagari scripture | **Noto Sans Devanagari** (variable wght) | SIL OFL 1.1 | Even shirorekha weight; conjuncts stay legible at 24px reversed out on black, which the serif cut does not |
+| Kannada | **Noto Sans Kannada** (variable wght) | SIL OFL 1.1 | Complete conjunct coverage, correct vertical extents |
+| Telugu | **Noto Sans Telugu** (variable wght) | SIL OFL 1.1 | Same; the stacked vowel signs need the taller metrics |
 
-The three Indic faces are loaded *conditionally* by `<link>` injected when the language is
-selected, or — simpler and preferred — declared as separate stylesheet links with
-`media="print" onload="this.media='all'"` so they never block first paint:
+There is **no italic**. Inter's italic is a separate file, and the one place the old design
+used italic — the transliteration — is now set apart by colour (`--ink-2`) and a hair of
+positive tracking instead. Never let the browser synthesise one.
 
-```html
-<link rel="stylesheet" media="print" onload="this.media='all'"
-  href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400..700&display=swap" />
-<link rel="stylesheet" media="print" onload="this.media='all'"
-  href="https://fonts.googleapis.com/css2?family=Noto+Serif+Kannada:wght@400..700&display=swap" />
-<link rel="stylesheet" media="print" onload="this.media='all'"
-  href="https://fonts.googleapis.com/css2?family=Noto+Serif+Telugu:wght@400..700&display=swap" />
-```
+**Loading — self-hosted only.** No `@import`, no `fonts.googleapis.com`, no CDN: the
+offline guarantee requires every byte of the shell to be servable from our own origin.
+Five `woff2` files under `public/fonts` (458 KB total), each declared with an explicit
+`unicode-range` so a Telugu reader never downloads Kannada:
 
-Devanagari always loads (the Sanskrit `verse.text` is always present); Kannada and Telugu
-can be gated on `language`.
+| File | Bytes | unicode-range covers | Precached? |
+| --- | --- | --- | --- |
+| `inter-latin.woff2` | 48 KB | Basic Latin | yes — preloaded, needed for first paint |
+| `noto-sans-devanagari.woff2` | 121 KB | Devanagari | yes — preloaded, `verse.text` is Sanskrit on every verse |
+| `inter-latin-ext.woff2` | 85 KB | Latin Extended (the IAST diacritics) | no — runtime `CacheFirst` |
+| `noto-sans-kannada.woff2` | 91 KB | Kannada | no — runtime `CacheFirst` |
+| `noto-sans-telugu.woff2` | 124 KB | Telugu | no — runtime `CacheFirst` |
+
+The two preloaded faces are the only ones in the workbox precache manifest; the other
+three are held out by `globIgnores` in `vite.config.ts` and cached on first use by the
+`/fonts/*.woff2` `CacheFirst` rule. Precaching all five would pull 458 KB on a first
+visit and defeat the point of the `unicode-range` split.
 
 **Per-script line-height is mandatory.** Indic scripts stack marks above and below the
-baseline. A `line-height` that is comfortable for Latin clips them. Apply
-`--lh-indic: 1.9` to any element rendering Devanagari/Kannada/Telugu, versus `--lh-body: 1.65`
-for Latin. Set it via a `[lang]` attribute selector — and set `lang` on the elements in
-`VerseViewer.tsx` (`lang="sa"`, `lang="kn"`, `lang="te"`) which is also the correct thing
-to do for screen readers and hyphenation.
+baseline; a line-height comfortable for Latin clips them. `--lh-indic: 1.9` on anything
+rendering Devanagari/Kannada/Telugu, against `--lh-body: 1.6` for Latin.
 
-### 2.3 Token set — paste this over the top of `src/index.css`
+**Two cascade traps, both live.** The per-script rules live at the *end* of
+`src/index.css`, not in the base block, because they match on one attribute — a component
+rule such as `.verse-section-content { font-family: … }` has equal specificity and would
+otherwise win on source order, dropping a Kannada translation into whatever font the OS
+happens to have. And they are written as `[lang="sa"]`, not `:lang(sa)`: BCP-47 prefix
+matching means `:lang(sa)` also matches `lang="sa-Latn"` and would drag the Latin
+transliteration into the Devanagari face.
+
+### 2.3 Token set — as shipped in `src/index.css`
+
+Dark lives on bare `:root`; only `[data-theme="light"]` overrides it. That ordering is the
+whole "dark-first" claim in one line — a stylesheet that fails to load, or a token that is
+never overridden, falls back to dark.
 
 ```css
 :root {
   /* ---------- Font stacks ---------- */
   --font-ui:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text",
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-read:
-    "Literata", ui-serif, Georgia, "Times New Roman", serif;
-  --font-deva:
-    "Noto Serif Devanagari", "Devanagari Sangam MN", "Nirmala UI", serif;
-  --font-knda:
-    "Noto Serif Kannada", "Kannada Sangam MN", "Nirmala UI", serif;
-  --font-telu:
-    "Noto Serif Telugu", "Telugu Sangam MN", "Nirmala UI", serif;
+    "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-read: var(--font-ui);        /* scripture + long-form share the UI face */
+  --font-deva: "Noto Sans Devanagari", "Devanagari Sangam MN", "Nirmala UI", sans-serif;
+  --font-knda: "Noto Sans Kannada", "Kannada Sangam MN", "Nirmala UI", sans-serif;
+  --font-telu: "Noto Sans Telugu", "Telugu Sangam MN", "Nirmala UI", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 
-  /* ---------- Type scale (major-third-ish, capped, iOS-named) ---------- */
-  /* Base is 17px = iOS body. All sizes are rem off a 16px root.          */
+  /* ---------- Type scale (iOS-named, rem off a 16px root) ---------- */
   --fs-caption2: 0.6875rem; /* 11px */
   --fs-caption1: 0.75rem;   /* 12px */
   --fs-footnote: 0.8125rem; /* 13px */
   --fs-subhead:  0.9375rem; /* 15px */
   --fs-callout:  1rem;      /* 16px */
   --fs-body:     1.0625rem; /* 17px  <- default reading size */
-  --fs-headline: 1.0625rem; /* 17px semibold */
-  --fs-title3:   1.25rem;   /* 20px */
-  --fs-title2:   1.375rem;  /* 22px */
-  --fs-title1:   1.75rem;   /* 28px */
-  --fs-large:    2.125rem;  /* 34px  <- iOS large title */
+  --fs-headline: 1.0625rem;
+  --fs-title3:   1.25rem;
+  --fs-title2:   1.375rem;
+  --fs-title1:   1.75rem;
+  --fs-large:    2.125rem;  /* 34px  <- large title */
 
-  /* Scripture is its own ramp, driven by the reading-size control (§3.10) */
-  --reading-scale: 1;                                  /* 0.85 … 1.35 */
-  --fs-verse:   calc(1.5rem   * var(--reading-scale)); /* 24px @ 1.0 */
-  --fs-translit: calc(1.0625rem * var(--reading-scale));
-  --fs-trans:   calc(1.125rem * var(--reading-scale)); /* 18px @ 1.0 */
-  --fs-comment: calc(1.0625rem * var(--reading-scale));
+  /* Scripture ramp, driven by the reading-size control (§3.10) */
+  --reading-scale: 1;                                /* 0.85 … 1.35 */
+  --fs-verse:    calc(1.5rem   * var(--reading-scale)); /* 24px @ 1.0 */
+  --fs-translit: calc(1rem     * var(--reading-scale));
+  --fs-trans:    calc(1.125rem * var(--reading-scale));
+  --fs-comment:  calc(1.0625rem * var(--reading-scale));
 
   /* ---------- Line heights ---------- */
   --lh-tight: 1.2;
   --lh-snug: 1.35;
-  --lh-body: 1.65;
-  --lh-read: 1.72;
-  --lh-indic: 1.95;   /* required: marks above + below baseline */
-  --lh-verse: 2.05;   /* scripture, generous */
+  --lh-body: 1.6;
+  --lh-read: 1.7;
+  --lh-indic: 1.9;   /* required: marks above + below baseline */
+  --lh-verse: 2;
 
-  /* ---------- Tracking ---------- */
-  --tr-large: -0.022em;
-  --tr-title: -0.015em;
-  --tr-body: -0.005em;
-  --tr-caps: 0.06em;
+  /* ---------- Tracking (Inter runs wide; display sizes need negative) ------- */
+  --tr-large: -0.03em;
+  --tr-title: -0.018em;
+  --tr-body: -0.01em;
+  --tr-caps: 0.08em;
 
-  /* ---------- Weights ---------- */
-  --fw-regular: 400;
-  --fw-medium: 500;
-  --fw-semibold: 600;
-  --fw-bold: 700;
-
-  /* ---------- Spacing (4px base, iOS rhythm) ---------- */
-  --sp-0: 0;
-  --sp-1: 0.25rem;  /* 4  */
-  --sp-2: 0.5rem;   /* 8  */
-  --sp-3: 0.75rem;  /* 12 */
-  --sp-4: 1rem;     /* 16 <- standard iOS margin */
-  --sp-5: 1.25rem;  /* 20 */
-  --sp-6: 1.5rem;   /* 24 */
-  --sp-8: 2rem;     /* 32 */
-  --sp-10: 2.5rem;  /* 40 */
-  --sp-12: 3rem;    /* 48 */
-  --sp-16: 4rem;    /* 64 */
-  --gutter: var(--sp-4);
-  --measure: 34rem; /* ~66ch of Literata at 17px */
-
-  /* ---------- Radii ---------- */
-  --r-xs: 6px;
-  --r-sm: 10px;
-  --r-md: 14px;   /* iOS grouped-list cell */
-  --r-lg: 20px;   /* cards */
-  --r-xl: 28px;   /* sheets */
-  --r-pill: 999px;
-
-  /* ---------- Hit targets ---------- */
+  /* ---------- Weights / spacing / radii / targets / motion ------------------ */
+  /* unchanged from the original draft, except radii, which tightened:          */
+  --r-xs: 6px;  --r-sm: 8px;  --r-md: 12px;
+  --r-lg: 16px; --r-xl: 24px; --r-pill: 999px;
   --tap-min: 44px;
-  --tap-comfortable: 48px;
 
-  /* ---------- Motion ---------- */
-  --ease-out-ios: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --ease-in-out-ios: cubic-bezier(0.42, 0, 0.58, 1);
-  --spring-gentle: linear(
-    0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 18.9%, 0.721 25.3%, 0.849 31.5%,
-    0.937 38.1%, 0.968 41.8%, 0.991 45.7%, 1.006 50.1%, 1.015 60%, 1.006 80%, 1
-  );
-  --spring-snappy: linear(
-    0, 0.045, 0.19 6%, 0.62 15%, 0.86 22%, 0.98 28%, 1.04 34%, 1.05 42%, 1.01 60%, 1
-  );
-  --dur-instant: 100ms;
-  --dur-fast: 180ms;
-  --dur-base: 280ms;
-  --dur-slow: 400ms;
-  --dur-sheet: 480ms;
-
-  /* ---------- Light appearance ---------- */
-  color-scheme: light;
-
-  --paper:        #FBF9F5;  /* app background — warm, not white */
-  --surface-1:    #FFFFFF;  /* cards, list cells */
-  --surface-2:    #F3F0EA;  /* recessed wells, commentary block */
-  --surface-3:    #E8E4DB;  /* dividers-as-blocks, skeletons */
-  --separator:    rgba(60, 50, 35, 0.14);
-  --separator-opaque: #E3DED3;
-
-  --ink-1:        #1C1A17;  /* primary text, scripture */
-  --ink-2:        #55504A;  /* secondary */
-  --ink-3:        #8A8379;  /* tertiary, captions */
-  --ink-4:        #B6AEA2;  /* quaternary, disabled */
-
-  --accent:       #B5651D;  /* saffron/marigold, 4.9:1 on --paper */
-  --accent-hi:    #D4832E;  /* hover / large-text only */
-  --accent-soft:  rgba(181, 101, 29, 0.10);
-  --accent-line:  rgba(181, 101, 29, 0.28);
-  --on-accent:    #FFFFFF;
-
-  --danger:       #C0392B;
-  --success:      #2E7D52;
-
-  /* Materials — reserved for floating chrome ONLY */
-  --mat-chrome:   rgba(251, 249, 245, 0.72);
-  --mat-blur:     saturate(180%) blur(20px);
-  --mat-border:   rgba(60, 50, 35, 0.08);
-
-  /* Elevation — soft, warm-tinted, never black */
-  --el-0: none;
-  --el-1: 0 1px 2px rgba(50, 40, 25, 0.05);
-  --el-2: 0 2px 6px rgba(50, 40, 25, 0.06), 0 1px 2px rgba(50, 40, 25, 0.04);
-  --el-3: 0 8px 24px rgba(50, 40, 25, 0.09), 0 2px 6px rgba(50, 40, 25, 0.05);
-  --el-sheet: 0 -8px 40px rgba(30, 24, 14, 0.16);
-
-  /* Safe areas — always read through these, never env() at use site */
-  --sa-top: env(safe-area-inset-top, 0px);
-  --sa-right: env(safe-area-inset-right, 0px);
-  --sa-bottom: env(safe-area-inset-bottom, 0px);
-  --sa-left: env(safe-area-inset-left, 0px);
-
-  --nav-h: 44px;   /* iOS nav bar */
-  --tab-h: 49px;   /* iOS tab bar */
-  --large-title-h: 52px;
-}
-
-[data-theme="dark"] {
+  /* ---------- Dark appearance — the default ---------- */
   color-scheme: dark;
 
-  --paper:        #131211;
-  --surface-1:    #1D1B19;
-  --surface-2:    #242220;
-  --surface-3:    #2E2B28;
-  --separator:    rgba(255, 248, 235, 0.12);
-  --separator-opaque: #33302C;
+  --paper:            #0A0A0B;
+  --surface-1:        #141416;  /* cards, sheets, the reader's section panels */
+  --surface-2:        #1C1C1F;  /* pressed / hovered state of a surface-1 thing */
+  --surface-3:        #26262A;  /* the highest step; selected rows */
+  --separator:        rgba(255, 255, 255, 0.09);
+  --separator-opaque: #26262A;
 
-  --ink-1:        #F2EFE9;  /* not #fff — avoids halation */
-  --ink-2:        #B9B3AA;
-  --ink-3:        #857F76;
-  --ink-4:        #5A554E;
+  --ink-1: #FFFFFF;  /* 19.8:1 on paper, 18.4:1 on surface-1 — scripture, titles */
+  --ink-2: #A1A1AA;  /*  7.7:1 / 7.2:1 — translation, commentary, body */
+  --ink-3: #8B8B94;  /*  5.9:1 / 5.5:1 — labels, metadata, inactive tabs */
+  --ink-4: #63636B;  /*  3.3:1 / 3.1:1 — NON-TEXT ONLY: empty-state icons, scrollbar */
 
-  --accent:       #E3A24A;  /* lifted + desaturated for dark, 8.1:1 on --paper */
-  --accent-hi:    #F0B463;
-  --accent-soft:  rgba(227, 162, 74, 0.14);
-  --accent-line:  rgba(227, 162, 74, 0.32);
-  --on-accent:    #1A1613;
+  --accent:      #A78BFA;  /* 7.3:1 on paper, 6.8:1 on surface-1 */
+  --accent-hi:   #C4B5FD;
+  --accent-soft: rgba(167, 139, 250, 0.16);
+  --accent-line: rgba(167, 139, 250, 0.35);
+  --on-accent:   #0A0A0B;
 
-  --danger:       #E2685A;
-  --success:      #5BB98B;
+  --danger: #F87171;
+  --success: #4ADE80;
 
-  --mat-chrome:   rgba(19, 18, 17, 0.72);
-  --mat-border:   rgba(255, 248, 235, 0.10);
+  --mat-chrome: rgba(10, 10, 11, 0.72);   /* floating chrome ONLY */
+  --mat-blur: saturate(180%) blur(20px);
+  --mat-border: rgba(255, 255, 255, 0.08);
 
-  --el-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --el-2: 0 2px 8px rgba(0, 0, 0, 0.45);
-  --el-3: 0 8px 28px rgba(0, 0, 0, 0.55);
-  --el-sheet: 0 -8px 40px rgba(0, 0, 0, 0.6);
+  /* On a near-black ground a drop shadow is invisible. Separation comes from the
+     surface step plus a hairline; the shadow only anchors what genuinely floats. */
+  --el-0: none;
+  --el-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --el-2: 0 2px 8px rgba(0, 0, 0, 0.55);
+  --el-3: 0 12px 32px rgba(0, 0, 0, 0.65);
+  --el-sheet: 0 -8px 40px rgba(0, 0, 0, 0.7);
+}
+
+/* ---------- Light appearance — secondary, and fully correct ---------- */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --paper:            #FFFFFF;
+  --surface-1:        #F4F4F5;
+  --surface-2:        #EBEBEE;
+  --surface-3:        #E2E2E6;
+  --separator:        rgba(10, 10, 11, 0.10);
+  --separator-opaque: #E2E2E6;
+
+  --ink-1: #0A0A0B;  /* 19.8:1 / 18.0:1 */
+  --ink-2: #46464F;  /*  9.0:1 /  8.2:1 */
+  --ink-3: #62626B;  /*  6.2:1 /  5.6:1 */
+  --ink-4: #85858E;  /*  3.6:1 /  3.3:1 — non-text only */
+
+  --accent:      #7C3AED;  /* 5.7:1 on paper, 5.2:1 on surface-1 */
+  --accent-hi:   #6D28D9;
+  --accent-soft: rgba(124, 58, 237, 0.07);  /* 0.10 puts the badge at 4.49:1 */
+  --accent-line: rgba(124, 58, 237, 0.28);
+  --on-accent:   #FFFFFF;
+
+  --danger: #DC2626;
+  --success: #15803D;
+
+  --mat-chrome: rgba(255, 255, 255, 0.72);
+  --mat-border: rgba(10, 10, 11, 0.07);
+
+  --el-1: 0 1px 2px rgba(10, 10, 11, 0.05);
+  --el-2: 0 2px 8px rgba(10, 10, 11, 0.06), 0 1px 2px rgba(10, 10, 11, 0.04);
+  --el-3: 0 12px 32px rgba(10, 10, 11, 0.10), 0 2px 6px rgba(10, 10, 11, 0.05);
+  --el-sheet: 0 -8px 40px rgba(10, 10, 11, 0.16);
 }
 ```
+
+**Contrast contract.** Every ink level except `--ink-4` clears 4.5:1 against both `--paper`
+and `--surface-1` in both themes; `--ink-4` clears 3:1 and is reserved for icons and
+disabled chrome. A disabled `.btn` uses `--ink-3`, not `--ink-4` — WCAG exempts disabled
+controls, but nothing in a scripture app should be unreadable. Verified by walking the
+live DOM across Home, the reader in all three scripts, and the three placeholder screens
+in both themes: 0 failures.
 
 ### 2.4 Base rules that replace the current globals
 
-```css
-* { margin: 0; padding: 0; box-sizing: border-box; }
+Unchanged from the original draft except for the four points below; the `*`, `html`,
+`body`, selection, reduced-motion and standalone blocks are as written there.
 
-html {
-  -webkit-text-size-adjust: 100%;      /* stop iOS auto-inflating text in landscape */
-  overscroll-behavior-y: none;         /* kill Chrome pull-to-refresh in standalone */
-}
+- `body` sets `background: var(--paper)` — a flat colour, never a gradient — and
+  `font-synthesis-weight: none`.
+- The per-script block moves to the **end** of the stylesheet and uses attribute
+  selectors, for the two cascade reasons given in §2.2.
+- `@media (prefers-contrast: more)` now raises `--ink-2`/`--ink-3`/`--ink-4` and the
+  separator on bare `:root` (dark) and on `[data-theme="light"]`.
+- Hover effects stay inside `@media (hover: hover) and (pointer: fine)`.
 
-body {
-  font-family: var(--font-ui);
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-  letter-spacing: var(--tr-body);
-  background: var(--paper);            /* flat colour, NOT a gradient */
-  color: var(--ink-1);
-  min-height: 100dvh;                  /* dvh, not vh — iOS URL-bar collapse */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-synthesis-weight: none;
-}
+**Dark-first is not only CSS.** Three non-CSS places have to agree, or a first-time
+visitor gets a white flash before the app paints:
 
-/* No tap flash, anywhere. This one line does the most for native feel. */
-* { -webkit-tap-highlight-color: transparent; }
-
-button, a, [role="button"] {
-  -webkit-touch-callout: none;
-  touch-action: manipulation;          /* removes the 300ms dbl-tap-zoom delay */
-  user-select: none;
-}
-
-/* Text the user should be able to select and share stays selectable */
-.verse-text, .verse-translit, .verse-translation, .verse-commentary {
-  user-select: text;
-  -webkit-user-select: text;
-  -webkit-touch-callout: default;
-}
-
-/* Per-script typography, driven by lang attributes set in VerseViewer */
-:lang(sa), [lang="hi"], .script-deva {
-  font-family: var(--font-deva);
-  line-height: var(--lh-indic);
-  font-feature-settings: "kern" 1;
-}
-:lang(kn), .script-knda { font-family: var(--font-knda); line-height: var(--lh-indic); }
-:lang(te), .script-telu { font-family: var(--font-telu); line-height: var(--lh-indic); }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-@media (prefers-contrast: more) {
-  :root { --ink-2: #3A362F; --ink-3: #5A554C; --separator: rgba(60,50,35,0.30); }
-  [data-theme="dark"] { --ink-2: #D8D2C8; --ink-3: #A9A296; }
-}
-```
+1. The pre-paint script in `index.html` resolves an unset preference to `dark` — it no
+   longer consults `prefers-color-scheme`. Only an explicitly stored `"light"` selects
+   light.
+2. `<meta name="theme-color">` is a single `#0A0A0B` with no `prefers-color-scheme` split;
+   the pre-paint script and `SettingsProvider.toggleTheme` rewrite it to `#FFFFFF` when
+   the stored choice is light. A media-split meta would paint white chrome around a dark
+   app on a light OS.
+3. The PWA manifest's `theme_color` and `background_color` in `vite.config.ts` are
+   `#0a0a0b`. They are the splash screen and the task-switcher card, i.e. the genuine
+   first paint for an installed user.
 
 Delete outright: `--bg-gradient`, `--accent-gradient`, `--glass-*`, `--card-hover-translate`,
 `--transition-speed`, `.text-gradient`, `.glass-panel::before`, `.glass-panel:hover::before`,
