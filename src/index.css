@@ -406,6 +406,14 @@
      title, the floating tab bar it must clear, and the field's own height. */
   --search-rise: max(0px, calc((100dvh - var(--nav-total) - var(--large-title-h) - var(--tabbar-h) - var(--float-gap) - var(--sa-bottom) - var(--sp-6) - var(--sp-4) - var(--tap-comfortable)) / 2));
   --sidebar-w: 17rem;
+
+  /* Each swatch previews a palette other than the active one, so these cannot
+     resolve through the palette tokens — all four grounds have to be readable
+     at once, whichever palette is on. */
+  --swatch-parijata: linear-gradient(145deg, #d61a4a, #0b0709);
+  --swatch-kumkum: linear-gradient(145deg, #db1e3a, #0a0406);
+  --swatch-saffron: linear-gradient(145deg, #e27410, #090603);
+  --swatch-nila: linear-gradient(145deg, #3042ba, #04060d);
 }
 
 /* ---------- Light appearance — secondary, and fully correct ---------- */
@@ -492,6 +500,11 @@
   --metal-oxblood-edge: linear-gradient(152deg, rgba(255, 255, 255, 0.95), rgba(161, 29, 51, 0.16) 44%, rgba(38, 16, 54, 0.14));
   --metal-brass-face: linear-gradient(152deg, rgba(168, 122, 30, 0.16), rgba(255, 255, 255, 0.52) 34%, rgba(226, 190, 110, 0.2) 52%, rgba(255, 255, 255, 0.46) 70%, rgba(168, 122, 30, 0.14));
   --metal-brass-edge: linear-gradient(152deg, rgba(255, 255, 255, 0.95), rgba(168, 122, 30, 0.2) 42%, rgba(38, 16, 54, 0.14));
+
+  --swatch-parijata: linear-gradient(145deg, #e278c4, #f3ebf9);
+  --swatch-kumkum: linear-gradient(145deg, #f07860, #fbeee9);
+  --swatch-saffron: linear-gradient(145deg, #f8b042, #fdf3e3);
+  --swatch-nila: linear-gradient(145deg, #7892ee, #ecf0fc);
 }
 
 /* ---------- Palettes — the ground's hue, on both appearances. Each block
@@ -1301,7 +1314,9 @@ body::before {
   font-family: inherit;
   font-size: var(--fs-footnote);
   cursor: pointer;
-  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+  transition:
+    color var(--dur-fast) var(--ease-out-ios),
+    border-color var(--dur-fast) var(--ease-out-ios);
 }
 
 .palette-pill[aria-checked="true"] {
@@ -1318,35 +1333,19 @@ body::before {
   flex: none;
   border-radius: 50%;
   border: 0.5px solid var(--separator);
-  background: linear-gradient(145deg, #d61a4a, #0b0709);
+  background: var(--swatch-parijata);
 }
 
 .palette-swatch[data-palette-swatch="kumkum"] {
-  background: linear-gradient(145deg, #db1e3a, #0a0406);
+  background: var(--swatch-kumkum);
 }
 
 .palette-swatch[data-palette-swatch="saffron"] {
-  background: linear-gradient(145deg, #e27410, #090603);
+  background: var(--swatch-saffron);
 }
 
 .palette-swatch[data-palette-swatch="nila"] {
-  background: linear-gradient(145deg, #3042ba, #04060d);
-}
-
-[data-theme="light"] .palette-swatch {
-  background: linear-gradient(145deg, #e278c4, #f3ebf9);
-}
-
-[data-theme="light"] .palette-swatch[data-palette-swatch="kumkum"] {
-  background: linear-gradient(145deg, #f07860, #fbeee9);
-}
-
-[data-theme="light"] .palette-swatch[data-palette-swatch="saffron"] {
-  background: linear-gradient(145deg, #f8b042, #fdf3e3);
-}
-
-[data-theme="light"] .palette-swatch[data-palette-swatch="nila"] {
-  background: linear-gradient(145deg, #7892ee, #ecf0fc);
+  background: var(--swatch-nila);
 }
 
 .settings-row-label {
