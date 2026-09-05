@@ -41,6 +41,10 @@
           // verse. "literata" is the default and needs no attribute.
           var f = localStorage.getItem("gita-font");
           if (f && f !== "literata" && /^[a-z]+$/.test(f)) document.documentElement.dataset.font = f;
+          // And the palette, which repaints the whole ground. "maroon" is the
+          // default and needs no attribute.
+          var p = localStorage.getItem("gita-palette");
+          if (p && p !== "maroon" && /^[a-z]+$/.test(p)) document.documentElement.dataset.palette = p;
         } catch (e) {
           document.documentElement.dataset.theme = "dark";
         }

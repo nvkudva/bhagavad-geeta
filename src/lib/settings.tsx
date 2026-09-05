@@ -14,6 +14,14 @@ type Theme = "light" | "dark";
  *  index.css override font-family for those scripts whatever this says. */
 export type FontKey = "literata" | "source" | "newsreader" | "faustina" | "system";
 
+/** The ground's hue. "maroon" is the built-in and carries no attribute; the
+ *  rest are the [data-palette] blocks in index.css, each with a light half. */
+export type PaletteKey = "maroon" | "kumkum" | "saffron" | "nila";
+
+export const PALETTE_KEYS: readonly PaletteKey[] = ["maroon", "kumkum", "saffron", "nila"];
+
+export const PALETTE_LABELS: Record<PaletteKey, string> = { maroon: "Maroon", kumkum: "Kumkum", saffron: "Saffron", nila: "Nila" };
+
 export const FONT_KEYS: readonly FontKey[] = ["literata", "source", "newsreader", "faustina", "system"];
 
 export type SectionKey = "text" | "transliteration" | "translation" | "commentary" | "words";
@@ -24,6 +32,8 @@ export const SECTION_KEYS: readonly SectionKey[] = ["text", "transliteration", "
 interface Settings {
   theme: Theme;
   toggleTheme: () => void;
+  palette: PaletteKey;
+  setPalette: (key: PaletteKey) => void;
   language: Language;
   setLanguage: (lang: Language) => void;
   sections: Sections;
@@ -45,6 +55,13 @@ const readTheme = (): Theme => (document.documentElement.dataset.theme === "ligh
 const THEME_COLOR: Record<Theme, string> = { dark: "#0A0A0B", light: "#FFFFFF" };
 const paintThemeColor = (theme: Theme): void => {
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLOR[theme]);
+};
+
+// Applied pre-paint alongside the theme; "maroon" is the default and carries
+// no attribute.
+const readPalette = (): PaletteKey => {
+  const saved = document.documentElement.dataset.palette;
+  return PALETTE_KEYS.includes(saved as PaletteKey) ? (saved as PaletteKey) : "maroon";
 };
 
 // The pre-paint script in index.html has already applied the face, the same way
@@ -93,6 +110,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [language, setLanguageState] = useState<Language>(readLanguage);
   const [sections, setSections] = useState<Sections>(readSections);
   const [font, setFontState] = useState<FontKey>(readFont);
+  const [palette, setPaletteState] = useState<PaletteKey>(readPalette);
   const [readingScale, setReadingScaleState] = useState<number>(readReadingScale);
 
   // Applied here rather than in a pre-paint script: the scale only affects the
@@ -129,13 +147,20 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem("gita-reading-scale", String(scale));
   }, []);
 
+  const setPalette = useCallback((key: PaletteKey) => {
+    setPaletteState(key);
+    if (key === "maroon") delete document.documentElement.dataset.palette;
+    else document.documentElement.dataset.palette = key;
+    localStorage.setItem("gita-palette", key);
+  }, []);
+
   const setFont = useCallback((key: FontKey) => {
     setFontState(key);
     document.documentElement.dataset.font = key;
     localStorage.setItem("gita-font", key);
   }, []);
 
-  const value = useMemo<Settings>(() => ({ theme, toggleTheme, language, setLanguage, sections, toggleSection, font, setFont, readingScale, setReadingScale }), [theme, toggleTheme, language, setLanguage, sections, toggleSection, font, setFont, readingScale, setReadingScale]);
+  const value = useMemo<Settings>(() => ({ theme, toggleTheme, palette, setPalette, language, setLanguage, sections, toggleSection, font, setFont, readingScale, setReadingScale }), [theme, toggleTheme, palette, setPalette, language, setLanguage, sections, toggleSection, font, setFont, readingScale, setReadingScale]);
 
   return <SettingsContext value={value}>{children}</SettingsContext>;
 };

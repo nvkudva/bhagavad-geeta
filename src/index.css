@@ -469,6 +469,91 @@
   --metal-brass-edge: linear-gradient(152deg, rgba(255, 255, 255, 0.95), rgba(168, 122, 30, 0.2) 42%, rgba(38, 16, 54, 0.14));
 }
 
+/* ---------- Palettes — the ground's hue, on both appearances. Each block
+     overrides only what carries colour: the paper, the four bloom slots, and
+     the accent triple. Everything else — inks, glass, materials, metals — is
+     hue-neutral and inherited from the appearance above. No attribute is the
+     maroon default, so a reader who never opens the picker pays nothing. --- */
+
+:root[data-palette="kumkum"] {
+  --paper: #0a0406;
+  --bloom-1: rgba(219, 30, 58, 0.7);
+  --bloom-2: rgba(166, 14, 40, 0.56);
+  --bloom-3: rgba(92, 8, 24, 0.62);
+  --accent: #f4756a;
+  --accent-soft: rgba(244, 117, 106, 0.16);
+  --accent-line: rgba(244, 117, 106, 0.35);
+}
+
+[data-theme="light"][data-palette="kumkum"] {
+  --paper: #fbeee9;
+  --bloom-1: rgba(240, 120, 96, 0.72);
+  --bloom-2: rgba(214, 58, 74, 0.5);
+  --bloom-3: rgba(246, 168, 120, 0.52);
+  --bloom-4: rgba(253, 240, 232, 0.95);
+  /* 5.6:1 on --paper. */
+  --accent: #b12f26;
+  --accent-soft: rgba(177, 47, 38, 0.07);
+  --accent-line: rgba(177, 47, 38, 0.28);
+  --well: rgba(56, 18, 14, 0.085);
+  --well-border: rgba(56, 18, 14, 0.07);
+  --glass-border-hover: rgba(177, 47, 38, 0.22);
+}
+
+:root[data-palette="saffron"] {
+  --paper: #090603;
+  --bloom-1: rgba(226, 116, 16, 0.62);
+  --bloom-2: rgba(178, 74, 6, 0.5);
+  --bloom-3: rgba(94, 42, 4, 0.6);
+  --accent: #f2a24a;
+  --accent-soft: rgba(242, 162, 74, 0.16);
+  --accent-line: rgba(242, 162, 74, 0.35);
+}
+
+[data-theme="light"][data-palette="saffron"] {
+  --paper: #fdf3e3;
+  --bloom-1: rgba(248, 176, 66, 0.72);
+  --bloom-2: rgba(232, 126, 32, 0.52);
+  --bloom-3: rgba(250, 206, 140, 0.55);
+  --bloom-4: rgba(255, 247, 234, 0.95);
+  /* 5.0:1 on --paper. */
+  --accent: #9a5410;
+  --accent-soft: rgba(154, 84, 16, 0.07);
+  --accent-line: rgba(154, 84, 16, 0.28);
+  --well: rgba(56, 34, 8, 0.085);
+  --well-border: rgba(56, 34, 8, 0.07);
+  --glass-border-hover: rgba(154, 84, 16, 0.22);
+}
+
+/* The one cool ground. Its accent is the gilded ramp's own gold, which is why
+   it is the only palette whose accent already matches --selection-verse. */
+:root[data-palette="nila"] {
+  --paper: #04060d;
+  --bloom-1: rgba(48, 66, 186, 0.58);
+  --bloom-2: rgba(84, 44, 168, 0.48);
+  --bloom-3: rgba(14, 20, 74, 0.62);
+  --accent: #e9c273;
+  --accent-soft: rgba(233, 194, 115, 0.16);
+  --accent-line: rgba(233, 194, 115, 0.35);
+}
+
+/* Gold at 3.3:1 on a light ground is not a text colour, so light Nila keeps the
+   indigo and leaves the gold to the blooms. */
+[data-theme="light"][data-palette="nila"] {
+  --paper: #ecf0fc;
+  --bloom-1: rgba(120, 146, 238, 0.7);
+  --bloom-2: rgba(138, 110, 236, 0.52);
+  --bloom-3: rgba(196, 176, 120, 0.42);
+  --bloom-4: rgba(240, 244, 255, 0.95);
+  /* 7.9:1 on --paper. */
+  --accent: #3b3f96;
+  --accent-soft: rgba(59, 63, 150, 0.07);
+  --accent-line: rgba(59, 63, 150, 0.28);
+  --well: rgba(18, 22, 58, 0.085);
+  --well-border: rgba(18, 22, 58, 0.07);
+  --glass-border-hover: rgba(59, 63, 150, 0.22);
+}
+
 /* ------------------------------------------------------------------- base */
 
 * {
@@ -1161,6 +1246,82 @@ body::before {
   right: 0;
   height: 0.5px;
   background: var(--separator);
+}
+
+/* The palette pills need the full row width, so this row stacks instead of
+   putting its control on the trailing edge. */
+.settings-row-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-3);
+  padding-block: var(--sp-3);
+  cursor: default;
+}
+
+.palette-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.palette-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--well);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: var(--fs-footnote);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.palette-pill[aria-checked="true"] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--ink-1);
+}
+
+/* The swatch is the palette's own ground: the hot bloom over the paper it sits
+   on, which is the whole difference between one palette and the next. */
+.palette-swatch {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border-radius: 50%;
+  border: 0.5px solid var(--separator);
+  background: linear-gradient(145deg, #d61a4a, #0b0709);
+}
+
+.palette-swatch[data-palette-swatch="kumkum"] {
+  background: linear-gradient(145deg, #db1e3a, #0a0406);
+}
+
+.palette-swatch[data-palette-swatch="saffron"] {
+  background: linear-gradient(145deg, #e27410, #090603);
+}
+
+.palette-swatch[data-palette-swatch="nila"] {
+  background: linear-gradient(145deg, #3042ba, #04060d);
+}
+
+[data-theme="light"] .palette-swatch {
+  background: linear-gradient(145deg, #e278c4, #f3ebf9);
+}
+
+[data-theme="light"] .palette-swatch[data-palette-swatch="kumkum"] {
+  background: linear-gradient(145deg, #f07860, #fbeee9);
+}
+
+[data-theme="light"] .palette-swatch[data-palette-swatch="saffron"] {
+  background: linear-gradient(145deg, #f8b042, #fdf3e3);
+}
+
+[data-theme="light"] .palette-swatch[data-palette-swatch="nila"] {
+  background: linear-gradient(145deg, #7892ee, #ecf0fc);
 }
 
 .settings-row-label {
