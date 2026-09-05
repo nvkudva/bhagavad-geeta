@@ -364,11 +364,19 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
     if (activeRef.current === targetVerse) return;
     const el = document.getElementById(verseDomId(chapter, targetVerse));
     if (!el) return;
-    // A jump from a link or a cold open is instant; stepping to a neighbour
-    // animates, which is what makes j/k read as movement rather than a cut.
-    const near = activeRef.current !== null && Math.abs(targetVerse - activeRef.current) <= 1;
     activeRef.current = targetVerse;
-    el.scrollIntoView({ block: "start", behavior: near && !reducedMotion() ? "smooth" : "auto" });
+    // Always instant. A smooth scroll across forty verses is a smear the eye
+    // cannot follow, and even across one it lands late enough to read as lag.
+    el.scrollIntoView({ block: "start", behavior: "auto" });
+    // The cut that leaves is softened by a fade rather than by animating the
+    // scroll: the destination resolves in place, so nothing travels. Any fade
+    // still running is cancelled first, so holding J is one steady dissolve
+    // rather than a stack of them beating against each other.
+    const column = columnRef.current;
+    if (column && !reducedMotion()) {
+      for (const running of column.getAnimations()) running.cancel();
+      column.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: "cubic-bezier(0.25, 0.1, 0.25, 1)" });
+    }
   }, [wide, chapter, count, targetVerse, targetNonce]);
 
   // The rail never scrolls, and nothing scrolls it: the whole chapter fits the
