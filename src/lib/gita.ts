@@ -115,7 +115,7 @@ export function loadReader(id: ChapterId): Promise<readonly Verse[]> {
     const byVerse = new Map(rows.map((r) => [r.verse_number, r]));
     const merged = verses.map((v) => {
       const row = byVerse.get(v.verse_number);
-      return row ? { ...v, commentary_english: row.commentary_english, commentary_author: row.commentary_author } : v;
+      return row ? { ...v, ...row } : v;
     });
     memo.set(id, merged);
     withCommentary.add(id);

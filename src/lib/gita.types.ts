@@ -34,6 +34,8 @@ export interface CommentaryRow {
   verse_number: number;
   commentary_english?: string;
   commentary_author?: string;
+  commentary_kannada?: string;
+  commentary_telugu?: string;
 }
 
 export interface ChapterMeta {
