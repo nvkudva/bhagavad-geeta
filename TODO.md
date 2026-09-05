@@ -109,8 +109,11 @@ through this list once.
 - [x] Have a Kannada reader review a stratified sample of 20 Sivananda verses — short and long, early and late chapters. The automated scan proves script and structure, not that the prose reads.
 - [x] Merge Kannada only: `merge-language.mjs --field commentary_kannada --script kannada --machine-flag --dry` first, then for real. Needed a new `--against commentary_english` flag — the guard's absolute script test rejects commentary that legitimately quotes the Upanishads in Devanagari and cites `Cf.XVIII.17`, so it now judges a run against the source and still fails anything the source does not have.
 - [x] Run `fix-corpus` / `check-corpus` / `build-data` / `check-size` as a unit, and confirm the reader shows the "AI translated" credit on the commentary block. check-corpus warnings are byte-identical before and after the merge. check-size fails render-blocking CSS at 9.0/9 KB, which it also does on an unmodified tree — pre-existing, not this change.
-- [ ] DECIDE: 195 "X or X" glosses, 83 Kannada verses and 87 Telugu. Where the English pairs two synonyms — "Guna means attribute or quality", "the senses or the Indriyas", "wavering or vacillation" — both collapse to one word in the target and the sentence stutters: ಗುಣ ಎಂದರೆ ಗುಣ ಅಥವಾ ಗುಣ. Same failure as the ದ್ವೇಶ class, and correcting that spelling turned those into tautologies rather than fixing them. Dropping one side needs grammar, so `check-translation.mjs` reports it and `fix-translation.mjs` deliberately does not touch it. Either regenerate the affected verses with a frontier model or accept the stutter.
 - [ ] Then repeat the whole list for Telugu, which has its own scan output and its own 53-verse untranslated-word list.
+
+## P3, pending
+
+- [ ] DECIDE — regenerate the 83 verses or accept the stutter. Correcting the ದ್ವೇಶ spelling did not fix that defect, it converted it into a tautology. 7.27 now reads ದ್ವೇಷ ಅಥವಾ ದ್ವೇಷವಿದೆ, "dveṣa or dveṣa". Checking for the general form found 195 instances across 83 Kannada and 87 Telugu verses: wherever the English pairs two synonyms, both collapse to one word — "Guna means attribute or quality" becomes ಗುಣ ಎಂದರೆ ಗುಣ ಅಥವಾ ಗುಣ, "the senses or the Indriyas" becomes ಇಂದ್ರಿಯಗಳೊಂದಿಗೆ ಅಥವಾ ಇಂದ್ರಿಯಗಳೊಂದಿಗೆ. Dropping one side takes grammar `fix-translation.mjs` does not have, so `check-translation.mjs` reports it and the fix pass deliberately leaves it alone. Nothing else is blocked on this — the Kannada commentary is merged and shipping either way.
 
 ## Language — still open
 
