@@ -138,6 +138,18 @@ PROTECTED = re.compile(
 )
 
 
+# Five verses hold a placeholder where commentary would go, not commentary:
+# four say Sivananda did not comment on the sloka and 8.5 says "No Commentary."
+# Translated, they read as commentary in the target language while actually
+# being metadata about its absence — so they are skipped, and the reader falls
+# back to the English, which is honest about itself. TODO.md tracks giving them
+# a real empty state.
+PLACEHOLDER = re.compile(
+    r"^\s*(?:no commentary|swami sivananda did not comment|there is no commentary)",
+    re.I,
+)
+
+
 def _is_abbrev(left, spaced):
     m = re.search(r"([A-Za-z.]+)\.$", left)
     if not m:
@@ -291,6 +303,8 @@ def main():
             continue
         src = v.get(args.source_field)
         if not isinstance(src, str) or not src.strip():
+            continue
+        if PLACEHOLDER.match(src):
             continue
         if not args.overwrite:
             tgt = v.get(args.target_field)

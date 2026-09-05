@@ -14,7 +14,8 @@ export interface Verse {
   /** Set on the three verses te.wikisource left absent or unfinished, which
    *  were composed instead and so cannot carry the Wikisource credit. */
   translation_telugu_machine?: boolean; // 3/701
-  commentary_kannada?: string; // 700/701, machine-translated from commentary_english
+  commentary_kannada?: string; // 695/701, machine-translated from commentary_english
+  commentary_telugu?: string; // 695/701, machine-translated from commentary_english
   context_english?: string; // 701/701 — word-by-word glosses
   context_kannada?: string; // 4/701 — the one real remaining coverage gap
   context_telugu?: string; // 22/701

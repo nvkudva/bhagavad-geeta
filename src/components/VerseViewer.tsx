@@ -113,12 +113,20 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
   // Scripture: Devanagari is the source text; kn/te are transliterations of it.
   const scripture = pick(language, verse.text, verse.text_kannada, verse.text_telugu, "sa") as Tagged;
   const translation = pick(language, verse.translation_english, verse.translation_kannada, verse.translation_telugu, "en") as Tagged;
-  /* Kannada prefers the full translated commentary over context_kannada, which
-     covers four verses with a short summary — one register across the chapter
-     beats a better paragraph on 4 of 701. Telugu still has only context_telugu
-     until its own commentary merge lands. */
+  /* Both languages prefer the full translated commentary over context_kannada
+     and context_telugu, which cover 4 and 22 verses with a short summary — one
+     register across the chapter beats a better paragraph on a couple of dozen
+     verses. Five verses hold a placeholder rather than commentary and are
+     deliberately untranslated, so those fall back to the English, which says
+     plainly that Sivananda did not comment. */
   const commentary = sections.commentary
-    ? pick(language, verse.commentary_english, verse.commentary_kannada ?? verse.context_kannada, verse.context_telugu, "en")
+    ? pick(
+        language,
+        verse.commentary_english,
+        verse.commentary_kannada ?? verse.context_kannada,
+        verse.commentary_telugu ?? verse.context_telugu,
+        "en",
+      )
     : null;
   // There is no Kannada or Telugu gloss set, and the panel is worth more in
   // English than it is missing: the list is tagged `lang="en"` and shown in

@@ -36,16 +36,16 @@ const VERSE_KEYS = [
 // Commentary is 29% of the corpus and is never on screen at first paint — the home
 // screen's verse card does not show it at all. It ships as commentary-NN.json, which
 // the reader loads in parallel with its chapter and nothing else loads at all.
-const COMMENTARY_KEYS = ["verse_number", "commentary_english", "commentary_author", "commentary_kannada"];
+const COMMENTARY_KEYS = ["verse_number", "commentary_english", "commentary_author", "commentary_kannada", "commentary_telugu"];
 
-const SOURCE_KEYS = ["translation_telugu_source", "translation_kannada_source", "commentary_kannada_source"];
+const SOURCE_KEYS = ["translation_telugu_source", "translation_kannada_source", "commentary_kannada_source", "commentary_telugu_source"];
 
 // Known, and deliberately not shipped: true on every verse that has the field,
 // so it carries no per-verse information. The reader states the credit once,
 // the way it does for translation_kannada. Contrast translation_telugu_machine,
 // which ships because it is true on only three verses and the reader has to
 // tell those three apart from the other 698.
-const CONSTANT_KEYS = ["commentary_kannada_machine"];
+const CONSTANT_KEYS = ["commentary_kannada_machine", "commentary_telugu_machine"];
 
 const CHAPTER_KEYS = [
   "id",

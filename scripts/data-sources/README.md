@@ -166,8 +166,17 @@ spilling to host memory under WSL instead of raising), and the measured
 throughput table.
 
 **Provenance.** Output is keyed `"chapter.verse"`, the shape
-`merge-language.mjs` consumes. `verses.json` is untouched until the merge, which
-writes `commentary_<lang>_machine: true` and a `_source` string naming the model.
+`merge-language.mjs` consumes. The merge writes `commentary_<lang>_machine: true`
+and a `_source` string naming the model. Both languages are merged: 695 verses
+each.
+
+Five verses are deliberately absent. 6.38, 8.1, 12.3 and 12.18 say "Swami
+Sivananda did not comment on this sloka" and 8.5 says "No Commentary." — these
+are placeholders where commentary would go, and translating them produces a
+sentence that reads as commentary in the target language while being metadata
+about its absence. The runner skips them and the reader falls back to the
+English, which is honest about itself. Giving them a real empty state is
+tracked in `TODO.md`.
 
 ### Quality — what this output is and is not
 
