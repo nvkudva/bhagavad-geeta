@@ -1,133 +1,155 @@
-# Quality bar for generated text
+# Quality of generated text
 
-Everything here is measured on this corpus, not general knowledge about models.
-The numbers are worth trusting; re-measure if the models change.
+All findings below were measured on this corpus. Re-measure if the models change.
 
-## Why this is harder than ordinary translation
+## Why scripture is harder than ordinary translation
 
-Scripture commentary carries a technical vocabulary that must survive
-translation *as itself*. When Śaṅkara glosses *karmaṇy akarma*, rendering it
-with everyday words for "action" and "inactivity" doesn't just lose register —
-it destroys the doctrinal claim the sentence exists to make.
+- Sanskrit technical terms must stay Sanskrit, written in the target script:
+  ಕರ್ಮ / కర్మ, not a everyday word meaning "action".
+- Kannada and Telugu already use these loanwords, so the correct output is
+  usually the Sanskrit term unchanged.
+- Models trained on news and web text do the opposite — they reach for everyday
+  vocabulary, because that is what general translation rewards.
+- When Śaṅkara glosses *karmaṇy akarma*, replacing *karma* with an everyday word
+  removes the point the sentence exists to make.
 
-Kannada and Telugu both take Sanskrit loanwords natively, so the right output is
-usually the Sanskrit term in the target script (ಕರ್ಮ / కర్మ), not a native
-equivalent. A model that "translates well" by general standards will often fail
-exactly here, because everyday vocabulary is what its training data rewards.
+## The three registers
 
-Three registers, and they behave differently:
-
-| register | verses | difficulty |
+| commentator | verses | difficulty |
 |---|---|---|
-| Sivananda — plain devotional prose | 631 | easy |
-| Rāmānuja — Viśiṣṭādvaita bhāṣya | 48 | hard |
-| Śaṅkara — Advaita bhāṣya | 22 | hard |
+| Swami Sivananda — plain devotional prose | 631 | easy |
+| Sri Ramanuja — Viśiṣṭādvaita bhāṣya | 48 | hard |
+| Sri Shankaracharya — Advaita bhāṣya | 22 | hard |
 
-The 70 bhāṣya verses are ~10% of the corpus and carry most of the risk. Budget
-the strongest model for them and don't let an aggregate quality number hide them.
+- The 70 bhāṣya verses are ~10% of the corpus and carry most of the risk.
+- Use the strongest model available for those 70.
+- Do not judge a run by an average score — it hides them.
 
-## Measured failure modes
+## IndicTrans2 (local, free, MIT)
 
-### IndicTrans2 (local, free, MIT)
+**Use for:** plain prose drafts, and back-translation checking.
+**Do not use for:** word-by-word glosses, or bhāṣya.
 
-Good on plain exposition — three of four sampled Sivananda sentences were
-shippable. It fails in two specific ways:
+Good on plain exposition — 3 of 4 sampled Sivananda sentences were shippable.
 
-- **Sanskrit terms are collapsed into everyday vocabulary.** *"the knower of
-  Reality"* → ವಾಸ್ತವವನ್ನು ತಿಳಿದವನು (everyday "reality") instead of ತತ್ತ್ವ;
-  *"inaction in action"* → ಕ್ರಿಯೆ/ನಿಷ್ಕ್ರಿಯತೆ instead of ಕರ್ಮ/ಅಕರ್ಮ;
-  *"organs"* → ಅಂಗಗಳ (body parts) instead of ಇಂದ್ರಿಯ (sense-organs).
-- **Transliteration is unreliable even when it keeps the term.** For *"Dvesha or
-  aversion"* it produced ದ್ವೇಶ ಅಥವಾ ದ್ವೇಷ — misspelled the transliteration
-  (ಶ for ಷ), then translated the gloss to the correctly-spelled word, yielding a
-  misspelled word, "or", and the same word again.
+Two failure modes on prose:
 
-It does sometimes keep terms correctly (ರಾಗ came through fine), which makes the
-failures harder to spot: output that is 90% right and fluent invites trust.
+| English | IndicTrans2 gave | should be |
+|---|---|---|
+| the knower of Reality | ವಾಸ್ತವವನ್ನು ತಿಳಿದವನು | ತತ್ತ್ವ… |
+| inaction in action | ಕ್ರಿಯೆ / ನಿಷ್ಕ್ರಿಯತೆ | ಕರ್ಮ / ಅಕರ್ಮ |
+| organs | ಅಂಗಗಳ (body parts) | ಇಂದ್ರಿಯ (sense-organs) |
+| Dvesha or aversion | ದ್ವೇಶ ಅಥವಾ ದ್ವೇಷ | ದ್ವೇಷ |
 
-**On word-by-word glosses it is markedly worse than on prose**, because
-`context_english`'s `headword—meaning; headword—meaning` shape is nothing like
-the sentences it was trained on. Measured on 1.3 and 1.4: ಪಾಶ್ಯ for *paśhya*
-(should be ಪಶ್ಯ — it transliterated the source's `śh` digraph literally),
-ಮಹಾ-ಇಸು-ಆಸ for *mahā-iṣhu-āsa*, ವಾಯುದಮ್ for *vyūḍhām*, and — the clearest tell —
-the English word "here" rendered phonetically as ಹಿಯರ್ instead of translated.
-Glosses need a human source or a frontier model.
+That last row is the clearest example: it misspelled the transliteration
+(ಶ instead of ಷ), then translated "aversion" to the correctly-spelled word — so
+the output is a misspelled word, "or", then the same word again.
 
-**Verdict: usable as a draft generator for plain prose, not for glosses or
-bhāṣya.** Its unambiguously good use is back-translation checking (see below),
-where a spelling slip costs nothing.
+It sometimes gets terms right (ರಾಗ came through correctly). That inconsistency
+is the danger: output that is 90% right and reads fluently invites trust.
 
-### Smaller/faster frontier models
+**On word-by-word glosses it is much worse**, because `context_english` is a
+`headword—meaning; headword—meaning` chain, not sentences. Measured on 1.3 and 1.4:
 
-On a 3-verse, 3-commentator sample against the production prompt — which
-explicitly instructed "Sanskrit technical vocabulary stays Sanskrit" — a Sonnet
-run substituted ಕ್ರಿಯೆ/క్రియ for ಕರ್ಮ/కర్మ in **8 of 8** occurrences, while an
-Opus run at the same instruction did the inverse: 8 correct, 0 substitutions.
-Sonnet also mis-declined *ātman* (ಆತ್ಮದಲ್ಲಿ, neuter, instead of ಆತ್ಮನಲ್ಲಿ) and
-ignored the instruction to match the published translation's register.
+| source | gave | should be |
+|---|---|---|
+| paśhya | ಪಾಶ್ಯ | ಪಶ್ಯ |
+| mahā-iṣhu-āsa | ಮಹಾ-ಇಸು-ಆಸ | — mangled |
+| vyūḍhām | ವಾಯುದಮ್ | — mangled |
+| here | ಹಿಯರ್ | translated, not spelled phonetically |
 
-Both passed every mechanical check. **Fluency is not the discriminator here and
-automated script checks will not find this** — the vocabulary rule has to be
-verified deliberately.
+## Frontier models
 
-## Two checks that find real defects cheaply
+Tested on 3 verses covering all three commentators, using the production prompt,
+which explicitly said "Sanskrit technical vocabulary stays Sanskrit":
 
-### Cross-script codepoint agreement
+| model | kept the Sanskrit term | substituted an everyday word |
+|---|---|---|
+| Opus | 8 of 8 | 0 |
+| Sonnet | 0 of 8 | 8 |
 
-For scripts sharing a parent, a Sanskrit term should be the same word in both,
-differing only in glyph. Kannada and Telugu satisfy `telugu = kannada - 0x80`
-**exactly** — verified across all 65,838 characters of
-`text_kannada`/`text_telugu` with zero exceptions.
+Sonnet also:
 
-So when generating both languages, any shared Sanskrit term that isn't an exact
-codepoint-offset twin is a defect you can find without reading either language.
-Compare 4-character stems rather than whole words: the two languages inflect the
-same stem differently, so whole-word matching scores near zero even on the
-published human translations. Their measured p5 for stem agreement is ~6%.
+- Mis-declined *ātman* — wrote ಆತ್ಮದಲ್ಲಿ (neuter) instead of ಆತ್ಮನಲ್ಲಿ.
+- Ignored the instruction to match the published translation's register.
 
-This also catches drift between two separately-generated languages: in a
-47-verse gloss run, it found the single verse where one side wrote ಕಿಂ
-(anusvāra) and the other కిమ్ (explicit *ma* + virāma) — both valid, but not
-twins.
+**Both outputs passed every automated check.** Script-purity, length and
+paragraph checks cannot see this class of error. Someone has to verify the
+vocabulary deliberately.
 
-### Back-translation
+## Two cheap checks that catch real defects
 
-Translate the generated text back to English locally and diff against the
-source. This catches omissions, padding and hallucinated clauses — exactly what
-script-purity and length-ratio checks are blind to. IndicTrans2's
-`indic-en` direction is well suited: the 200M distilled model is enough, since
-you're diffing meaning rather than shipping its prose.
+### 1. Cross-script codepoint agreement (Kannada ↔ Telugu only)
 
-Environment that works (versions are load-bearing):
+- A Sanskrit term is the same word in both languages, differing only in script.
+- Telugu codepoint = Kannada codepoint − 0x80, exactly.
+- Verified across all 65,838 characters of `text_kannada` / `text_telugu` — zero
+  exceptions.
+- So any shared Sanskrit term that is not an exact offset pair is a bug, findable
+  without reading either language.
 
-- **Python 3.12** — on 3.14 the `tokenizers` wheel older transformers needs does
-  not exist and the Rust build fails
-- **`transformers==4.46.3`** — newer versions break IndicTrans2's vendored
-  `modeling_indictrans.py` (`past_key_values[0][0].shape[2]` against a cache
-  object whose first layer is `None`). On 4.46.3 leave `use_cache` at its default
-  `True`; forcing `use_cache=False` "works" but measured **32× slower**
-  (2.6 h → 85 h for this corpus).
-- Batch size is **not** monotonic — on Apple silicon, batch 16 → 32 at beam 5 was
-  16× *slower* with near-identical input lengths. Measure, don't assume.
+How to run it:
+
+- Compare 4-character word stems, not whole words. The two languages inflect the
+  same stem differently, so whole-word matching finds almost nothing even on the
+  published human translations.
+- Expect a low match rate. On human translations only about 6% of stems match,
+  so treat anything below that as the failure signal, not a high number as
+  success.
+
+It works. In a 47-verse gloss run it found the one verse where Kannada wrote
+ಕಿಂ (anusvāra) and Telugu wrote కిమ్ (explicit *ma* + virāma) — both valid
+spellings, but not the same word.
+
+### 2. Back-translation
+
+- Translate the generated text back to English locally, then diff against the
+  English source.
+- Catches omissions, padding and invented clauses — none of which script or
+  length checks can see.
+- Use IndicTrans2's `indic-en` direction. The 200M distilled model is enough,
+  because you are comparing meaning, not shipping its prose.
+
+## Environment for the local model
+
+These exact versions are required. Newer ones break.
+
+| requirement | why |
+|---|---|
+| Python 3.12 | On 3.14 the `tokenizers` wheel does not exist and the Rust build fails. |
+| `transformers==4.46.3` | Newer versions break IndicTrans2's vendored `modeling_indictrans.py`. |
+| Leave `use_cache` at `True` | Setting it `False` works but ran **32× slower** — 2.6 h became 85 h. |
+| CUDA 12.8+ on RTX 50xx | Blackwell is `sm_120`; older CUDA builds will not run on it. |
+
+**Batch size is not "bigger is better".** On Apple silicon, raising batch 16 → 32
+at beam 5 was **16× slower**, with near-identical sentence lengths. Always
+measure a new batch size on a small sample before using it.
 
 ## Prompt shape that worked
 
-For per-verse translation, supplying the Sanskrit, the English, and **the
-already-published translation of that same verse in the target language** is what
-lets a model match register — it anchors the voice the new text will sit beside.
-Reinforce with an explicit rule that Sanskrit technical vocabulary stays
-Sanskrit in the target script, and that a shared term must be identical across
-the two languages bar the script.
+Give the model, per verse:
+
+- The Sanskrit śloka.
+- The English translation.
+- **The already-published translation of that same verse in the target
+  language.** This is what lets it match register — the new text sits directly
+  beneath that translation in the reader.
+- The English text to translate.
+
+Then state the rules explicitly:
+
+- Sanskrit technical vocabulary stays Sanskrit, in the target script.
+- A shared term must be identical in both languages apart from the script.
+- Preserve paragraph count and order.
 
 Ask for a fixed JSON shape, and keep the system prompt byte-identical across
 calls so it caches.
 
-## What to do with the result
+## Recording the result
 
-Machine-generated text goes in with provenance, never silently:
-`<field>_source` on every verse and, where the field ships a per-verse flag,
-`<field>_machine: true`. The reader surfaces this — that's why
-`translation_telugu_machine` exists for the three composed Telugu verses.
-
-Consider flagging the 70 bhāṣya verses separately as low-confidence even inside
-an otherwise-accepted language, so a later pass can find them.
+- Write `<field>_source` on every verse, in language a reader would understand.
+- Where the field has a per-verse flag, also write `<field>_machine: true`.
+- `translation_telugu_machine` is the existing example — it marks the three
+  Telugu verses that were composed rather than taken from Wikisource.
+- Consider flagging the 70 bhāṣya verses as low-confidence even inside an
+  accepted language, so a later pass can find them.

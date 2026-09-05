@@ -5,96 +5,107 @@ description: Find and fill gaps in a language the corpus already carries, or rep
 
 # Filling in a language the corpus already has
 
-The corpus is 701 verses and every language is a set of parallel fields across
-all of them. "Kannada is done" is never true as a whole — it is true per field.
-So the work always starts by finding out what is actually missing, and ends by
-proving the merge did what you meant.
+The corpus is 701 verses. Every language is a set of parallel fields across all
+of them, so "Kannada is done" is never true as a whole — only per field.
 
-Adding fields to an existing language needs **no type, UI or font changes** —
-that is what makes this different from onboarding a new one. If you find
-yourself editing `Language` or `@font-face`, you are in `onboard-language`
-territory.
+**This skill needs no type, UI or font changes.** That is the line between it and
+`onboard-language`. If you find yourself editing `Language` in `gita.types.ts` or
+adding an `@font-face`, you are in the wrong skill.
 
-## 1. Scan before deciding
+## 1. Scan first
 
-```
+```bash
 node scripts/data-sources/coverage.mjs            # every field
 node scripts/data-sources/coverage.mjs --gaps     # only incomplete ones
 node scripts/data-sources/coverage.mjs --lang kn
 node scripts/data-sources/coverage.mjs --field context_kannada --ids
 ```
 
-This reads `src/data/verses.json` directly, so it is true of the working tree —
-`manifest.json` carries the same counts but only after a build.
+- Reads `src/data/verses.json` directly, so it reflects the working tree.
+  `manifest.json` has the same counts but only after a build.
+- `--ids` prints the missing verse ids. Feed them to a translation run with
+  `--only`.
 
-**Read the partial fields carefully.** A field present on some verses and absent
-on others is the interesting case, and it has two very different causes: either
-it was never finished, or a merge silently dropped rows. `--ids` prints the
-missing verse ids, which is also what you feed a translation run via `--only`.
+**A partly-filled field has two possible causes. Work out which:**
 
-**Check what the existing entries actually contain before matching them.** The
-field name is not a contract. `context_english` is word-by-word glosses, but the
-four `context_kannada` entries are one-line prose summaries and the twenty-two
-`context_telugu` entries are long multi-commentator bhāṣya notes — three genres
-sharing one field name. Filling such a field means choosing which genre is
-correct and saying so, not blindly matching whatever is there.
+- It was never finished.
+- A merge silently dropped rows.
 
-## 2. Decide what the gap is worth
+## 2. Check what the existing entries actually contain
 
-Not every gap should be filled the same way, and some should be left alone.
+The field name is not a contract. Open a few entries before matching them.
 
-Weigh the reader's experience against the honesty of the fill. A word-by-word
-gloss that is mechanically wrong is worse than an English fallback the reader
-can see is English, because the reader cannot tell the wrong one is wrong.
-`translation_telugu_machine` exists precisely so three composed verses could be
-shown as composed rather than passed off as the Wikisource text.
+The live example — one field name, three different kinds of content:
 
-Also weigh volume. Commentary is 655k characters — roughly 3.4× the word
-glosses — and the registers inside it are not uniform: 631 verses of plain
-Sivananda prose, and 70 of Śaṅkara and Rāmānuja bhāṣya that are far harder and
-carry most of the risk. Splitting by `commentary_author` and treating those 70
-separately is usually the right call.
+| field | entries | what is actually in it |
+|---|---|---|
+| `context_english` | 701 | word-by-word glosses |
+| `context_kannada` | 4 | one-line prose summaries |
+| `context_telugu` | 22 | long multi-commentator bhāṣya notes |
 
-## 3. Produce the text
+So filling `context_kannada` means **choosing** which of these is correct and
+saying so — not blindly matching what is already there.
 
-Use the **translator** skill. It covers the three routes — find a licensed human
-translation, generate with an online model, generate locally with IndicTrans2 —
-and the quality evidence for choosing between them.
+## 3. Decide whether the gap is worth filling
 
-The short version: glosses and bhāṣya need path 1 or 2; plain prose can take
-path 3. All three produce the same `{"chapter.verse": "…"}` shape.
+- A wrong gloss is worse than an English fallback. The reader can see that
+  English is English; they cannot see that a Kannada gloss is wrong.
+- `translation_telugu_machine` exists for exactly this reason — it marks three
+  composed verses as composed rather than passing them off as Wikisource text.
 
-If the target field does not exist yet on any verse, check whether it needs
-plumbing beyond the data. `commentary_kannada` and `commentary_telugu` are the
-live example: commentary is English-only by design and ships as separate
-`commentary-NN.json` files, so a translated commentary also needs new keys in
-`COMMENTARY_KEYS` (`scripts/build-data.mjs:39`) and a merge in
-`src/lib/gita.ts:112-123`. `onboard-language`'s `references/code-touchpoints.md`
-has the map.
+Weigh the volume too:
 
-## 4. Merge, verify, and prove it landed
+| field | source size | notes |
+|---|---|---|
+| `context_english` (glosses) | 192k chars | smaller, higher value per verse |
+| `commentary_english` | 655k chars | 3.4× larger |
 
-The translator skill covers the merge invocation and the pipeline. The one thing
-worth repeating here: **re-run the coverage scan afterwards**, because it is the
-only check that answers the question you actually started with.
+Commentary is not uniform. Split it by `commentary_author`:
 
-```
+- 631 verses of plain Sivananda prose — easier, lower risk.
+- 70 verses of Śaṅkara and Rāmānuja bhāṣya — hard, and where quality usually
+  fails. Treat these separately.
+
+## 4. Produce the text
+
+Use the **translator** skill. It covers all three routes and the evidence for
+choosing between them.
+
+Short version:
+
+- Glosses and bhāṣya → path 1 (human source) or path 2 (online model).
+- Plain prose → path 3 (local IndicTrans2) is acceptable.
+
+**If the target field does not exist on any verse yet, check for plumbing.**
+`commentary_kannada` and `commentary_telugu` are the live case: commentary is
+English-only by design and ships as separate `commentary-NN.json` files, so a
+translated commentary also needs
+
+- a new key in `COMMENTARY_KEYS` (`scripts/build-data.mjs:39`), and
+- a merge in `src/lib/gita.ts:112-123`.
+
+The full map is at
+`.claude/skills/onboard-language/references/code-touchpoints.md`.
+
+## 5. Merge and verify
+
+The translator skill covers the merge command and the pipeline. One thing to add
+here — **re-run the coverage scan afterwards**:
+
+```bash
 node scripts/data-sources/coverage.mjs --field <target_field>
 ```
 
-If the count is not what you expected, the merge dropped rows — `--allow-partial`
-silently permits that, which is what you want for a deliberate backfill and not
-what you want otherwise.
+This is the only check that answers the question you started with. If the count
+is lower than expected, the merge dropped rows — `--allow-partial` permits that
+silently, which is right for a deliberate backfill and wrong otherwise.
 
-Before accepting generated text, spot-check a stratified sample: short and long
-verses, and every commentator if commentary is involved. Mechanical checks prove
-well-formedness, never correctness.
+Then spot-check a stratified sample by hand. Automated checks prove the data is
+well-formed, never that it is correct.
 
-## 5. Commit
+## 6. Commit
 
-`feat(data): …`, matching the existing log. State the provenance in the body —
-which route produced the text, and for a licensed source, the licence and
-attribution. Someone will ask in a year where it came from and the commit is
-where they will look.
-
-Keep data commits separate from any UI change, so they revert independently.
+- Use `feat(data): …`, matching the existing log.
+- State in the body which route produced the text.
+- For a licensed source, name the licence and the attribution.
+- Keep data commits separate from UI commits so they revert independently.

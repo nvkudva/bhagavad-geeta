@@ -5,78 +5,99 @@ description: The three ways text gets into this corpus in a new language — fin
 
 # Getting text into the corpus
 
-Three routes. They are not equal and they are not interchangeable — the right
-one depends on the register of the text and on what licences exist for the
-language. Pick deliberately, and record which you used.
+Three routes. Pick deliberately and record which you used.
 
-Whatever you pick, the output shape is the same: a JSON object keyed
-`"chapter.verse"`, e.g. `{"1.1": "…", "2.47": "…"}`. That is what
-`merge-language.mjs` consumes, so all three paths converge on the same merge and
-the same verification.
+| path | use it for | cost |
+|---|---|---|
+| 1. Find a human translation | anything, if the licence allows | free, often unavailable |
+| 2. Online frontier model | bhāṣya, glosses, anything doctrinal | ~$45 for the full commentary |
+| 3. IndicTrans2 locally | plain prose drafts, back-translation checks | free |
+
+All three produce the same output shape — a JSON object keyed `"chapter.verse"`:
+
+```json
+{ "1.1": "…", "2.47": "…" }
+```
+
+That is what `merge-language.mjs` reads, so every path ends at the same merge and
+the same checks.
+
+---
 
 ## Path 1 — find an existing human translation
 
-Always try this first. A published translation by a named translator beats
-anything generated, and it is the only route that gives the reader a real
-scholarly rendering rather than an approximation.
+Try this first. A published translation by a named translator beats anything
+generated.
 
-The bar is licence, not availability. `scripts/data-sources/README.md` records
-what was already searched and rejected — read it before repeating a search.
-The rules that matter:
+### Licence rules
 
-- **Public domain in India** = author died more than 60 years ago.
-- **CC BY / CC BY-SA** are usable with attribution carried in the `_source` field.
-- **CC BY-NC is not usable** — it forecloses ever monetising the app.
-- **Any ND variant is not usable** — this corpus splits every source into 701
-  verses, which is exactly the derivative ND forbids.
-- **An unstated licence is all rights reserved.** So is a `publicdomain/mark`
-  applied by an uploader who is not the rights holder — a real trap this project
-  already hit with a Prabhupada upload.
+| licence | usable? |
+|---|---|
+| Public domain in India (author died 60+ years ago) | yes |
+| CC BY, CC BY-SA | yes, with attribution in the `_source` field |
+| CC BY-NC | **no** — forecloses ever monetising the app |
+| Any ND variant | **no** — this corpus splits sources into 701 verses, which is the derivative ND forbids |
+| No licence stated | **no** — that means all rights reserved |
+| `publicdomain/mark` applied by an uploader | **no** — only the rights holder can apply it |
 
-Where to look: language Wikisources, archive.org (check `licenseurl` and
-`rights`, and distrust uploader-applied marks), and university digitisations.
-Watch for OCR quality — the 1869 Kannada edition was public domain but its
-Tesseract text destroyed the verse boundaries, which made it unusable anyway.
+That last row is a real trap this project already hit, with a Prabhupada upload
+on archive.org.
 
-If you find one, model the fetcher on
-`scripts/data-sources/fetch-telugu-wikisource.mjs`. The part worth copying is
-that it asserts a per-chapter verse count and exits non-zero when one drifts, so
-an upstream edit fails loudly instead of silently misaligning a chapter.
+### Where to look
 
-**Record the outcome either way.** A documented "no usable source exists, here
-is what I checked and why each failed" is a real deliverable — it is what
-justifies generating the text instead, and it stops the next person repeating
-the search. `TODO.md:100` is a good example for Hindi.
+- Language Wikisources.
+- archive.org — check the `licenseurl` and `rights` fields, not the description.
+- University digitisations.
+
+### Also check OCR quality
+
+A public-domain scan is useless if the text is unusable. The 1869 Kannada
+edition was correctly licensed but its OCR destroyed the verse boundaries.
+
+### If you find one
+
+- Model the fetcher on `scripts/data-sources/fetch-telugu-wikisource.mjs`.
+- Copy its most important behaviour: it asserts a per-chapter verse count and
+  exits non-zero if one drifts, so an upstream edit fails loudly instead of
+  silently misaligning a whole chapter.
+
+### If you don't find one
+
+Write down what you checked and why each source failed, then use path 2 or 3.
+That record is a real deliverable — it justifies generating the text and stops
+the next person repeating the search. `TODO.md:100` is the worked example, for
+Hindi.
+
+---
 
 ## Path 2 — generate with an online frontier model
 
-Best quality, costs money. Use it when the text carries doctrinal weight —
-bhāṣya commentary especially — where the alternative is worse than nothing.
+Best quality. Costs money. Use it for text carrying doctrinal weight.
 
-`scripts/bakeoff/run-claude.mjs` is the runner. It needs `ANTHROPIC_API_KEY`.
-`scripts/bakeoff/prompt.mjs` holds the production prompt, and its shape is the
-part worth understanding: each verse is given the Sanskrit, the English, and
-**the already-published translation of that same verse in the target language**.
-That anchor is what lets a model match register — the new text has to sit
-directly beneath the existing translation in the reader without sounding like a
-different book.
+- Runner: `scripts/bakeoff/run-claude.mjs`. Needs `ANTHROPIC_API_KEY`.
+- Prompt: `scripts/bakeoff/prompt.mjs`.
+- Cost: roughly **$45** for the full commentary in two languages at Opus rates
+  (~1.7M characters of output; Indic scripts tokenise expensively).
 
-Cost scales with output, and Indic scripts tokenise expensively. The full
-commentary corpus in two languages is roughly 1.7M characters of output — on
-the order of $45 at Opus rates. Keep the system prompt byte-identical across
-calls so it caches; that is the single biggest saving.
+Two things that matter:
 
-**Model choice is not free.** See `references/translation-quality.md`: a smaller
-frontier model substituted everyday vocabulary for Sanskrit technical terms in
-8 of 8 measured occurrences, while passing every mechanical check.
+- **Give each verse the already-published translation of that same verse.** It
+  anchors the register, so the new text sits under the existing translation
+  without sounding like a different book.
+- **Keep the system prompt byte-identical across calls** so it caches. This is
+  the single biggest cost saving.
+
+**Choose the model deliberately.** A smaller frontier model replaced Sanskrit
+terms with everyday words in 8 of 8 measured cases, and passed every automated
+check while doing it. See `references/translation-quality.md`.
+
+---
 
 ## Path 3 — generate locally with IndicTrans2
 
-Free, no API key, runs offline once cached. Good on plain expository prose and
-unreliable on exactly the vocabulary scripture is made of, so it is a draft
-generator and a checker rather than a finisher.
+Free, no API key, offline once the model is cached.
 
-```
+```bash
 python scripts/data-sources/translate-indictrans2.py \
   --source-field commentary_english \
   --target-field commentary_kannada \
@@ -84,37 +105,43 @@ python scripts/data-sources/translate-indictrans2.py \
   --out scripts/data-sources/commentary-kannada-mt.json
 ```
 
-It skips verses that already have the target field, resumes after an interrupt,
-sorts by length before batching, and preserves paragraph structure exactly —
-which matters because the reader renders commentary with `white-space: pre-line`.
-Use `--limit 2` for a trial run before committing to the full pass.
+What the runner does for you:
 
-Environment (**the versions are load-bearing**):
+- Skips verses that already have the target field.
+- Resumes after an interrupt — rerun the same command.
+- Sorts by length before batching, which is the main throughput win.
+- Preserves paragraph count and order exactly (the reader uses
+  `white-space: pre-line`, so this matters).
+- Prints the merge command to run next.
 
-```
+Use `--limit 2` for a trial run first.
+
+### Setup
+
+```bash
 uv venv --python 3.12 .venv-it2
 uv pip install --python .venv-it2/bin/python \
     torch "transformers==4.46.3" sentencepiece IndicTransToolkit
 ```
 
-- **Python 3.12**, not 3.14 — `tokenizers` has no 3.14 wheel and the Rust build fails.
-- **transformers 4.46.3** — newer versions break IndicTrans2's vendored
-  `modeling_indictrans.py`. The tempting workaround, `use_cache=False`, measured
-  **32× slower**; leave the cache on.
-- The model repo is **gated** on HuggingFace (MIT licence, instant approval):
-  needs `HF_TOKEN` and a one-time click to accept.
-- On CUDA, check `torch.cuda.get_device_capability()` matches the card —
-  Blackwell (RTX 50xx) is `sm_120` and needs a CUDA 12.8+ build.
+These versions are required — see the table in
+`references/translation-quality.md` for what breaks otherwise.
 
-**Do not use it for word-by-word glosses.** Measured on `context_english`, whose
-`headword—meaning; headword—meaning` shape is not sentence-like: it produced
-ಪಾಶ್ಯ for *paśhya* (should be ಪಶ್ಯ), mangled *mahā-iṣhu-āsa* into ಮಹಾ-ಇಸು-ಆಸ,
-and rendered the English word "here" phonetically as ಹಿಯರ್ instead of
-translating it. Glosses need path 1 or 2.
+The model repo is **gated** on HuggingFace (MIT licence, instant approval):
+set `HF_TOKEN` and accept the terms once in a browser.
 
-## Merge and verify — the same for all three paths
+### Do not use path 3 for word-by-word glosses
 
-```
+Measured on `context_english`, it produced ಪಾಶ್ಯ for *paśhya*, mangled
+*mahā-iṣhu-āsa*, and spelled the English word "here" phonetically as ಹಿಯರ್
+instead of translating it. The gloss format is not sentence-shaped, which is
+what the model expects. Use path 1 or 2 for glosses.
+
+---
+
+## Merge — the same for all three paths
+
+```bash
 node scripts/data-sources/merge-language.mjs \
   --input scripts/data-sources/<file>.json \
   --field <target_field> \
@@ -124,26 +151,34 @@ node scripts/data-sources/merge-language.mjs \
   --dry
 ```
 
-Run `--dry` first and check the count. It refuses to write unless every entry is
-≥92% in the declared script with no foreign Indic block, because a wrong-script
-merge is invisible in JSON and only shows up as mojibake in the reader. Pass
-`--min-length 0` for glosses and `--allow-partial` for a partial backfill.
+- **Run with `--dry` first** and check the count, then rerun without it.
+- It refuses to write unless every entry is ≥92% in the declared script with no
+  other Indic script present. A wrong-script merge is invisible in the JSON and
+  only appears as mojibake in the reader.
+- `--source` lands on every verse as `<field>_source` and is shown to the reader.
+  Write a sentence, not a code.
+- Add `--machine-flag` for generated text.
+- Add `--min-length 0` for glosses (they are short).
+- Add `--allow-partial` for a deliberate partial backfill.
+- If the script is not in the `SCRIPTS` table, add its Unicode block — one row.
 
-`--source` lands on every verse as `<field>_source` and is shown to the reader,
-so write a sentence, not a code. Generated text takes `--machine-flag` too.
+## Then run the pipeline
 
-Then the pipeline, which runs as a unit because an import re-introduces what
-`fix-corpus` removes:
+These run as a unit, because an import re-introduces what `fix-corpus` removes:
 
-```
+```bash
 node scripts/data-sources/fix-corpus.mjs
 node scripts/data-sources/check-corpus.mjs     # must report 0 blocking defects
 node scripts/build-data.mjs
 node scripts/check-size.mjs
 ```
 
-`check-corpus` proves the data is well-formed, not that it is *right*. Before
-accepting generated text, read `references/translation-quality.md` and run the
-two checks that catch what script-purity cannot: **cross-script codepoint
-agreement** (for Kannada/Telugu, `telugu = kannada - 0x80` holds exactly) and
-**back-translation** against the English source.
+## Then verify what the checks cannot see
+
+`check-corpus` proves the data is well-formed. It does not prove the text is
+correct. Before accepting generated text:
+
+- Read `references/translation-quality.md`.
+- Run the cross-script check (Kannada ↔ Telugu) and back-translation described
+  there.
+- Spot-check a stratified sample: short and long verses, every commentator.

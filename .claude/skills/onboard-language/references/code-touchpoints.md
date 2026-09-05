@@ -1,11 +1,12 @@
 # Code touchpoints for a new language
 
-Surveyed against the three-language state (`en`/`kn`/`te`). Line numbers drift —
-treat them as a starting point and confirm before editing.
+Every place a new language changes the app. Surveyed against the current
+three-language state (`en` / `kn` / `te`).
 
-Order matters: do **types → data pipeline → UI tables → fonts**. Starting at
-`Language` makes the compiler enumerate most of the remaining work for you,
-because every `Record<Language, …>` table becomes a type error until filled.
+**Line numbers drift.** Treat them as a starting point and confirm before editing.
+
+**Do these in order:** types → the errors that surfaces → search → build → fonts.
+Widening `Language` first makes the compiler list most of the work for you.
 
 - [1. Types](#1-types)
 - [2. Field lookup and UI tables](#2-field-lookup-and-ui-tables)
@@ -18,71 +19,94 @@ because every `Record<Language, …>` table becomes a type error until filled.
 
 ## 1. Types
 
-`src/lib/gita.types.ts`
+All in `src/lib/gita.types.ts`.
 
-| line | what |
+| line | what to add |
 |---|---|
 | 2 | `Language = "en" \| "kn" \| "te"` — **start here** |
-| 8-9 | `text_kannada` / `text_telugu` → add `text_<lang>` |
-| 12-13 | `translation_*` → add `translation_<lang>` |
-| 16 | `translation_telugu_machine?` — decide if the new language needs a per-verse machine flag |
-| 18-19 | `context_*` (word glosses) |
-| 42-50 | `ChapterMeta`: `name_*`, `name_meaning_*`, `summary_*` |
+| 8-9 | `text_<lang>` — the verse in the new script |
+| 12-13 | `translation_<lang>` |
+| 16 | `translation_telugu_machine?` — decide if the new language needs its own per-verse flag |
+| 18-19 | `context_<lang>` — word glosses |
+| 42-43 | `ChapterMeta.name_<lang>` |
+| 45-46 | `ChapterMeta.name_meaning_<lang>` |
+| 49-50 | `ChapterMeta.summary_<lang>` |
 
 ## 2. Field lookup and UI tables
 
-The single most important one:
+### The central lookup
 
-- `src/lib/gita.ts:37` — `SUFFIX: Record<Language, "" | "_kannada" | "_telugu">`.
-  Add the tag → suffix mapping and widen the union. `chapterText()` (41-45)
-  then works generically.
+`src/lib/gita.ts:37`
 
-**`VerseViewer` needs a small refactor, not just an added case.**
-`src/components/VerseViewer.tsx:32-38` — `pick()` takes *positional*
-`kannada`/`telugu` arguments, with three call sites at 108-110. A fourth
-language means either another positional parameter or, better, rewriting it to
-use the `SUFFIX` lookup. Also `Tagged.lang` (line 30) is a literal union, and
-lines 53/116 special-case `language === "te" && translation_telugu_machine` —
-generalise that if the new language ships machine translations.
+```ts
+const SUFFIX: Record<Language, "" | "_kannada" | "_telugu"> = { … };
+```
 
-Other hard-coded `kn`/`te` branches:
+Add the tag → suffix mapping and widen the union type. `chapterText()` at 41-45
+then works generically.
 
-- `src/components/VerseOfMoment.tsx:22-32` — `scriptureOf()` / `translationOf()`
-- `src/components/SavedScreen.tsx:15-19` — `scriptureOf()` reads search-index row
-  offsets 3/4; needs the new offset (see §3)
-- `src/lib/router.tsx:176-183` — `?lang=` override checks literals; prefer
-  validating against `LANGUAGES`
+### Needs a rewrite, not another case
 
-Switcher and settings (these extend automatically once the arrays grow):
+`src/components/VerseViewer.tsx`
 
-- `src/lib/settings.tsx:99` `LANGUAGES`, `:101` `LANGUAGE_LABELS` (use the endonym)
-- `src/components/TabBar.tsx:107-113` + `src/desktop.css:584-640` — pill geometry
-  is driven by `--slots` from `LANGUAGES.length`; **check a 4-slot pill still fits**
-- `src/App.tsx:282-286` — settings radio group, auto-extends
+| line | problem |
+|---|---|
+| 32-38 | `pick()` takes **positional** `kannada`/`telugu` arguments. Rewrite it against the `SUFFIX` table rather than adding a fourth parameter. |
+| 108-110 | Three `pick()` call sites to update with it. |
+| 30 | `Tagged.lang` is a literal union — widen. |
+| 53, 116 | Special-cases `language === "te" && translation_telugu_machine`. Generalise if the new language ships machine translations. |
 
-`Record<Language, …>` string tables — each must gain a key or the build fails:
+### Other hard-coded `kn` / `te` branches
 
-`src/App.tsx:31` `APP_NAME` · `SearchScreen.tsx:12` `SEARCH_PLACEHOLDER` ·
-`VerseOfMoment.tsx:34-35` `LABEL`, `SECTION_LANG` · `VerseViewer.tsx:59,61`
-`COMMENTARY_LABEL`, `SECTION_LANG` · `ChapterList.tsx:16-26` `CHAPTER_LABEL`,
-`VERSES_LABEL` · `VerseViewer.tsx:46-49` `TRANSLATION_SOURCE` (Partial, but fill it)
+| file:line | what |
+|---|---|
+| `src/components/VerseOfMoment.tsx:22-32` | `scriptureOf()` and `translationOf()` |
+| `src/components/SavedScreen.tsx:15-19` | `scriptureOf()` reads search-index offsets 3/4 — needs the new offset (see §3) |
+| `src/lib/router.tsx:176-183` | `?lang=` override checks literals; better to validate against `LANGUAGES` |
+
+### Extends automatically once the arrays grow
+
+| file:line | what |
+|---|---|
+| `src/lib/settings.tsx:99` | `LANGUAGES` — switcher order |
+| `src/lib/settings.tsx:101` | `LANGUAGE_LABELS` — use the endonym |
+| `src/App.tsx:282-286` | Settings radio group |
+| `src/components/TabBar.tsx:107-113` | Language pills — sized from `LANGUAGES.length` |
+| `src/desktop.css:584-640` | Pill geometry via `--slots`. **Check a 4-slot pill still fits.** |
+
+### String tables — each needs one more key or the build fails
+
+All are `Record<Language, …>`.
+
+| file:line | table |
+|---|---|
+| `src/App.tsx:31` | `APP_NAME` |
+| `src/components/SearchScreen.tsx:12` | `SEARCH_PLACEHOLDER` |
+| `src/components/VerseOfMoment.tsx:34` | `LABEL` |
+| `src/components/VerseOfMoment.tsx:35` | `SECTION_LANG` |
+| `src/components/VerseViewer.tsx:59` | `COMMENTARY_LABEL` |
+| `src/components/VerseViewer.tsx:61` | `SECTION_LANG` |
+| `src/components/VerseViewer.tsx:46-49` | `TRANSLATION_SOURCE` — `Partial`, so optional, but fill it |
+| `src/components/ChapterList.tsx:16-20` | `CHAPTER_LABEL` |
+| `src/components/ChapterList.tsx:22-26` | `VERSES_LABEL` |
 
 ## 3. Search
 
-The row is a positional tuple, and **its offsets are defined in two files that
-must agree**. Changing one without the other silently mis-attributes snippets.
+The search row is a **positional tuple**, and its offsets are declared in two
+files that must agree. Change one without the other and snippets are attributed
+to the wrong language, with no error.
 
-- `src/lib/search.ts:8` — `Row` = `[ch, v, deva, kn, te, translit, en]`; inserting
-  a column renumbers everything after it
-- `src/lib/search.ts:16` `snippetLang` union; `:112-116` `FIELDS` offset/lang/weight
-  table; `:41-42` `normalizeRow` builds exactly `row[2]..row[6]`
-- `scripts/build-data.mjs:191-196` — the row builder; **must match the above exactly**
-- `src/components/CommandPalette.tsx:76` — haystack concatenates `name_kannada`,
-  `name_telugu`, `name_meaning_*`; add the new chapter-name fields or the chapter
-  is unfindable by its own name
+| file:line | what |
+|---|---|
+| `src/lib/search.ts:8` | `Row = [ch, v, deva, kn, te, translit, en]` |
+| `src/lib/search.ts:16` | `snippetLang` union |
+| `src/lib/search.ts:41-42` | `normalizeRow` builds exactly `row[2]..row[6]` |
+| `src/lib/search.ts:112-116` | `FIELDS` — offset, language and weight per column |
+| `scripts/build-data.mjs:191-196` | The row builder. **Must match the above exactly.** |
+| `src/components/CommandPalette.tsx:76` | Haystack of chapter names — add the new `name_*` fields or the chapter cannot be found by its own name |
 
-Safer than inserting: **append** the new column at the end, leaving existing
-offsets untouched.
+**Append the new column at the end.** Inserting one renumbers every offset after
+it, including the ones `SavedScreen.tsx` hard-codes.
 
 ## 4. Build pipeline
 
@@ -90,97 +114,95 @@ offsets untouched.
 
 | line | what |
 |---|---|
-| 14-30 | `VERSE_KEYS` — omitted keys are silently dropped by `pick()` |
-| 41 | `SOURCE_KEYS` — add `translation_<lang>_source` or `validate()` flags it as unknown |
+| 14-30 | `VERSE_KEYS` — keys not listed here are silently dropped |
+| 41 | `SOURCE_KEYS` — add `translation_<lang>_source`, or `validate()` flags it as unknown |
 | 43-55 | `CHAPTER_KEYS` |
-| 82-84 | script-block regexes |
-| 101-108 | script-integrity table — add `["text_<lang>", RE, "Name"]` |
-| 191-196 | search-index row builder (see §3) |
-| 231-233 | prunes any file not in `expected` — register new per-language outputs |
+| 82-84 | Script-block regexes — add the new script |
+| 101-108 | Script-integrity table — add `["text_<lang>", RE, "Name"]` |
+| 191-196 | Search-index row builder (see §3) |
+| 217-218 | Coverage map — derived from `VERSE_KEYS`, extends automatically |
+| 231-233 | Prunes any file not in `expected` — register new per-language outputs |
 
-`scripts/check-size.mjs:63` — `BUDGETS = { js, css, desktopCss }`. A fourth
-language grows `src/data/chapters.json`, which is **statically imported** and so
-counts against the `js` row. Raise it and add a comment in the style of lines 43-49.
+`scripts/check-size.mjs:63` — `BUDGETS = { js, css, desktopCss }`.
+
+- `src/data/chapters.json` is **statically imported**, so its new fields count
+  against the **`js`** budget, not a data budget.
+- Expect to raise it. Leave a comment saying why, in the style of lines 43-49.
 
 ## 5. Corpus checks
 
-`scripts/data-sources/check-corpus.mjs` — the most per-language-aware file:
+`scripts/data-sources/check-corpus.mjs` is the most language-aware file.
 
-`:31-35` `BLOCK` regex map · `:54-59` `FIELDS` structural list · `:82-86`
-script-integrity pairs · `:122` native-digit check (`[೦-೯]`, `[౦-౯]`, `[०-९]`) ·
-`:135` normalisation loop · `:146-147` avagraha presence · `:168-172` speaker
-formula / `uvāca` · `:176` blob-repetition fields · `:239` **BLOCKER class list —
-add the new field's `E-missing:` class or absence never fails the build**
+| line | what |
+|---|---|
+| 31-35 | `BLOCK` regex map — add the new script |
+| 54-59 | `FIELDS` structural list |
+| 82-86 | Script-integrity pairs |
+| 122 | Native-digit check (`[೦-೯]`, `[౦-౯]`, `[०-९]`) |
+| 135 | Normalisation loop |
+| 146-147 | Avagraha presence |
+| 168-172 | Speaker formula / `uvāca` presence |
+| 176 | Blob-repetition field list |
+| **239** | **BLOCKER class list — add the new field's `E-missing:` class, or a missing field never fails the build** |
 
-`:216-230` and `:256` are Kannada-specific term-drift analysis; leave
+Lines 216-230 and 256 are Kannada-specific term-drift analysis. Leave them
 language-specific unless the new language needs an equivalent.
 
-`fix-corpus.mjs` is English OCR repair only — no change unless the new source
+`fix-corpus.mjs` repairs English OCR only. No change unless the new source
 brings its own defects.
 
 ## 6. Fonts
 
-**Check first whether a new face is needed at all.** `src/index.css:2403-2415`
-already maps `[lang="hi"]` to the Devanagari face, so **Hindi needs no new
-font** — only data and UI work.
+**Check whether you need a new face at all.** `src/index.css:2404` already maps
+`[lang="hi"]` to the Devanagari face, so **Hindi needs no new font** — only data
+and UI work. The same applies to any language in a script already rendered.
 
-If the script genuinely is new:
+If the script is genuinely new:
 
-- `scripts/subset-fonts.mjs:21-37` — add to `FACES`:
-  `{ file: "noto-sans-<script>", family: "Noto Sans <Script>", blocks: [...] }`.
-  Mirror Google's original `unicode-range` for that face so dandas and vedic
-  marks stay with the right one.
-- `:38` `WEIGHTS = [400, 600]` — both are needed (semibold Indic labels appear in
-  `.verse-tab`, `.chapter-badge`, `.chapter-stats`, `.verse-of-moment-label`)
-- `:47-60` — the corpus scan walks `src/data/*.json`, `src/**/*.tsx?` and
-  `index.html`, so it picks up new verse fields and UI strings automatically.
-  **Run it after the merge and after the UI tables are written**, or the subset
-  omits exactly the glyphs the new strings need.
-- `:96-119` — fetches from Google, writes `public/fonts/<name>.woff2`, prints the
-  `@font-face` block to paste. No CLI args; it rewrites every face each run.
-- `src/index.css:80-127` — paste the two new `@font-face` blocks here
-- `src/index.css:153-155` — add `--font-<script>` with platform fallbacks
-  ("… Sangam MN", "Nirmala UI")
-- `src/index.css:2403-2415` — add the `[lang="<tag>"]` rule setting `font-family`
-  and `--lh-indic`. Keep it in the same last-in-file position; line 2401-2402
-  records why these are attribute selectors and not `:lang()`.
-- `src/desktop.css:318-326` — add the tag to the `font-feature-settings`
-  / `font-variant-ligatures` rule for display sizes
+| file:line | what |
+|---|---|
+| `scripts/subset-fonts.mjs:21-37` | Add to `FACES`: `{ file: "noto-sans-<script>", family: "Noto Sans <Script>", blocks: [...] }`. Mirror Google's original `unicode-range` so dandas and vedic marks stay on the right face. |
+| `scripts/subset-fonts.mjs:38` | `WEIGHTS = [400, 600]` — both needed; semibold Indic appears in `.verse-tab`, `.chapter-badge`, `.chapter-stats`, `.verse-of-moment-label` |
+| `scripts/subset-fonts.mjs:47-60` | Scans `src/data/*.json`, `src/**/*.tsx?`, `index.html`. **Run it after the merge and after UI strings are written**, or the subset omits the new glyphs. |
+| `scripts/subset-fonts.mjs:96-119` | Fetches from Google, writes `public/fonts/<name>.woff2`, prints the `@font-face` block. No CLI args; rewrites all faces each run. |
+| `src/index.css:80-127` | Paste the two new `@font-face` blocks here |
+| `src/index.css:153-155` | Add `--font-<script>` with platform fallbacks ("… Sangam MN", "Nirmala UI") |
+| `src/index.css:2403-2415` | Add a `[lang="<tag>"]` rule setting `font-family` and `--lh-indic`. Keep it last in the file — lines 2401-2402 explain why these are attribute selectors, not `:lang()`. |
+| `src/desktop.css:318-326` | Add the tag to the `font-feature-settings` / `font-variant-ligatures` rule for display sizes |
 
 ## 7. Output and caching
 
-- `public/data/v1/chapter-NN.json` — all 18 gain the new keys
-- `public/data/v1/search-index.json` — row width grows; ~726 KB today and
-  deliberately under the 500 KB precache trip-wire at
-  `vite.config.ts:123` (`maximumFileSizeToCacheInBytes`). **Confirm it is still
-  not precached** after widening.
-- `public/data/v1/manifest.json` — `sources` and `coverage` gain entries; every
-  chapter's `bytes`/`sha` changes, invalidating all Workbox precache revisions
-  on the next deploy (expected, worth knowing)
-- `vite.config.ts:116` — `globIgnores` excludes `noto-sans-kannada.woff2` and
-  `noto-sans-telugu.woff2` from precache. Add the new face. Note the `-600`
-  variants are **not** currently excluded, so they are precached today; make the
-  same call deliberately for the new one.
-- `public/data/v1/commentary-NN.json` is English-only (`COMMENTARY_KEYS`,
-  `build-data.mjs:39`). Per-language commentary needs a new key here *and* a
-  merge in `src/lib/gita.ts:112-123`.
+| file | effect |
+|---|---|
+| `public/data/v1/chapter-NN.json` | All 18 files gain the new keys |
+| `public/data/v1/search-index.json` | Row width grows. ~726 KB today, deliberately under the 500 KB precache limit at `vite.config.ts:123`. **Confirm it is still not precached.** |
+| `public/data/v1/manifest.json` | `sources` and `coverage` gain entries. Every chapter's `bytes`/`sha` changes, invalidating all Workbox precache revisions on next deploy — expected. |
+| `vite.config.ts:116` | `globIgnores` excludes the large Kannada and Telugu faces from precache. Add the new one. Note the `-600` variants are **not** currently excluded, so decide that deliberately. |
+
+`public/data/v1/commentary-NN.json` is English-only (`COMMENTARY_KEYS`,
+`build-data.mjs:39`). Per-language commentary needs a new key there **and** a
+merge in `src/lib/gita.ts:112-123`.
 
 ## 8. Prose that names the languages
 
-Easy to forget, all user-visible or agent-visible:
+All reader- or agent-visible:
 
-`src/App.tsx:297` (reading-face footer: "Kannada and Telugu keep Noto Sans") ·
-`index.html:25` meta description · `public/llms.txt:4,22,26,32` ·
-`README.md:8` · `docs/ARCHITECTURE_PLAN.md` and `docs/DESIGN_PLAN.md` font and
-unicode-range tables · `src/index.css:136-138` comment
+| file:line | what |
+|---|---|
+| `src/App.tsx:297` | Reading-face footer: "Kannada and Telugu keep Noto Sans" |
+| `index.html:25` | Meta description |
+| `public/llms.txt:4,22,26,32` | Corpus description and per-field coverage |
+| `README.md:8` | "Switch between English, Kannada, and Telugu" |
+| `docs/ARCHITECTURE_PLAN.md`, `docs/DESIGN_PLAN.md` | Font and unicode-range tables |
+| `src/index.css:136-138` | Comment naming only Kannada and Telugu |
 
-**`TODO.md:100` already contains the licence research for Hindi** and names
-`Language` in `gita.types.ts` plus `LANGUAGES`/`LANGUAGE_LABELS` in
-`settings.tsx` as the gate to decide before touching. Read it before starting.
+**Read `TODO.md:100` first** — it already contains the licence research for
+Hindi, and names `Language` in `gita.types.ts` plus `LANGUAGES` /
+`LANGUAGE_LABELS` in `settings.tsx` as the decision gate.
 (`TODO.md:99` is the related `context_kannada` / `context_telugu` coverage gap.)
 
 ## Confirmed not per-language
 
-`src/lib/sw.ts`, `bookmarks.ts`, `history.ts`, `keys.ts`, `media.ts`,
-`ShortcutsSheet.tsx`, `Header.tsx`, `wrangler.toml`, the PWA manifest in
-`vite.config.ts:72-101`, and `<html lang="en">` in `index.html:2`.
+No changes needed in: `src/lib/sw.ts`, `bookmarks.ts`, `history.ts`, `keys.ts`,
+`media.ts`, `ShortcutsSheet.tsx`, `Header.tsx`, `wrangler.toml`, the PWA manifest
+at `vite.config.ts:72-101`, and `<html lang="en">` at `index.html:2`.
