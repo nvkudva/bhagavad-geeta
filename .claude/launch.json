@@ -4,15 +4,15 @@
     {
       "name": "gita-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5173", "--strictPort"],
-      "port": 5173,
-      "autoPort": false
-    },
-    {
-      "name": "gita-desktop",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "../geeta-desktop-ui", "run", "dev", "--", "--port", "5199", "--strictPort"],
-      "port": 5199,
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5186",
+        "--strictPort"
+      ],
+      "port": 5186,
       "autoPort": false
     }
   ]

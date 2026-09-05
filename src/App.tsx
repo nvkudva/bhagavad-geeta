@@ -97,7 +97,7 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
         if (chapter > FIRST_CHAPTER) navigate({ name: "verse", chapter: chapter - 1, verse: lastVerseOf(chapter - 1) }, { scroll: "preserve" });
       }}
       onNextChapter={() => {
-        if (chapter < LAST_CHAPTER) navigate({ name: "verse", chapter: chapter + 1, verse: 1 });
+        if (chapter < LAST_CHAPTER) navigate({ name: "verse", chapter: chapter + 1, verse: 1 }, { scroll: "preserve" });
       }}
       hasPrevChapter={chapter > FIRST_CHAPTER}
       hasNextChapter={chapter < LAST_CHAPTER}
@@ -316,7 +316,12 @@ const AppShell: React.FC = () => {
     setRailDirection(delta < 0 ? "prev" : "next");
     const to: Route = { name: "verse", chapter: next, verse };
     routeRef.current = to;
-    navigate(to);
+    /* "preserve", like the rail's own chapter steps: the reader positions
+       itself on the target verse in a layout effect, and a parent's layout
+       effect runs after the child's — so a scroll-to-top here lands on the
+       verse and is then dragged back, leaving the URL on 3.43 and the page on
+       3.1. */
+    navigate(to, { scroll: "preserve" });
   }, []);
 
   const actions = useCallback(

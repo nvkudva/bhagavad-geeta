@@ -3484,26 +3484,41 @@ body::before {
 }
 
 /* The whole-viewport blur crossfade is a phone transition: at 2560px it is an
-   expensive full-screen filter and it blinks the sidebar, which never changed.
-   Scope it to the content column instead. */
+   expensive full-screen filter, and it blinks the chrome, which never changed.
+
+   Naming .app-main was the wrong way to scope it. A named element is captured
+   at its full size, not the viewport's — the reading column is tens of
+   thousands of pixels tall — and its group then animates between the old and
+   new geometry, which is what read as the page scrolling on a chapter change.
+   Name the chrome instead and freeze it: the root snapshot stays
+   viewport-sized, and what is left to cross-fade is exactly the content. */
 @media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
-  .app-main {
-    view-transition-name: main;
+  .app-sidebar {
+    view-transition-name: sidebar;
   }
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
+  .app-nav {
+    view-transition-name: nav;
+  }
+  ::view-transition-group(sidebar),
+  ::view-transition-group(nav),
+  ::view-transition-old(sidebar),
+  ::view-transition-new(sidebar),
+  ::view-transition-old(nav),
+  ::view-transition-new(nav) {
     animation: none;
   }
-  ::view-transition-old(main),
-  ::view-transition-new(main) {
+
+  /* Opacity only, and in place: no blur, no geometry. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
     animation-duration: var(--dur-fast);
     animation-timing-function: var(--ease-out-ios);
     mix-blend-mode: normal;
   }
-  ::view-transition-old(main) {
+  ::view-transition-old(root) {
     animation-name: desk-fade-out;
   }
-  ::view-transition-new(main) {
+  ::view-transition-new(root) {
     animation-name: desk-fade-in;
   }
 }
@@ -3539,9 +3554,12 @@ body::before {
    goes on the grid and the header, never on .verse-rail itself — a named
    element is lifted into the snapshot layer, which would kill its sticky. */
 @media (min-width: 1280px) and (prefers-reduced-motion: no-preference) {
+  /* Frozen, like the chrome above: the keypad's height changes with the
+     chapter, and a group animating between the two sizes is a stretch, not a
+     slide. The old/new pair below does all the moving. */
   ::view-transition-group(rail-body),
   ::view-transition-group(rail-head) {
-    animation-duration: var(--dur-fast);
+    animation: none;
   }
   ::view-transition-old(rail-body),
   ::view-transition-new(rail-body),
