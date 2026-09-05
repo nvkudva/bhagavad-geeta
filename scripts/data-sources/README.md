@@ -81,7 +81,8 @@ uploader; that mark is simply wrong and must not be relied on.
 **Conclusion.** `translation_kannada` is machine-assisted, rendered from the
 Sanskrit with the English and the Telugu alongside it, deliberately without
 reference to any copyrighted Kannada edition. Every verse carries
-`translation_kannada_source` saying so, and the reader is told in the UI.
+`translation_kannada_source` saying so, and the reader sees "AI translated"
+under the translation.
 
 `translation_kannada` is therefore machine-assisted, rendered from the Sanskrit
 with the English and the Telugu alongside it, and every verse carries
@@ -109,8 +110,8 @@ a to-do list — investigate only if a count moves.
   of its four clauses, and 16.2 with 6 of its 11 qualities. All three were
   composed from the Sanskrit in the register of the verses either side of them,
   and carry `translation_telugu_machine: true` — the one provenance field that
-  ships, so the reader sees "యంత్రసహాయంతో అనువదించబడింది" on those three instead
-  of the Wikisource credit. 2.55 and 15.16 had commentary running straight on
+  ships, so the reader sees "AI translated" on those three instead of the Wikisource
+  credit. 2.55 and 15.16 had commentary running straight on
   from the translation with no bhāṣya heading for the parser to find; the tail
   was moved to `context_telugu` rather than discarded.
 - **13.1 `translation_english`** is an editorial note — the English edition

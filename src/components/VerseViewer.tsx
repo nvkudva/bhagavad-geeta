@@ -36,24 +36,22 @@ const pick = (language: Language, english: string | undefined, kannada: string |
   return english ? { text: english, lang: englishLang, fellBack: language !== "en" } : null;
 };
 
-/* Where each translation comes from. Stated here rather than shipped as a
-   per-verse string: it is the same sentence for all 701 verses, and the reader
-   is entitled to know that the Kannada is not a traditional rendering. */
+/* Provenance, in English in every language. These are metadata about the text
+   rather than part of it: rendering them in the reader's script made them
+   compete with the scripture for attention, and "AI translated" is understood
+   as it stands. Stated here rather than shipped per verse — it is the same
+   sentence for all 701. */
 const TRANSLATION_SOURCE: Partial<Record<Language, string>> = {
-  kn: "ಯಂತ್ರಸಹಾಯದಿಂದ ಅನುವಾದಿಸಲಾಗಿದೆ",
-  te: "తెలుగు వికీసోర్స్ · CC BY-SA 4.0",
+  kn: "AI translated",
+  te: "Telugu Wikisource · CC BY-SA 4.0",
 };
 
 /* Three Telugu verses the source left absent or unfinished were composed
    instead, so they cannot carry the Wikisource credit. */
-const TELUGU_COMPOSED = "యంత్రసహాయంతో అనువదించబడింది";
+const TELUGU_COMPOSED = "AI translated";
 
 /** Shown under an English section the reader did not ask for. */
-const ONLY_IN_ENGLISH: Record<Language, string> = {
-  en: "",
-  kn: "ಇದು ಇಂಗ್ಲಿಷ್\u200cನಲ್ಲಿ ಮಾತ್ರ ಲಭ್ಯವಿದೆ",
-  te: "ఇది ఇంగ్లీషులో మాత్రమే అందుబాటులో ఉంది",
-};
+const ONLY_IN_ENGLISH = "Available in English only";
 
 /* Section headings in the reader's own language. The label is tagged with its
    script so the [lang] font rules pick up Noto Sans Kannada/Telugu — the UI
@@ -140,12 +138,12 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
             {translation.text}
           </p>
           {translation.fellBack ? (
-            <p className="verse-section-note" lang={SECTION_LANG[language]}>
-              {ONLY_IN_ENGLISH[language]}
+            <p className="verse-section-note" lang="en">
+              {ONLY_IN_ENGLISH}
             </p>
           ) : (
             translationSource && (
-              <p className="verse-section-note" lang={SECTION_LANG[language]}>
+              <p className="verse-section-note" lang="en">
                 {translationSource}
               </p>
             )
@@ -165,8 +163,8 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
               {commentary.text}
             </p>
             {commentary.fellBack && (
-              <p className="verse-section-note" lang={SECTION_LANG[language]}>
-                {ONLY_IN_ENGLISH[language]}
+              <p className="verse-section-note" lang="en">
+                {ONLY_IN_ENGLISH}
               </p>
             )}
             {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
@@ -211,8 +209,8 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
                     {commentary.text}
                   </p>
                   {commentary.fellBack && (
-                    <p className="verse-section-note" lang={SECTION_LANG[language]}>
-                      {ONLY_IN_ENGLISH[language]}
+                    <p className="verse-section-note" lang="en">
+                      {ONLY_IN_ENGLISH}
                     </p>
                   )}
                   {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
