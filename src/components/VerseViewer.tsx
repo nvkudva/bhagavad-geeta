@@ -162,12 +162,12 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
             <p className="verse-section-content" lang={commentary.lang}>
               {commentary.text}
             </p>
+            {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
             {commentary.fellBack && (
               <p className="verse-section-note" lang="en">
                 {ONLY_IN_ENGLISH}
               </p>
             )}
-            {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
           </div>
           <div className="verse-section-card commentary">
             <h3 className="verse-pane-label" lang="en">
@@ -208,12 +208,12 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
                   <p className="verse-section-content" lang={commentary.lang}>
                     {commentary.text}
                   </p>
+                  {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
                   {commentary.fellBack && (
                     <p className="verse-section-note" lang="en">
                       {ONLY_IN_ENGLISH}
                     </p>
                   )}
-                  {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
                 </>
               )
             )}
