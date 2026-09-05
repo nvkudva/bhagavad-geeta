@@ -2462,3 +2462,59 @@ body::before {
     transform: translateX(-12px);
   }
 }
+
+/* ---------------------------------------------------------- update prompt
+   Stacks above the floating capsule rather than replacing it: navigation stays
+   usable while the offer to reload is on screen. */
+.update-toast {
+  position: fixed;
+  left: max(var(--sp-4), var(--sa-left));
+  right: max(var(--sp-4), var(--sa-right));
+  bottom: calc(var(--sa-bottom) + var(--float-gap) + var(--tabbar-h) + var(--sp-2));
+  z-index: 100;
+  width: fit-content;
+  max-width: calc(100% - 2 * var(--sp-4));
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+  background: var(--mat-chrome);
+  -webkit-backdrop-filter: var(--mat-blur);
+  backdrop-filter: var(--mat-blur);
+  border: 0.5px solid var(--mat-border);
+  border-radius: var(--r-pill);
+  box-shadow: var(--spec), var(--el-3);
+  animation: fadeIn var(--dur-base) var(--ease-out-ios) both;
+}
+
+.update-toast-text {
+  font-family: var(--font-sys);
+  font-size: var(--fs-subhead);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tr-body);
+  color: var(--ink-1);
+  white-space: nowrap;
+}
+
+.update-toast-action {
+  flex: 0 0 auto;
+  min-height: calc(var(--tap-min) - var(--sp-3));
+  padding-inline: var(--sp-4);
+  font-family: var(--font-sys);
+  font-size: var(--fs-subhead);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tr-body);
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 0.5px solid var(--accent-line);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+
+/* The trailing text on a settings row that reports rather than selects. */
+.settings-row-value {
+  flex: 0 0 auto;
+  font-size: var(--fs-subhead);
+  color: var(--ink-3);
+}

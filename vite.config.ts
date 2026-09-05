@@ -58,11 +58,13 @@ export default defineConfig({
     spaFallback(),
     minifyLinkedCss(),
     VitePWA({
-      registerType: "autoUpdate",
-      // registerSW.js is injected as a plain <script>, which Lighthouse measures as
-      // 150 ms of render-blocking for 403 bytes — for a script that must not run
-      // before paint anyway. Inlined, it costs no round trip.
-      injectRegister: "inline",
+      // "prompt", not "autoUpdate": the precache is the entire app, so an update
+      // that activates itself swaps the JS out from under whoever is reading.
+      // src/components/UpdatePrompt.tsx offers the reload instead.
+      registerType: "prompt",
+      // The generated registerSW.js registers but reports nothing back; the app
+      // calls registerSW() itself so it can hear onNeedRefresh.
+      injectRegister: null,
       // Without this the manifest and service worker only exist in a build, so
       // "Add to Home Screen" on a phone pointed at the dev server installs nothing.
       devOptions: { enabled: true, type: "module" },

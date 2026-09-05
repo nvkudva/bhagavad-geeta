@@ -54,7 +54,13 @@ const KB = 1024;
 //   desktop — fetched at low priority, never render-blocking on a phone. 6 KB.
 // A single summed row would have let a desktop-only block eat the mobile
 // critical path's headroom, which is exactly what the split exists to prevent.
-const BUDGETS = { js: 81 * KB, css: 9 * KB, desktopCss: 6 * KB };
+// Raised from 81 KB when the service worker learned to ask before it updates:
+//   JS  +1.0 KB — src/lib/sw.ts (registration, the hourly/visibility check, and
+//                 the SKIP_WAITING handshake), the update toast, and the
+//                 Settings row that forces the check. Hand-rolled rather than
+//                 virtual:pwa-register, which would have cost 2.4 KB gz of
+//                 workbox-window for the same handshake.
+const BUDGETS = { js: 82 * KB, css: 9 * KB, desktopCss: 6 * KB };
 
 const gz = (p) => gzipSync(readFileSync(p), { level: 9 }).length;
 const files = readdirSync(assets);

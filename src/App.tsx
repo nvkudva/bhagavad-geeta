@@ -16,6 +16,7 @@ import type { Language, Verse } from "./lib/gita.types";
 import type { KeyActions } from "./lib/keys";
 import { installKeys } from "./lib/keys";
 import { useWide } from "./lib/media";
+import { applyUpdate, checkForUpdate } from "./lib/sw";
 import type { Route } from "./lib/router";
 import { Link, navigate, useRoute, useScrollRestoration } from "./lib/router";
 import type { FontKey, PaletteKey, SectionKey } from "./lib/settings";
@@ -205,7 +206,30 @@ const SETTINGS_SECTIONS: readonly { id: string; label: string }[] = [
   { id: "appearance", label: "Appearance" },
   { id: "reading-face", label: "Reading face" },
   { id: "sections", label: "Show in each verse" },
+  { id: "updates", label: "Updates" },
 ];
+
+/** The app updates itself in the background and offers the reload as a toast, so
+ *  this row exists for the reader who wants to force the question — the one who
+ *  has been told a fix shipped and is looking at yesterday's precache. */
+const UpdateRow: React.FC = () => {
+  const [state, setState] = useState<"idle" | "checking" | "current">("idle");
+
+  const check = async (): Promise<void> => {
+    setState("checking");
+    // A found update reloads the page, so there is no state to return to.
+    if (await checkForUpdate()) return applyUpdate();
+    setState("current");
+    setTimeout(() => setState("idle"), 3000);
+  };
+
+  return (
+    <button type="button" className="settings-row pressable" onClick={() => void check()} disabled={state === "checking"}>
+      <span className="settings-row-label">Check for updates</span>
+      <span className="settings-row-value">{state === "checking" ? "Checking\u2026" : state === "current" ? "Up to date" : ""}</span>
+    </button>
+  );
+};
 
 const SettingsScreen: React.FC = () => {
   const { theme, toggleTheme, palette, setPalette, language, setLanguage, sections, toggleSection, font, setFont } = useSettings();
@@ -283,6 +307,10 @@ const SettingsScreen: React.FC = () => {
           {SECTION_KEYS.map((key) => (
             <SettingsSwitch key={key} on={sections[key]} onToggle={() => toggleSection(key)} label={SECTION_LABELS[key]} />
           ))}
+        </SettingsSection>
+
+        <SettingsSection id="updates" header="Updates" footer="The app keeps a copy of itself on the device so it opens offline. A new version installs in the background and asks before it replaces the one you are reading.">
+          <UpdateRow />
         </SettingsSection>
       </div>
     </div>
