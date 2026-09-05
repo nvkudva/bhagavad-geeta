@@ -1246,10 +1246,9 @@ body::before {
   }
 }
 
-/* Provenance: who translated this, and the "this is English because there is
-   no Kannada" state. Set as the commentary attribution is — italic, trailing,
-   at the foot of the card — because it is the same kind of line: a note about
-   the text rather than part of it. */
+/* Provenance: who translated this. Set as the commentary attribution is —
+   italic, trailing, at the foot of the card — because it is the same kind of
+   line: a note about the text rather than part of it. */
 .verse-section-note,
 .verse-section-attribution {
   margin-top: var(--sp-2);
@@ -1257,12 +1256,6 @@ body::before {
   font-size: var(--fs-caption2);
   font-style: italic;
   text-align: right;
-}
-
-/* Two of them under one commentary — the author, then the language note —
-   should read as one block, not two spaced ones. */
-.verse-section-attribution + .verse-section-note {
-  margin-top: var(--sp-1);
 }
 
 .verse-glosses {

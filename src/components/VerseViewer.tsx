@@ -50,9 +50,6 @@ const TRANSLATION_SOURCE: Partial<Record<Language, string>> = {
    instead, so they cannot carry the Wikisource credit. */
 const TELUGU_COMPOSED = "AI translated";
 
-/** Shown under an English section the reader did not ask for. */
-const ONLY_IN_ENGLISH = "Available in English only";
-
 /* Section headings in the reader's own language. The label is tagged with its
    script so the [lang] font rules pick up Noto Sans Kannada/Telugu — the UI
    stack deliberately carries no Indic fallback, because one there would pull
@@ -137,16 +134,12 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
           <p className="verse-section-content" lang={translation.lang}>
             {translation.text}
           </p>
-          {translation.fellBack ? (
+          {/* Suppressed on a fallback: the text on screen is then the English
+              translation, which neither credit describes. */}
+          {!translation.fellBack && translationSource && (
             <p className="verse-section-note" lang="en">
-              {ONLY_IN_ENGLISH}
+              {translationSource}
             </p>
-          ) : (
-            translationSource && (
-              <p className="verse-section-note" lang="en">
-                {translationSource}
-              </p>
-            )
           )}
         </div>
       )}
@@ -163,11 +156,6 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
               {commentary.text}
             </p>
             {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
-            {commentary.fellBack && (
-              <p className="verse-section-note" lang="en">
-                {ONLY_IN_ENGLISH}
-              </p>
-            )}
           </div>
           <div className="verse-section-card commentary">
             <h3 className="verse-pane-label" lang="en">
@@ -209,11 +197,6 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
                     {commentary.text}
                   </p>
                   {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
-                  {commentary.fellBack && (
-                    <p className="verse-section-note" lang="en">
-                      {ONLY_IN_ENGLISH}
-                    </p>
-                  )}
                 </>
               )
             )}
