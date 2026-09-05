@@ -422,38 +422,18 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
      than from cell arithmetic, so it stays exact whatever the grid resolves the
      cell width to, and it can transition between two positions instead of the
      ground teleporting from cell to cell. */
+  /* The rail never follows the reading position — that pulled cards out from
+     under the cursor on every click. It does bring the active card into view
+     once per chapter, so a deep link into chapter 18 does not open with its
+     own card scrolled out of sight. */
   const placedRef = useRef<number | null>(null);
   useLayoutEffect(() => {
     const grid = gridRef.current;
-    const row = grid?.querySelector<HTMLElement>('[aria-current="true"]');
-    if (!grid) return;
-    grid.dataset.thumb = row ? "true" : "false";
-    if (!row) return;
-
-    // The first placement in a chapter is a cut, not a slide: on a deep link
-    // the thumb would otherwise travel the width of the keypad from its
-    // unplaced origin, and the transition swallows the placement entirely.
-    const settled = placedRef.current === chapter;
-    if (!settled) grid.dataset.settled = "false";
-
-    grid.style.setProperty("--thumb-x", `${row.offsetLeft}px`);
-    grid.style.setProperty("--thumb-y", `${row.offsetTop}px`);
-    grid.style.setProperty("--thumb-w", `${row.offsetWidth}px`);
-    grid.style.setProperty("--thumb-h", `${row.offsetHeight}px`);
-
-    if (!settled) {
-      placedRef.current = chapter;
-      // Flush the untransitioned placement before the transition is allowed back.
-      void grid.offsetWidth;
-      grid.dataset.settled = "true";
-    }
+    const card = grid?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (!grid || !card || placedRef.current === chapter) return;
+    placedRef.current = chapter;
+    grid.scrollTop = card.offsetTop - grid.clientHeight / 2 + card.offsetHeight / 2;
   }, [active, count, chapter, widePlus]);
-
-  // A new chapter is a new list, not a moving cursor: the one scroll the rail
-  // is allowed to perform on its own.
-  useLayoutEffect(() => {
-    if (widePlus && railRef.current) railRef.current.scrollTop = 0;
-  }, [widePlus, chapter]);
 
   // Column -> route. The band is the middle of the viewport: a verse owns the
   // URL while its top third is in the reading position.
@@ -534,20 +514,18 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
             </div>
 
             <div className="verse-rail-grid" ref={gridRef}>
-              <span className="verse-rail-thumb" aria-hidden />
               {verses.map((v) => (
                 <a
                   key={v.verse_number}
                   href={`#${verseDomId(chapter, v.verse_number)}`}
                   className="verse-rail-item"
-                  aria-label={`Verse ${v.verse_number}`}
-                  data-decade={v.verse_number % 10 === 0 ? "" : undefined}
                   aria-current={v.verse_number === active ? "true" : undefined}
                   onClick={(event) => {
                     event.preventDefault();
                     onGoToVerse(v.verse_number);
                   }}>
-                  {v.verse_number}
+                  <span className="verse-rail-item-label">Verse</span>
+                  <span className="verse-rail-item-n">{v.verse_number}</span>
                 </a>
               ))}
             </div>
