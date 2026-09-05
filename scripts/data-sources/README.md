@@ -133,48 +133,38 @@ a to-do list — investigate only if a count moves.
   the commentary block is set in a Latin reading face, so these runs fall back to
   the system Devanagari face mid-paragraph.
 
+
 ## Commentary — machine-translated into Kannada and Telugu
 
 `commentary_english` exists for 700 of the 701 verses and had no counterpart in
-either target language. It is now machine-translated into both, into a staging
-file that nothing in the build reads yet.
+either target language. Both are now drafted by IndicTrans2 into staging files
+that nothing in the build reads yet.
 
 ```
-scripts/mt/setup-indictrans2.sh                   # venv, CUDA torch, model
-python scripts/mt/bench.py                        # config sweep, 200 sentences
-python scripts/mt/translate-commentary.py         # -> src/data/commentary-mt.json
-node scripts/check-mt.mjs                         # defect scan, --verbose for all
+python scripts/data-sources/translate-indictrans2.py \
+  --source-field commentary_english --target-field commentary_kannada \
+  --lang kan_Knda --out scripts/data-sources/commentary-kannada-mt.json
+
+node scripts/data-sources/check-translation.mjs --source commentary_english \
+  --kannada scripts/data-sources/commentary-kannada-mt.json \
+  --telugu  scripts/data-sources/commentary-telugu-mt.json
 ```
 
 **Model.** `ai4bharat/indictrans2-en-indic-1B`, revision
 `10e65a9951a1e922cd109a95e8aba9357b62144b`, MIT licence, gated on HuggingFace
-with instant auto-approval. Run on 2026-09-05 on an RTX 5090 under
-torch 2.11.0+cu128, transformers 4.46.3, Python 3.12.
+with instant auto-approval. Run 2026-09-05 on an RTX 5090 under
+torch 2.11.0+cu128, transformers 4.46.3, Python 3.12: bfloat16, beam 5, batches
+formed to a 1500-token budget with sentences length-sorted first. 700 verses,
+1,627 paragraphs, 7,627 sentences, 7,632 pieces after long-sentence splitting.
 
-**Settings.** bfloat16, `num_beams=5`, batches formed to a 1500-token budget
-with sentences length-sorted first and the original order restored after.
-Source tags `eng_Latn` -> `kan_Knda` / `tel_Telu`, pre- and post-processing by
-`IndicProcessor(inference=True)`. 7,627 sentences across 1,627 paragraphs,
-15,264 translations in 9.3 minutes at 27.5 sentences/sec.
+`.claude/skills/translator/` holds the operational detail — the version pins,
+the two silent traps (IndicProcessor's pre/post FIFO, and oversized batches
+spilling to host memory under WSL instead of raising), and the measured
+throughput table.
 
-Those version pins are load-bearing and `setup-indictrans2.sh` explains each.
-Two things worth knowing before touching the inference code:
-
-- `IndicProcessor` pairs `preprocess_batch` with `postprocess_batch` through an
-  internal FIFO of placeholder maps. Preprocessing the whole corpus up front and
-  postprocessing it in length-sorted order desynchronises that queue and wedges
-  the processor with no error. Pre and post must be paired per batch.
-- Batches are sized by token budget, not sentence count. At a fixed 256
-  sentences the long tail asks for ~60 GiB; under WSL that does not raise, the
-  driver spills to host memory over PCIe and throughput collapses from 21 to
-  0.56 sentences/sec.
-
-**Provenance.** Output is `src/data/commentary-mt.json`, keyed `"chapter.verse"`,
-carrying `commentary_kannada` / `commentary_telugu`, the two
-`*_machine: true` flags, and a `*_source` string naming model, revision, dtype
-and beam width. `verses.json` is untouched: this is staging, and the merge is a
-separate reviewed step. The 70 bhāṣya verses additionally carry
-`low_confidence: true` with the reason.
+**Provenance.** Output is keyed `"chapter.verse"`, the shape
+`merge-language.mjs` consumes. `verses.json` is untouched until the merge, which
+writes `commentary_<lang>_machine: true` and a `_source` string naming the model.
 
 ### Quality — what this output is and is not
 
@@ -185,54 +175,37 @@ Measured against Claude Opus on the same verses, before this run:
 - **Sanskrit technical vocabulary is unreliable.** For "Dvesha or aversion" it
   writes ದ್ವೇಶ — ಶ where ಷ belongs — then translates the gloss to the correctly
   spelled ದ್ವೇಷ, so the reader gets a misspelling, "or", and the same word
-  spelled right. That exact sentence is in the output at 7.27. The misspelling
-  itself runs wider than the flagged pairs: ದ್ವೇಶ / ద్వేశ appears 11 times
-  across 8 verses, always wrong, while the gloss beside it is always right.
+  spelled right. The misspelling runs wider than the flagged pairs: ದ್ವೇಶ /
+  ద్వేశ appears 11 times across 8 verses, always wrong, while the gloss beside
+  it is always right. That is a mechanical fix.
 - **Bhāṣya fails structurally.** Śaṅkara (22) and Rāmānuja (48) use a technical
   register the model flattens: karma/akarma come out as everyday
   ಕ್ರಿಯೆ/ನಿಷ್ಕ್ರಿಯತೆ, losing the pair, and "organs" as ಅಂಗಗಳ, body parts,
-  where ಇಂದ್ರಿಯ, sense-organs, is meant. Those 70 verses are translated and
-  flagged `low_confidence` rather than withheld; they should be redone by a
-  stronger model before anyone sees them.
+  where ಇಂದ್ರಿಯ, sense-organs, is meant. Those 70 verses should be regenerated
+  by a frontier model, not merged from here.
 
 None of this is fixable by re-running with different settings. Greedy decoding
 was benchmarked alongside beam 5 — 5.3x faster, and it changes 55% of sentences
 without being better or worse on the failures above.
 
-### `check-mt.mjs` — 661/700 verses clean
+### What `check-translation.mjs` cannot see
 
-Blocking classes all report zero: no missing verses, no Devanagari leaked into
-the output, no run of three or more Latin words, no paragraph count differing
-from the English, no length ratio outside 0.55–1.9. Paragraph structure matters
+Blocking classes report zero: no missing verses, no Devanagari leaked into the
+output, no run of three or more Latin words, no paragraph count differing from
+the English, no length ratio outside 0.55–1.9. Paragraph structure matters
 because the reader sets commentary with `white-space: pre-line`.
 
-The cross-script check uses the fact this corpus already proves: Kannada and
-Telugu sit 0x80 apart, and `text_kannada` / `text_telugu` agree on that offset
-with zero exceptions across all 65,838 characters. A Sanskrit term appearing in
-both translations must therefore be an exact offset pair. It is run over whole
-words of six characters or more drawn from the ślokas' own vocabulary — at
-four-character stems nearly every word has a one-character neighbour by
-coincidence, and the check reports noise rather than bugs.
+Two things survive a clean report, and both need a human:
 
-What is left, all of it for a reader of both languages:
-
-- **53 verses carry an untranslated English word**, singly rather than in runs,
-  almost always glued to a citation marker — `heaven.-Tr`, `self.-Tr`,
-  `support.-V.S.A` — so the tokenizer never saw a word to translate. Scholarly
-  citations that are meant to stay in Latin (`Cf.XVIII.17`, `B. S. 1.1.11-19`,
-  `cf. Br. 4.4.22`) are excluded from this and from the purity ratio.
-- **6 verses fall below 98% script purity**, all between 93% and 98%, and all
-  for the reason above.
-- **5 cross-script mismatches**, every one a real transliteration divergence on
-  aspiration or vowel length: ಆಸ್ತಿಭತಿಪ್ರಿಯ/ఆస్థిభతిప్రియ, ವಾರ್ಷ್ಣೇಯ/వర్ష్ణేయ,
-  ಸ್ವಾಸನ್/స్వసన్, and ಧ್ರುವನಾ/ద్రువనా at both 9.32 and 10.23.
-- **1 ದ್ವೇಶ-class pair**, 7.27. The scan flags the misspelling only where it
-  sits next to its own corrected gloss; see the wider count above.
-
-**The eight verses that quote scripture in Devanagari lost the quotation.**
-13.21, 13.31, 15.6, 15.7, 15.9, 15.14, 17.8 and 17.15 carry Chhandogya, Katha
-and Brihadaranyaka lines, the Manu Smriti, and the कारण/करण pair in script
-inside English prose. The model rendered them as ordinary prose in the target
-language instead of preserving them, so the citation is gone. Nothing flags
-this — the Devanagari check passes precisely because the Devanagari is gone.
-Decide whether to restore those runs verbatim before merging.
+- **The eight verses that quote scripture in Devanagari lost the quotation.**
+  13.21, 13.31, 15.6, 15.7, 15.9, 15.14, 17.8 and 17.15 carry Chhandogya, Katha
+  and Brihadaranyaka lines, the Manu Smriti, and the कारण/करण pair, in script,
+  inside English prose. The model rendered them as ordinary prose in the target
+  language instead of preserving them. Nothing flags this — the Devanagari check
+  passes precisely because the Devanagari is gone. Restore those runs verbatim
+  before merging.
+- **A handful of verses carry a single untranslated English word**, always glued
+  to a citation marker — `heaven.-Tr`, `self.-Tr`, `support.-V.S.A` — so the
+  tokenizer never saw a word to translate. Scholarly citations that are meant to
+  stay in Latin (`Cf.XVIII.17`, `B. S. 1.1.11-19`, `cf. Br. 4.4.22`) are
+  excluded from the purity ratio and are correct as they stand.

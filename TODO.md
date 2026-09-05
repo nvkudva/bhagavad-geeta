@@ -93,6 +93,22 @@ marked SUPERSEDED were written against the earlier warm-paper direction.
 - [ ] 220 `?` in commentary_english sit before a capital — comma or real question is undecidable, left alone
 - [ ] combined-verse groups (1.32-34, 1.38-39, 2.42-43, 5.8-9, 5.27-28, 10.12-13) repeat one English blob, unmarked
 
+## Commentary translation — Kannada first, in this order
+
+Drafts for both languages are in `scripts/data-sources/commentary-{kannada,telugu}-mt.json`
+[M 2026-09-05], IndicTrans2, 675/700 clean for Kannada alone. Nothing is merged.
+Telugu is held until Kannada has been through this list once.
+
+- [ ] Restore the Devanagari scripture quotations the model dropped in 13.21, 13.31, 15.6, 15.7, 15.9, 15.14, 17.8, 17.15 — copy the runs verbatim from `commentary_english`. No check catches this: the Devanagari test passes because the Devanagari is gone.
+- [ ] Fix ದ್ವೇಶ to ದ್ವೇಷ across all 11 occurrences in 8 verses; the gloss beside each one is already correct. Mechanical.
+- [ ] Re-translate the ~25 Kannada fragments where a word came through in English glued to a citation marker (`heaven.-Tr`, `self.-Tr`, `support.-V.S.A`); strip the marker first, then splice the result back.
+- [ ] Check the 5 cross-script divergences by hand — ವಾರ್ಷ್ಣೇಯ/వర్ష్ణేయ, ಧ್ರುವನಾ/ద్రువనా at 9.32 and 10.23, ಆಸ್ತಿಭತಿಪ್ರಿಯ/ఆస్థిభతిప్రియ, ಸ್ವಾಸನ್/స్వసన్ — and decide which script has it right.
+- [ ] Hold back the 70 bhāṣya verses (Śaṅkara 22, Rāmānuja 48) and regenerate them with a frontier model via path 2 of the translator skill. IndicTrans2 flattens the register; this is not a settings problem.
+- [ ] Have a Kannada reader review a stratified sample of 20 Sivananda verses — short and long, early and late chapters. The automated scan proves script and structure, not that the prose reads.
+- [ ] Merge Kannada only: `merge-language.mjs --field commentary_kannada --script kannada --machine-flag --dry` first, then for real.
+- [ ] Run `fix-corpus` / `check-corpus` / `build-data` / `check-size` as a unit, and confirm the reader shows the "AI translated" credit on the commentary block.
+- [ ] Then repeat the whole list for Telugu, which has its own scan output and its own 53-verse untranslated-word list.
+
 ## Language — still open
 
 - [ ] Localise the rest of the UI chrome. The chapter cards, the reader's chapter title, search and saved rows now follow the reader's language, but "Verse N", "Previous chapter", the verse rail, the tab labels and the Settings screen are still English in every language.

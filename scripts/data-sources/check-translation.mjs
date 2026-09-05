@@ -1,16 +1,44 @@
 #!/usr/bin/env node
-// Defect scan for src/data/commentary-mt.json, the machine-translated
-// commentary staging file. Reports a clean/total count and lists every defect.
+// Defect scan for a generated translation, before it goes anywhere near
+// merge-language.mjs. Reports a clean/total count and lists every defect.
 //
-//   node scripts/check-mt.mjs            # summary + up to 20 examples per class
-//   node scripts/check-mt.mjs --verbose  # every defect
+//   node scripts/data-sources/check-translation.mjs \
+//     --source commentary_english \
+//     --kannada scripts/data-sources/commentary-kannada-mt.json \
+//     [--telugu scripts/data-sources/commentary-telugu-mt.json] [--verbose]
+//
+// Both files are the shape merge-language.mjs consumes: { "chapter.verse": text }.
+// The cross-script check needs both languages and is skipped with only one.
+//
+// This is the layer above merge-language.mjs, which enforces script purity and
+// refuses a wrong-script merge. What is here is everything that survives a
+// well-formed merge: untranslated words, a lost paragraph, a Sanskrit term
+// spelled two different ways across the two scripts.
 //
 // Exits non-zero if any blocking defect class is non-empty.
 import { readFileSync } from 'node:fs';
 
-const VERBOSE = process.argv.includes('--verbose');
+const argv = process.argv.slice(2);
+const arg = (name, fallback) => {
+  const i = argv.indexOf(`--${name}`);
+  return i === -1 ? fallback : argv[i + 1];
+};
+const VERBOSE = argv.includes('--verbose');
+const SOURCE_FIELD = arg('source', 'commentary_english');
+const FILES = { kannada: arg('kannada'), telugu: arg('telugu') };
+if (!FILES.kannada && !FILES.telugu) {
+  console.error('need at least one of --kannada / --telugu');
+  process.exit(2);
+}
+
 const verses = JSON.parse(readFileSync('src/data/verses.json', 'utf8'));
-const mt = JSON.parse(readFileSync('src/data/commentary-mt.json', 'utf8'));
+const mt = {};
+for (const [lang, file] of Object.entries(FILES)) {
+  if (!file) continue;
+  for (const [id, text] of Object.entries(JSON.parse(readFileSync(file, 'utf8')))) {
+    (mt[id] ??= {})[lang] = text;
+  }
+}
 
 const KN = [0x0c80, 0x0cff];   // Kannada block
 const TE = [0x0c00, 0x0c7f];   // Telugu block, exactly 0x80 below Kannada
@@ -196,7 +224,7 @@ function orPairs(text) {
 // ── run ────────────────────────────────────────────────────────────────────
 
 const src = new Map(
-  verses.filter((v) => v.commentary_english)
+  verses.filter((v) => v[SOURCE_FIELD])
         .map((v) => [`${v.chapter_id}.${v.verse_number}`, v]),
 );
 
@@ -224,12 +252,11 @@ for (const [id, v] of src) {
   const rec = mt[id];
   if (!rec) { flag('missing from staging file', id, ''); continue; }
 
-  const en = v.commentary_english;
+  const en = v[SOURCE_FIELD];
   const enParas = paras(en);
 
-  for (const [lang, field] of [['kannada', 'commentary_kannada'],
-                               ['telugu', 'commentary_telugu']]) {
-    const t = rec[field];
+  for (const lang of Object.keys(FILES).filter((l) => FILES[l])) {
+    const t = rec[lang];
     if (!t) { flag('missing from staging file', id, `${lang} empty`); continue; }
 
     const p = purity(t, BLOCK[lang]);
@@ -258,8 +285,8 @@ for (const [id, v] of src) {
       flag('misspelling-or-correct pair (ದ್ವೇಶ class)', id, `${lang} ${pair}`);
   }
 
-  if (rec.commentary_kannada && rec.commentary_telugu) {
-    for (const pair of crossScript(rec.commentary_kannada, rec.commentary_telugu))
+  if (rec.kannada && rec.telugu) {
+    for (const pair of crossScript(rec.kannada, rec.telugu))
       flag('cross-script sanskrit stem mismatch', id, pair);
   }
 }
@@ -267,7 +294,8 @@ for (const [id, v] of src) {
 // ── report ─────────────────────────────────────────────────────────────────
 
 const clean = total - dirty.size;
-console.log(`\ncommentary-mt.json — ${clean}/${total} verses clean `
+const scanned = Object.keys(FILES).filter((l) => FILES[l]).join(' + ');
+console.log(`\n${SOURCE_FIELD} -> ${scanned} — ${clean}/${total} verses clean `
           + `(${((clean / total) * 100).toFixed(1)}%)\n`);
 
 let blocking = 0;
@@ -280,6 +308,13 @@ for (const [cls, list] of Object.entries(defects)) {
     console.log(`         … ${list.length - show.length} more (--verbose)`);
 }
 
-const low = Object.values(mt).filter((r) => r.low_confidence).length;
-console.log(`\n${low} verses flagged low_confidence (bhāṣya: Śaṅkara, Rāmānuja)`);
+// The bhāṣya verses are where this model fails structurally rather than
+// cosmetically, and nothing above can see that. Count them so the number is in
+// front of whoever reads this report.
+const BHASYA = new Set(['Sri Shankaracharya', 'Sri Ramanuja']);
+const bhasya = [...src.values()].filter((v) => BHASYA.has(v.commentary_author));
+console.log(`\n${bhasya.length} of these verses are bhāṣya (Śaṅkara, Rāmānuja). `
+          + 'No check here can see the failure mode that matters on them — the '
+          + 'technical register flattening. Read them, or regenerate with a '
+          + 'stronger model.');
 process.exit(blocking ? 1 : 0);

@@ -109,19 +109,57 @@ What the runner does for you:
 
 - Skips verses that already have the target field.
 - Resumes after an interrupt — rerun the same command.
-- Sorts by length before batching, which is the main throughput win.
-- Preserves paragraph count and order exactly (the reader uses
-  `white-space: pre-line`, so this matters).
+- Sorts by length and batches to a **token budget**, which is the main
+  throughput win. Do not reach for a sentence-count batch size; see below.
+- Splits sentences the way this corpus actually punctuates, including the 974
+  places where the space after a full stop is missing.
+- Breaks any sentence too long for the model's 256 positions instead of letting
+  `truncation=True` silently drop its tail.
+- Preserves paragraph count, order, and the exact run of newlines between
+  paragraphs (the reader uses `white-space: pre-line`, so a collapsed blank
+  line is a visible change).
 - Prints the merge command to run next.
 
 Use `--limit 2` for a trial run first.
+
+### Measured on an RTX 5090, 2026-09-05
+
+700 verses of `commentary_english`, 7,627 sentences, into both languages:
+**15,264 translations in 9.3 minutes at 27.5 sentences/sec**, bf16, beam 5,
+1,500-token budget, 5.5 GiB peak. Budget out to 12,000 changes throughput by
+under 10% while peak VRAM goes to 23 GiB, so the small end is free.
+
+Greedy (`--beams 1`) is 5.3x faster and changes 55% of sentences. It is not
+worse on the failures that matter, but it is not better either, and beam 5
+costs ten minutes on the whole corpus — take the quality.
+
+### Two traps, both silent
+
+- **`IndicProcessor` pairs `preprocess_batch` with `postprocess_batch` through
+  an internal FIFO of placeholder maps.** Preprocess the whole corpus up front,
+  postprocess it in length-sorted order, and the queue desynchronises: the
+  process wedges with no error, no traceback, and 0% CPU and GPU. They must
+  bracket the same batch. The runner does this; keep it that way.
+- **Oversized batches do not raise under WSL.** Beam memory scales with batch x
+  longest-sentence-in-batch. At 256 sentences the long tail of this corpus asks
+  for ~60 GiB on a 32 GB card, and instead of failing the driver spills to host
+  memory over PCIe — throughput falls from 21 to 0.56 sentences/sec and looks
+  exactly like a hang. The runner caps the process at 92% of VRAM so this
+  surfaces as an OOM. Also check nothing else holds the GPU: an LM Studio or
+  llama.cpp server left resident causes the same symptom.
 
 ### Setup
 
 ```bash
 uv venv --python 3.12 .venv-it2
+# On an RTX 50xx the index is not optional: Blackwell is sm_120, and the
+# default wheel has no kernels for it. Verify before going further —
+#   python -c "import torch; print(torch.cuda.get_device_capability())"
+# must print (12, 0), not fall back to CPU.
 uv pip install --python .venv-it2/bin/python \
-    torch "transformers==4.46.3" sentencepiece IndicTransToolkit
+    torch --index-url https://download.pytorch.org/whl/cu128
+uv pip install --python .venv-it2/bin/python \
+    "transformers==4.46.3" sentencepiece IndicTransToolkit
 ```
 
 These versions are required — see the table in
@@ -176,9 +214,29 @@ node scripts/check-size.mjs
 ## Then verify what the checks cannot see
 
 `check-corpus` proves the data is well-formed. It does not prove the text is
-correct. Before accepting generated text:
+correct. Run the defect scan **before** merging, while the output is still a
+staging file:
+
+```bash
+node scripts/data-sources/check-translation.mjs \
+  --source commentary_english \
+  --kannada scripts/data-sources/commentary-kannada-mt.json \
+  --telugu  scripts/data-sources/commentary-telugu-mt.json
+```
+
+It reports a clean/total count and every defect: script purity with scholarly
+citations excluded, Devanagari leakage, untranslated English words, paragraph
+count against the source, length ratio, the cross-script codepoint check, and
+ದ್ವೇಶ-class misspelling pairs. Pass one language or both; the cross-script check
+needs both.
+
+Then, still:
 
 - Read `references/translation-quality.md`.
-- Run the cross-script check (Kannada ↔ Telugu) and back-translation described
-  there.
+- Run the back-translation described there.
 - Spot-check a stratified sample: short and long verses, every commentator.
+
+**A clean scan is not an accepted translation.** On the 2026-09-05 commentary
+run it reported 661/700 clean while the eight verses that quote the Upanishads
+in Devanagari had lost their quotations entirely — the check passed *because*
+the Devanagari was gone.
