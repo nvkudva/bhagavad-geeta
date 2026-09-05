@@ -181,7 +181,9 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
     <article className="verse-row" id={verseDomId(chapter, verse.verse_number)} data-verse={verse.verse_number}>
       <div className="verse-block">
       <div className="verse-viewer-title-wrapper">
-        <h2 className="verse-viewer-title">Verse {verse.verse_number}</h2>
+        <h2 className="verse-viewer-title">
+          Verse {chapter}.{verse.verse_number}
+        </h2>
         <SaveButton chapter={chapter} verse={verse.verse_number} />
       </div>
 
