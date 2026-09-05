@@ -146,9 +146,16 @@ const setRoute = (route: Route): void => {
  *  setting it here rather than in an effect. flushSync is required: the
  *  transition callback must leave the DOM in its new state when it returns, and
  *  React 19 would otherwise batch the render past the capture. */
+/** Two verses of one chapter are the same screen, so moving between them is not
+ *  a screen change: the reader scrolls to the verse, or the pager slides to it.
+ *  It must not go through a view transition — inside the update callback the
+ *  document is captured, and a scroll performed there is discarded, which
+ *  leaves the URL on the new verse and the viewport on the old one. */
+const sameScreen = (a: Route, b: Route): boolean => a.name === "verse" && b.name === "verse" && a.chapter === b.chapter;
+
 const setRouteAnimated = (route: Route, kind: "push" | "pop" | "replace"): void => {
   const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
-  if (kind === "replace" || typeof doc.startViewTransition !== "function" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (kind === "replace" || sameScreen(route, current) || typeof doc.startViewTransition !== "function" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     setRoute(route);
     return;
   }
