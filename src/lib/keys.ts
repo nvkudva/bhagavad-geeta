@@ -74,11 +74,21 @@ export function installKeys(actions: () => KeyActions): () => void {
     switch (event.key) {
       case "j":
       case "ArrowDown":
+      case "PageDown":
         event.preventDefault();
         a.nextVerse();
         break;
+      // Space pages forward and shift-space back, as every reader on the
+      // platform does. In Book View these are the page turn; in the card
+      // reader they are the same step the arrows already take.
+      case " ":
+        event.preventDefault();
+        if (event.shiftKey) a.prevVerse();
+        else a.nextVerse();
+        break;
       case "k":
       case "ArrowUp":
+      case "PageUp":
         event.preventDefault();
         a.prevVerse();
         break;
@@ -128,6 +138,8 @@ export const SHORTCUTS: readonly { keys: string; label: string }[] = [
   { keys: "K / ↑", label: "Previous verse" },
   { keys: "→", label: "Next chapter" },
   { keys: "←", label: "Previous chapter" },
+  { keys: "Space", label: "Next page" },
+  { keys: "⇧ Space / PgUp", label: "Previous page" },
   { keys: "G G", label: "First verse" },
   { keys: "⇧ G", label: "Last verse" },
   { keys: "G H", label: "Home" },

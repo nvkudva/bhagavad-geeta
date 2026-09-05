@@ -1,6 +1,6 @@
-import { Check, Settings2 } from "lucide-react";
+import { BookOpen, Check, Settings2 } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { ChapterList } from "./components/ChapterList";
 import { CommandPalette } from "./components/CommandPalette";
 import { ShortcutsSheet } from "./components/ShortcutsSheet";
@@ -10,6 +10,7 @@ import { SEARCH_PLACEHOLDER, SearchScreen } from "./components/SearchScreen";
 import { Sidebar, TabBar } from "./components/TabBar";
 import { VerseOfMoment } from "./components/VerseOfMoment";
 import { setRailDirection, VerseViewer } from "./components/VerseViewer";
+import { bookTurn } from "./lib/book";
 import { toggleBookmark } from "./lib/bookmarks";
 import { chapterName, getChapterMeta, getChapters, isReaderResident, loadReader, peekChapter, prefetchChapter } from "./lib/gita";
 import type { Language, Verse } from "./lib/gita.types";
@@ -21,6 +22,10 @@ import type { Route } from "./lib/router";
 import { Link, navigate, useRoute, useScrollRestoration } from "./lib/router";
 import type { FontKey, PaletteKey, SectionKey } from "./lib/settings";
 import { FONT_KEYS, LANGUAGE_LABELS, LANGUAGES, PALETTE_KEYS, PALETTE_LABELS, SECTION_KEYS, SettingsProvider, useSettings } from "./lib/settings";
+
+/* Desktop-only and never on the first-paint path: the book's own chunk is
+   fetched when a reader asks for it. */
+const BookView = lazy(() => import("./components/BookView"));
 
 const chapters = getChapters();
 const NO_VERSES: readonly Verse[] = [];
@@ -325,10 +330,27 @@ const SettingsScreen: React.FC = () => {
   );
 };
 
+/* A shared /book link opens on a phone too, but there is no book layout below
+   900px: it lands in the card reader and the URL is corrected to match. */
+const BookScreen: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }) => {
+  const wide = useWide();
+  useEffect(() => {
+    if (!wide) navigate({ name: "verse", chapter, verse }, { replace: true });
+  }, [wide, chapter, verse]);
+  if (!wide) return <Reader chapter={chapter} verse={verse} />;
+  return (
+    <Suspense fallback={<p className="book-loading">Loading chapter…</p>}>
+      <BookView chapter={chapter} verse={verse} />
+    </Suspense>
+  );
+};
+
 const Screen: React.FC<{ route: ReturnType<typeof useRoute>; language: Language }> = ({ route, language }) => {
   switch (route.name) {
     case "verse":
       return <Reader chapter={route.chapter} verse={route.verse} />;
+    case "book":
+      return <BookScreen chapter={route.chapter} verse={route.verse} />;
     case "search":
       // Keyed on nothing: remounting on every query change would drop focus.
       return <SearchScreen query={route.q} language={language} />;
@@ -351,6 +373,10 @@ const AppShell: React.FC = () => {
   const [shortcuts, setShortcuts] = useState(false);
 
   const inReader = route.name === "verse";
+  const inBook = route.name === "book";
+  /* Both readers own the whole column: no tab bar, no large title, and a
+     contextual leading item instead. */
+  const reading = inReader || inBook;
 
   const runSearch = useCallback((q: string) => navigate({ name: "search", q }, { replace: route.name === "search", scroll: "preserve" }), [route.name]);
 
@@ -393,16 +419,16 @@ const AppShell: React.FC = () => {
      "the last verse" is exact rather than guessed. */
   const chapterStep = useCallback((delta: number) => {
     const current = routeRef.current;
-    if (current.name !== "verse") return;
+    if (current.name !== "verse" && current.name !== "book") return;
     const next = current.chapter + delta;
     if (next < FIRST_CHAPTER || next > LAST_CHAPTER) return;
     setRailDirection(delta < 0 ? "prev" : "next");
     void loadReader(next)
       .then((loaded) => {
         const live = routeRef.current;
-        if (live.name !== "verse" || live.chapter !== current.chapter) return;
+        if (live.name !== current.name || live.chapter !== current.chapter) return;
         const verse = delta < 0 && loaded.length > 0 ? loaded[loaded.length - 1].verse_number : 1;
-        const to: Route = { name: "verse", chapter: next, verse };
+        const to: Route = { name: current.name, chapter: next, verse };
         routeRef.current = to;
         /* "preserve": the reader positions itself on the target verse in a
            layout effect, and a parent's layout effect runs after the child's,
@@ -412,17 +438,20 @@ const AppShell: React.FC = () => {
       .catch(() => undefined);
   }, []);
 
+  /* In Book View the same keys mean a page rather than a verse, and the screen
+     itself owns what a page is. It registers while it is mounted; when it is
+     not, these fall through to the card reader unchanged. */
   const actions = useCallback(
     (): KeyActions => ({
-      nextVerse: () => step(1),
-      prevVerse: () => step(-1),
+      nextVerse: () => bookTurn(1) || step(1),
+      prevVerse: () => bookTurn(-1) || step(-1),
       nextChapter: () => chapterStep(1),
       prevChapter: () => chapterStep(-1),
-      firstVerse: () => edge("first"),
-      lastVerse: () => edge("last"),
+      firstVerse: () => bookTurn("first") || edge("first"),
+      lastVerse: () => bookTurn("last") || edge("last"),
       toggleSave: () => {
         const current = routeRef.current;
-        if (current.name === "verse") toggleBookmark(current.chapter, current.verse);
+        if (current.name === "verse" || current.name === "book") toggleBookmark(current.chapter, current.verse);
       },
       openPalette: () => {
         setShortcuts(false);
@@ -445,6 +474,9 @@ const AppShell: React.FC = () => {
       escape: () => {
         setPalette(false);
         setShortcuts(false);
+        // Esc leaves the book the way the header's leading item does.
+        const now = routeRef.current;
+        if (now.name === "book") navigate({ name: "verse", chapter: now.chapter, verse: now.verse });
       },
     }),
     [step, edge, chapterStep, toggleTheme],
@@ -468,14 +500,20 @@ const AppShell: React.FC = () => {
         onHomeClick={() => navigate({ name: "home" })}
         // iOS-style contextual leading item: absent on Home, and on a chapter it
         // is labelled with where it goes back to.
-        back={inReader ? { label: "Home", onClick: () => navigate({ name: "home" }) } : undefined}
+        back={
+          inBook
+            ? { label: "Reader", onClick: () => navigate({ name: "verse", chapter: route.chapter, verse: route.verse }) }
+            : inReader
+              ? { label: "Home", onClick: () => navigate({ name: "home" }) }
+              : undefined
+        }
         // The number leads, as it does in the chapter list and the pager: it is
         // how a reader says where they are, and the name alone does not say it.
-        title={inReader ? `${route.chapter}. ${chapterName(route.chapter, language) ?? ""}`.trim() : APP_NAME[language]}
+        title={reading ? `${route.chapter}. ${chapterName(route.chapter, language) ?? ""}`.trim() : APP_NAME[language]}
         titleLang={language}
         // Only Home takes a large title. The reader's masthead was removed on
         // purpose, so its chapter name stays in the compact bar.
-        largeTitle={inReader ? undefined : APP_NAME[language]}
+        largeTitle={reading ? undefined : APP_NAME[language]}
         // The tab bar is gone in the reader, so Settings needs a door: the
         // trailing bar slot, as a round glass control matching the back item.
         // The sidebar's search row became this field; a phone still reaches
@@ -483,18 +521,26 @@ const AppShell: React.FC = () => {
         search={wide ? { query: route.name === "search" ? route.q : "", placeholder: SEARCH_PLACEHOLDER[language], onQueryChange: runSearch } : undefined}
         trailing={
           inReader ? (
-            <Link to={{ name: "settings" }} className="nav-action-button pressable" aria-label="Settings">
-              <Settings2 size={17} strokeWidth={2.2} aria-hidden />
-            </Link>
+            <>
+              {/* The way into the book, from the verse the reader is on. */}
+              {wide && (
+                <Link to={{ name: "book", chapter: route.chapter, verse: route.verse }} className="nav-action-button pressable" aria-label="Book view" data-tip="Book view">
+                  <BookOpen size={17} strokeWidth={2.2} aria-hidden />
+                </Link>
+              )}
+              <Link to={{ name: "settings" }} className="nav-action-button pressable" aria-label="Settings">
+                <Settings2 size={17} strokeWidth={2.2} aria-hidden />
+              </Link>
+            </>
           ) : undefined
         }
       />
 
-      <main className="app-main" data-reader={inReader ? "true" : "false"}>
+      <main className="app-main" data-reader={reading ? "true" : "false"} data-book={inBook ? "true" : "false"}>
         <Screen route={route} language={language} />
       </main>
 
-      {!inReader && <TabBar route={route} />}
+      {!reading && <TabBar route={route} />}
 
       {/* Desktop only: below the breakpoint neither dialog is ever mounted and
           no keyboard listener exists to open them. */}

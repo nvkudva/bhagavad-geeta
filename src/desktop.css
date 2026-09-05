@@ -299,6 +299,22 @@
     --row-min: 36px;
     --control-round: 32px;
 
+    /* ------------------------------------------------------------- book ---
+       One page per spread here; 1280 widens the same flow to two. All of it
+       is derived from existing tokens — a nested :root is not a token block
+       to the size checker, so a colour literal here would fail the build. */
+    --book-gutter: var(--sp-16);
+    /* One page per spread here; 1280 splits the same box in two. A count, not
+       a width: a width is only a minimum to the fragmenter, so the laid-out
+       column would never be the one the arithmetic assumed. */
+    --book-pages-per-spread: 1;
+    --book-page-w: 34rem;
+    --book-margin-out: var(--sp-10);
+    --book-margin-y: var(--sp-10);
+    --book-page-h: calc(100dvh - var(--nav-total) - 4 * var(--sp-8));
+    --book-turn-zone: 4rem;
+    --dur-book-turn: 420ms;
+
     /* Measure by role. One width cannot serve centred Devanagari padas, a
        translation and a page of commentary at the same time. */
     --measure-script: 46rem;
@@ -947,6 +963,279 @@
     font-size: var(--fs-subhead);
     color: var(--ink-2);
   }
+
+  /* ==================================================================== book
+     A spread is paper: opaque, no glass, no blur, no card. The whole chapter
+     is one multicol flow whose columns run off the right of a clipped
+     viewport; a page turn is one transform on that flow. Off-spread columns
+     are clipped rather than hidden, so find-in-page, Select All and a screen
+     reader's cursor all still traverse the chapter (docs/BOOK_VIEW_SPEC.md). */
+  .app-main[data-book="true"] {
+    padding: var(--sp-8) 0;
+  }
+
+  .book-spread {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    max-width: calc(var(--book-pages-per-spread) * var(--book-page-w) + var(--book-gutter) + 2 * var(--book-margin-out));
+    margin-inline: auto;
+    padding: var(--book-margin-y) var(--book-margin-out);
+    background: var(--surface-1);
+    border-radius: var(--r-md);
+    box-shadow: var(--el-3);
+  }
+
+  .book-viewport {
+    flex: 1;
+    height: var(--book-page-h);
+    overflow: hidden;
+    /* A drag suspends the transition; the turn itself is the only animation. */
+    touch-action: pan-y;
+  }
+
+  .book-flow {
+    height: 100%;
+    column-count: var(--book-pages-per-spread);
+    column-gap: var(--book-gutter);
+    column-fill: auto;
+    /* --book-step is written from layout, not from the tokens: see measure().
+       Both it and --book-page come from the component. */
+    transform: translate3d(calc(var(--book-drag, 0px) - var(--book-page, 0) * var(--book-step, 0px)), 0, 0);
+  }
+
+  .book-flow:focus-visible {
+    outline: none;
+  }
+
+  /* The opener owns the first page alone. */
+  .book-opener {
+    break-inside: avoid;
+    break-after: column;
+    padding-block: var(--sp-12) var(--sp-8);
+    text-align: center;
+  }
+
+  .book-opener-number {
+    margin: 0 0 var(--sp-4);
+    color: var(--ink-4);
+    font-size: var(--fs-caption1);
+    letter-spacing: var(--tr-caps);
+    text-transform: uppercase;
+  }
+
+  .book-opener-name {
+    margin: 0;
+    font-family: var(--font-read);
+    font-size: var(--fs-title1);
+    font-weight: var(--fw-medium);
+    color: var(--ink-1);
+  }
+
+  .book-opener-meaning {
+    margin: var(--sp-2) 0 var(--sp-8);
+    color: var(--ink-3);
+    font-size: var(--fs-callout);
+    font-style: italic;
+  }
+
+  .book-opener-summary {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: var(--fs-trans);
+    line-height: var(--lh-read);
+    text-align: start;
+  }
+
+  /* Space between verses, never a rule: the hanging number is the only mark. */
+  .book-verse {
+    margin-block-start: var(--sp-8);
+  }
+
+  .book-verse:first-of-type {
+    margin-block-start: 0;
+  }
+
+  .book-scripture {
+    break-inside: avoid;
+    margin: 0;
+    text-align: center;
+    font-size: var(--fs-verse);
+    line-height: var(--lh-verse);
+    color: var(--ink-1);
+    white-space: pre-line;
+  }
+
+  /* The number hangs above its sloka rather than beside it: a negative inline
+     margin would sit outside the column box and be clipped at the gutter. */
+  .book-folio-num {
+    display: block;
+    margin-bottom: var(--sp-2);
+    color: var(--ink-4);
+    font-family: var(--font-sys);
+    font-size: var(--fs-caption2);
+    letter-spacing: var(--tr-caps);
+  }
+
+  .book-verse-head {
+    break-after: avoid;
+  }
+
+  .book-translit {
+    break-inside: avoid;
+    margin: var(--sp-2) 0 0;
+    text-align: center;
+    font-size: var(--fs-translit);
+    font-style: italic;
+    color: var(--ink-3);
+  }
+
+  .book-prose {
+    orphans: 3;
+    widows: 3;
+    margin: var(--sp-4) 0 0;
+  }
+
+  /* Justified with hyphens for Latin prose; Kannada and Telugu have no usable
+     hyphenation dictionary, so a ragged edge beats a river of holes. */
+  .book-prose[lang="en"] {
+    text-align: justify;
+    hyphens: auto;
+  }
+
+  .book-trans {
+    font-size: var(--fs-trans);
+    line-height: var(--lh-read);
+    color: var(--ink-1);
+  }
+
+  /* Indent or space, never both. */
+  .book-comment {
+    margin-top: 0;
+    text-indent: var(--sp-6);
+    font-size: var(--fs-comment);
+    line-height: var(--lh-body);
+    color: var(--ink-2);
+  }
+
+  .book-attrib {
+    color: var(--ink-4);
+    font-size: var(--fs-caption1);
+  }
+
+  .book-words {
+    font-size: var(--fs-gloss);
+    line-height: var(--lh-body);
+    color: var(--ink-3);
+  }
+
+  .book-words-label {
+    color: var(--ink-4);
+    font-size: var(--fs-caption2);
+    font-weight: var(--fw-medium);
+    letter-spacing: var(--tr-caps);
+    text-transform: uppercase;
+  }
+
+  .book-loading {
+    margin: 0;
+    padding-block: var(--sp-16);
+    text-align: center;
+    color: var(--ink-3);
+  }
+
+  /* Outer-edge turn zones. Laid over the page's own margin rather than taking
+     a track of their own: they must never sit on the measure, and they must
+     not narrow it either. */
+  .book-turn {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: var(--book-turn-zone);
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: var(--r-md);
+    color: transparent;
+    cursor: pointer;
+  }
+
+  .book-turn-prev {
+    inset-inline-start: 0;
+  }
+
+  .book-turn-next {
+    inset-inline-end: 0;
+  }
+
+  .book-turn:disabled {
+    cursor: default;
+  }
+
+  .book-head,
+  .book-folio {
+    position: absolute;
+    margin: 0;
+    color: var(--ink-4);
+    font-family: var(--font-sys);
+    font-size: var(--fs-caption2);
+    letter-spacing: var(--tr-caps);
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  .book-head {
+    top: var(--sp-4);
+  }
+
+  .book-head-verso {
+    inset-inline-start: calc(var(--book-margin-out) + var(--book-turn-zone));
+  }
+
+  .book-head-recto {
+    inset-inline-end: calc(var(--book-margin-out) + var(--book-turn-zone));
+  }
+
+  .book-folio {
+    bottom: var(--sp-4);
+  }
+
+  .book-folio-verso {
+    inset-inline-start: calc(var(--book-margin-out) + var(--book-turn-zone));
+  }
+
+  .book-folio-recto {
+    inset-inline-end: calc(var(--book-margin-out) + var(--book-turn-zone));
+  }
+
+  .book-progress {
+    position: absolute;
+    inset-inline: var(--book-margin-out);
+    bottom: 0;
+    height: 2px;
+    background: var(--separator);
+    border-radius: var(--r-pill);
+    overflow: hidden;
+  }
+
+  .book-progress > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transform-origin: left center;
+  }
+
+  .book-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
 }
 
 /* --------------------------------------------------------- pointer only --
@@ -1041,6 +1330,8 @@
    reading column, which retires the floating pager entirely. */
 @media (min-width: 1280px) {
   :root {
+    /* Two pages of the same flow: one number changes. */
+    --book-pages-per-spread: 2;
     --gutter: var(--sp-8);
     --pad-card: var(--sp-8);
     --gap-verse: var(--sp-12);
@@ -1380,6 +1671,25 @@
    Name the chrome instead and freeze it: the root snapshot stays
    viewport-sized, and what is left to cross-fade is exactly the content. */
 @media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  /* One composited transform. A 3D curl would repaint every glyph on both
+     pages each frame and needs a second copy of the text; a translate under a
+     spine shadow is what actually reads as paper. */
+  .book-flow {
+    transition: transform var(--dur-book-turn) var(--spring-gentle);
+  }
+
+  .book-turn {
+    transition: color var(--dur-fast) var(--ease-out-ios);
+  }
+
+  .book-turn:hover:not(:disabled) {
+    color: var(--ink-4);
+  }
+
+  .book-progress > span {
+    transition: transform var(--dur-book-turn) var(--spring-gentle);
+  }
+
   .app-sidebar {
     view-transition-name: sidebar;
   }

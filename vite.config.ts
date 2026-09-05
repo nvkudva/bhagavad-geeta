@@ -53,6 +53,9 @@ export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(buildVersion()) },
   server: { host: true, allowedHosts: ["vijaymac.merino-brill.ts.net"] },
   build: {
+    /* The size gate reads this to tell an entry chunk from a lazily-loaded one:
+       "initial JS" has to mean what index.html actually loads. */
+    manifest: true,
     rollupOptions: {
       output: {
         // React changes on a framework upgrade; app code changes on every deploy.

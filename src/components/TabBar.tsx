@@ -1,4 +1,4 @@
-import { Bookmark, House, Minus, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings2, SunMoon } from "lucide-react";
+import { BookOpen, Bookmark, House, Minus, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings2, SunMoon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import type { Route } from "../lib/router";
@@ -6,7 +6,7 @@ import { Link, navigate } from "../lib/router";
 import { LANGUAGE_LABELS, LANGUAGES, READING_SCALES, useSettings } from "../lib/settings";
 import { Logo } from "./Logo";
 
-type TabId = "read" | "search" | "saved" | "settings";
+type TabId = "read" | "book" | "search" | "saved" | "settings";
 
 const TABS: readonly { id: TabId; label: string; Icon: typeof House; to: Route }[] = [
   { id: "read", label: "Home", Icon: House, to: { name: "home" } },
@@ -33,8 +33,15 @@ const railFromStorage = (): boolean => {
   }
 };
 
+/* Book View is a desktop screen, so it is appended to the sidebar list and
+   never to TABS, which also drives the phone tab bar. The sidebar is
+   display:none below 900px, so the entry is structurally unreachable there —
+   no width check in JS. It sits directly under Home: a reading destination,
+   above the utility rows. */
+const BOOK_TAB = { id: "book", label: "Book View", Icon: BookOpen, to: { name: "book", chapter: 1, verse: 1 } } as const satisfies (typeof TABS)[number];
+
 /** Search is the nav bar's own field at this width, not a row in the list. */
-const SIDEBAR_TABS = TABS.filter((tab) => tab.id !== "search");
+const SIDEBAR_TABS = [TABS[0], BOOK_TAB, ...TABS.slice(1).filter((tab) => tab.id !== "search" && tab.id !== "read")];
 
 /** The Read tab owns the chapter list and everything pushed on top of it. */
 const activeTab = (route: Route): TabId => {
@@ -45,6 +52,8 @@ const activeTab = (route: Route): TabId => {
       return "saved";
     case "settings":
       return "settings";
+    case "book":
+      return "book";
     default:
       return "read";
   }
@@ -108,10 +117,12 @@ export const Sidebar: React.FC<{ route: Route; title: string }> = ({ route, titl
 
   const row = ({ id, label, Icon, to }: (typeof SIDEBAR_TABS)[number]) => {
     const isActive = active === id;
+    // Opening the book continues from wherever the reader is.
+    const target: Route = id === "book" && (route.name === "verse" || route.name === "book") ? { name: "book", chapter: route.chapter, verse: route.verse } : to;
     return (
       <Link
         key={id}
-        to={to}
+        to={target}
         className="tab-item pressable"
         aria-label={label}
         aria-current={isActive ? "page" : undefined}

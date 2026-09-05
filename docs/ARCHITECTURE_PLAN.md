@@ -729,6 +729,14 @@ is small. Still:
 
 Enforced in CI (section 7). "Fails the build" means fails the build.
 
+The live numbers are the `BUDGETS` table in `scripts/check-size.mjs`, which is
+what actually fails a build; the table below is the target this project set out
+to hit. Two of those gates moved when Book View landed: `js` 82 → 84 KB for the
+book route, the page keys and the shell's lazy boundary, and `desktopCss`
+6 → 7 KB for the spread. The screen itself is not in either — a `lazy JS` row
+(12 KB) now measures what only `import()` reaches, read from Vite's manifest so
+"initial" means the chunks `index.html` actually loads.
+
 | Budget | Target | Today **[M]** |
 |---|---|---|
 | Initial JS, gzip (all chunks needed for first paint) | **≤ 65 KB** | 377 KB |

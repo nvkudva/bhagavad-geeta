@@ -3,7 +3,7 @@
 // Fails the build if the corpus (or anything else) creeps back into the shell.
 import { gzipSync } from "node:zlib";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -61,23 +61,50 @@ const KB = 1024;
 //                 Settings row that forces the check. Hand-rolled rather than
 //                 virtual:pwa-register, which would have cost 2.4 KB gz of
 //                 workbox-window for the same handshake.
-const BUDGETS = { js: 82 * KB, css: 10 * KB, desktopCss: 6 * KB };
+// Raised from 82 KB by Book View. The screen itself is in the lazy row; what
+// lands on the first paint is only its wiring — the book route in the router,
+// the page keys, the sidebar entry and the shell's lazy boundary.
+const BUDGETS = { js: 84 * KB, lazyJs: 12 * KB, css: 10 * KB, desktopCss: 7 * KB };
+
+/* What index.html loads on a first paint, walked transitively through the
+   manifest's static imports. A chunk reached only through import() — Book View,
+   which no phone and no first paint ever asks for — is not initial and is
+   budgeted separately; summing the two would make lazy-loading pointless. */
+function initialChunks() {
+  const manifestPath = join(root, "dist/.vite/manifest.json");
+  if (!existsSync(manifestPath)) return null;
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  const seen = new Set();
+  const walk = (key) => {
+    const chunk = manifest[key];
+    if (!chunk || seen.has(key)) return;
+    seen.add(key);
+    for (const next of chunk.imports ?? []) walk(next);
+  };
+  for (const [key, chunk] of Object.entries(manifest)) if (chunk.isEntry) walk(key);
+  return new Set([...seen].map((key) => basename(manifest[key].file)));
+}
+
+const initial = initialChunks();
 
 const gz = (p) => gzipSync(readFileSync(p), { level: 9 }).length;
 const files = readdirSync(assets);
 
 let jsBytes = 0;
+let lazyJsBytes = 0;
 let cssBytes = 0;
 let desktopCssBytes = 0;
 for (const f of files) {
   const size = gz(join(assets, f));
-  if (f.endsWith(".js")) jsBytes += size;
+  // With no manifest every chunk counts as initial, which is the safe reading.
+  if (f.endsWith(".js")) (initial && !initial.has(f) ? (lazyJsBytes += size) : (jsBytes += size));
   else if (f.startsWith("desktop-") && f.endsWith(".css")) desktopCssBytes += size;
   else if (f.endsWith(".css")) cssBytes += size;
 }
 
 const rows = [
   ["initial JS (gzip)", jsBytes, BUDGETS.js],
+  ["lazy JS (gzip)", lazyJsBytes, BUDGETS.lazyJs],
   ["render-blocking CSS (gzip)", cssBytes, BUDGETS.css],
   ["desktop CSS (gzip, >=900px only)", desktopCssBytes, BUDGETS.desktopCss],
 ];

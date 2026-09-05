@@ -944,6 +944,13 @@ favour of §3.3's edge-to-edge sticky bar.
 
 ---
 
+### 4.8 Book View (new, desktop only)
+
+A second reader, at `/book/chapter/N/verse/M` and in the sidebar under Home: one
+chapter set as a continuous two-page spread with no cards, paginated by the
+browser's own multicol fragmenter and turned with a transform. Full specification
+in `docs/BOOK_VIEW_SPEC.md`.
+
 ## 5. Implementation checklist
 
 ### P0 — nothing else lands correctly without these

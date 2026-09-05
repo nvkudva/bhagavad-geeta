@@ -7,7 +7,7 @@ import { useCallback, useLayoutEffect, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { getChapterMeta } from "./gita";
 
-export type Route = { name: "home" } | { name: "verse"; chapter: number; verse: number } | { name: "search"; q: string } | { name: "saved" } | { name: "settings" };
+export type Route = { name: "home" } | { name: "verse"; chapter: number; verse: number } | { name: "book"; chapter: number; verse: number } | { name: "search"; q: string } | { name: "saved" } | { name: "settings" };
 
 type NavigateOptions = {
   replace?: boolean;
@@ -42,6 +42,15 @@ function parseLocation(pathname: string, search: string): Route {
   if (segments[0] === "saved") return { name: "saved" };
   if (segments[0] === "settings") return { name: "settings" };
 
+  // The book route stays parseable at every width — a shared link must open
+  // something — and the screen sends a phone on to the card reader.
+  if (segments[0] === "book" && segments[1] === "chapter") {
+    const chapter = Number(segments[2]);
+    if (!getChapterMeta(chapter)) return { name: "home" };
+    const verse = segments[3] === "verse" ? Number(segments[4]) : 1;
+    return { name: "book", chapter, verse: clampVerse(verse) };
+  }
+
   if (segments[0] === "chapter") {
     const chapter = Number(segments[1]);
     if (!getChapterMeta(chapter)) return { name: "home" };
@@ -58,6 +67,8 @@ function toPath(route: Route): string {
       return `${BASE}/`;
     case "verse":
       return `${BASE}/chapter/${route.chapter}/verse/${route.verse}`;
+    case "book":
+      return `${BASE}/book/chapter/${route.chapter}/verse/${route.verse}`;
     case "search":
       return route.q ? `${BASE}/search?q=${encodeURIComponent(route.q)}` : `${BASE}/search`;
     case "saved":
@@ -147,7 +158,11 @@ const setRoute = (route: Route): void => {
  *  It must not go through a view transition — inside the update callback the
  *  document is captured, and a scroll performed there is discarded, which
  *  leaves the URL on the new verse and the viewport on the old one. */
-const sameScreen = (a: Route, b: Route): boolean => a.name === "verse" && b.name === "verse" && a.chapter === b.chapter;
+/* Same chapter in the same reader is one screen: a view transition captures the
+   document inside the update callback, and both the reader's scroll and the
+   book's page turn are our own animation. Reader <-> Book View is a real screen
+   change and keeps the lateral crossfade. */
+const sameScreen = (a: Route, b: Route): boolean => (a.name === "verse" || a.name === "book") && a.name === b.name && a.chapter === b.chapter;
 
 const setRouteAnimated = (route: Route, kind: "push" | "pop" | "replace"): void => {
   const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
@@ -230,6 +245,16 @@ export function navigate(to: Route, opts: NavigateOptions = {}): void {
  *  tick is exactly the work continuous scroll exists to avoid. */
 export function syncVerseUrl(chapter: number, verse: number): void {
   const route: Route = { name: "verse", chapter, verse };
+  const url = toPath(route);
+  if (url === location.pathname + location.search) return;
+  history.replaceState({ key: currentKey }, "", url);
+  current = route;
+}
+
+/** syncVerseUrl's twin for the book route. A twin rather than a parameter: the
+ *  reader's per-scroll-tick hot path is not worth a branch. */
+export function syncBookUrl(chapter: number, verse: number): void {
+  const route: Route = { name: "book", chapter, verse };
   const url = toPath(route);
   if (url === location.pathname + location.search) return;
   history.replaceState({ key: currentKey }, "", url);
