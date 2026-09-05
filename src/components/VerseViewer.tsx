@@ -52,6 +52,12 @@ const TRANSLATION_SOURCE: Partial<Record<Language, string>> = {
    instead, so they cannot carry the Wikisource credit. */
 const TELUGU_COMPOSED = "AI translated";
 
+/* The commentary is Sivananda's, Ramanuja's or Shankaracharya's in every
+   language; only the rendering into Kannada is generated. So the credit names
+   the commentator either way and adds the provenance when the reader is not
+   looking at the English. */
+const COMMENTARY_TRANSLATED = "AI translated";
+
 /* Section headings in the reader's own language. The label is tagged with its
    script so the [lang] font rules pick up Noto Sans Kannada/Telugu — the UI
    stack deliberately carries no Indic fallback, because one there would pull
@@ -107,13 +113,22 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
   // Scripture: Devanagari is the source text; kn/te are transliterations of it.
   const scripture = pick(language, verse.text, verse.text_kannada, verse.text_telugu, "sa") as Tagged;
   const translation = pick(language, verse.translation_english, verse.translation_kannada, verse.translation_telugu, "en") as Tagged;
-  const commentary = sections.commentary ? pick(language, verse.commentary_english, verse.context_kannada, verse.context_telugu, "en") : null;
+  /* Kannada prefers the full translated commentary over context_kannada, which
+     covers four verses with a short summary — one register across the chapter
+     beats a better paragraph on 4 of 701. Telugu still has only context_telugu
+     until its own commentary merge lands. */
+  const commentary = sections.commentary
+    ? pick(language, verse.commentary_english, verse.commentary_kannada ?? verse.context_kannada, verse.context_telugu, "en")
+    : null;
   // There is no Kannada or Telugu gloss set, and the panel is worth more in
   // English than it is missing: the list is tagged `lang="en"` and shown in
   // every reading language.
   const wordMeanings = sections.words ? verse.context_english : undefined;
   const [tab, setTab] = useState<"words" | "commentary">(commentary ? "commentary" : "words");
   const translationSource = language === "te" && verse.translation_telugu_machine ? TELUGU_COMPOSED : TRANSLATION_SOURCE[language];
+  const commentaryAttribution = commentary
+    ? [verse.commentary_author, commentary.lang === "en" ? null : COMMENTARY_TRANSLATED].filter(Boolean).join(" \u00b7 ")
+    : "";
   /* "term—gloss; term—gloss" from the source. Split at the FIRST em dash only:
      a gloss may contain one. The separator is chosen here rather than in CSS so
      that a copied line carries a real character. */
@@ -193,7 +208,7 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
           <p className="verse-section-content" lang={commentary.lang}>
             {commentary.text}
           </p>
-          {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
+          {commentaryAttribution && <p className="verse-section-attribution">{commentaryAttribution}</p>}
         </div>
       ) : panes ? null : (
         (wordMeanings || commentary) && (
@@ -220,7 +235,7 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
                   <p className="verse-section-content" lang={commentary.lang}>
                     {commentary.text}
                   </p>
-                  {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
+                  {commentaryAttribution && <p className="verse-section-attribution">{commentaryAttribution}</p>}
                 </div>
               )}
               {glossList && (

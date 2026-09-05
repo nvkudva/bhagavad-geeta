@@ -36,9 +36,16 @@ const VERSE_KEYS = [
 // Commentary is 29% of the corpus and is never on screen at first paint — the home
 // screen's verse card does not show it at all. It ships as commentary-NN.json, which
 // the reader loads in parallel with its chapter and nothing else loads at all.
-const COMMENTARY_KEYS = ["verse_number", "commentary_english", "commentary_author"];
+const COMMENTARY_KEYS = ["verse_number", "commentary_english", "commentary_author", "commentary_kannada"];
 
-const SOURCE_KEYS = ["translation_telugu_source", "translation_kannada_source"];
+const SOURCE_KEYS = ["translation_telugu_source", "translation_kannada_source", "commentary_kannada_source"];
+
+// Known, and deliberately not shipped: true on every verse that has the field,
+// so it carries no per-verse information. The reader states the credit once,
+// the way it does for translation_kannada. Contrast translation_telugu_machine,
+// which ships because it is true on only three verses and the reader has to
+// tell those three apart from the other 698.
+const CONSTANT_KEYS = ["commentary_kannada_machine"];
 
 const CHAPTER_KEYS = [
   "id",
@@ -78,7 +85,7 @@ const chapters = JSON.parse(readFileSync(join(SRC, "chapters.json"), "utf8"));
 /* A ratchet, not a repair: every rule below passes against the corpus as it stands.
    pick() silently drops any key it does not know, so before this existed, renaming a
    corpus field produced a clean build that quietly shipped nothing. */
-const KNOWN_KEYS = new Set([...VERSE_KEYS, ...COMMENTARY_KEYS, ...SOURCE_KEYS]);
+const KNOWN_KEYS = new Set([...VERSE_KEYS, ...COMMENTARY_KEYS, ...SOURCE_KEYS, ...CONSTANT_KEYS]);
 const KANNADA = /[\u0C80-\u0CFF]/;
 const TELUGU = /[\u0C00-\u0C7F]/;
 const DEVANAGARI = /[\u0900-\u097F]/;

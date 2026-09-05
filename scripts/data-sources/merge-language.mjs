@@ -19,6 +19,15 @@
  *
  * Optional:
  *   --min-purity 0.92   fraction of letters that must be in --script (default 0.92)
+ *   --against <field>   judge the text against this source field rather than in
+ *                       isolation. A run of another script is a defect only when
+ *                       it is NOT in the source, and runs carried over verbatim
+ *                       are left out of the purity ratio. Commentary needs this:
+ *                       it quotes the Upanishads in Devanagari and cites
+ *                       "Cf.XVIII.17" in Latin, and a faithful translation keeps
+ *                       both. Without it those verses are rejected for being
+ *                       correct. Do not use it for a verse translation, where
+ *                       the isolated test is the right one.
  *   --min-length 20     shortest acceptable entry (default 20; use 0 for glosses)
  *   --machine-flag      also write <field>_machine: true
  *   --allow-partial     permit verses missing from --input instead of failing
@@ -60,6 +69,7 @@ const field = arg("field");
 const scriptName = arg("script");
 const source = arg("source");
 const minPurity = Number(arg("min-purity", 0.92));
+const against = arg("against");
 const minLength = Number(arg("min-length", 20));
 const machineFlag = arg("machine-flag", false) === true;
 const allowPartial = arg("allow-partial", false) === true;
@@ -87,6 +97,29 @@ const forbidden = Object.entries(SCRIPTS)
   .filter(([name]) => name !== scriptName && name !== "latin")
   .map(([name, range]) => [name, range]);
 
+/* Runs a faithful translation may carry over from its source unchanged: a
+ * Devanagari scripture quotation, and a Latin citation or editorial marker.
+ * Anything matching these that also appears in the source field is the source's
+ * own text, not something the model produced, so it is not evidence about the
+ * translation either way. A run that does NOT appear in the source still counts
+ * — that is the mojibake and wrong-script merge this guard exists to catch. */
+const CARRIED = /[\u0900-\u097f][\u0900-\u097f\s\u0964\u0965]*|[A-Za-z][A-Za-z.\-']*/gu;
+
+function carriedOver(text, sourceText) {
+  if (!against || typeof sourceText !== "string") return [];
+  return (text.match(CARRIED) ?? [])
+    .map((run) => run.trim())
+    .filter((run) => run && sourceText.includes(run));
+}
+
+/** The text with every carried-over run removed, for judging what the model
+  * actually produced. */
+function ownWork(text, carried) {
+  let out = text;
+  for (const run of carried) out = out.split(run).join(" ");
+  return out;
+}
+
 const verses = JSON.parse(readFileSync(versesPath, "utf8"));
 const incoming = JSON.parse(readFileSync(isAbsolute(inputPath) ? inputPath : join(root, inputPath), "utf8"));
 
@@ -104,11 +137,14 @@ for (const verse of verses) {
     continue;
   }
 
+  const carried = carriedOver(text, verse[against]);
+  const judged = ownWork(text, carried);
+
   for (const [name, range] of forbidden) {
-    if ([...text].some((ch) => inBlock(ch, range))) problems.push(`${id}: contains ${name}`);
+    if ([...judged].some((ch) => inBlock(ch, range))) problems.push(`${id}: contains ${name}`);
   }
 
-  const letters = [...text].filter((ch) => /\p{L}/u.test(ch));
+  const letters = [...judged].filter((ch) => /\p{L}/u.test(ch));
   const right = letters.filter((ch) => inBlock(ch, [lo, hi])).length;
   const purity = letters.length ? right / letters.length : 0;
   if (purity < minPurity) {

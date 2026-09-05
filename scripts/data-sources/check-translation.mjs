@@ -221,6 +221,21 @@ function oneCharApart(l, r) {
   return diff === 1 && at > 0 && confusable(l[at], r[at]);
 }
 
+// "X or X": the model transliterated a Sanskrit term AND translated its English
+// gloss to that same term, so the gloss says nothing — "ದ್ವೇಷ ಅಥವಾ ದ್ವೇಷವಿದೆ",
+// dveṣa or dveṣa. Correcting the spelling of the ದ್ವೇಶ class turns those pairs
+// from a misspelling into a tautology; the right rendering drops one side, which
+// takes grammar the fix pass does not have. Reported, not repaired.
+function redundantGloss(text) {
+  const bad = [];
+  for (const m of text.matchAll(OR)) {
+    const [, l, r] = m;
+    if (l === r || (l.length >= 4 && (r.startsWith(l) || l.startsWith(r))))
+      bad.push(`${l} … ${r}`);
+  }
+  return bad;
+}
+
 function orPairs(text) {
   const bad = [];
   for (const m of text.matchAll(OR)) {
@@ -251,6 +266,7 @@ const defects = {
   'length ratio outside 0.55–1.9': [],
   'cross-script sanskrit stem mismatch': [],
   'misspelling-or-correct pair (ದ್ವೇಶ class)': [],
+  'redundant gloss — X or X': [],
 };
 
 let total = 0;
@@ -306,6 +322,9 @@ for (const [id, v] of src) {
 
     for (const pair of orPairs(t))
       flag('misspelling-or-correct pair (ದ್ವೇಶ class)', id, `${lang} ${pair}`);
+
+    for (const pair of redundantGloss(t))
+      flag('redundant gloss — X or X', id, `${lang} ${pair}`);
   }
 
   if (rec.kannada && rec.telugu) {
