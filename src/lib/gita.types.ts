@@ -15,9 +15,11 @@ export interface Verse {
    *  were composed instead and so cannot carry the Wikisource credit. */
   translation_telugu_machine?: boolean; // 3/701
   context_english?: string; // 701/701 — word-by-word glosses
-  commentary_english?: string; // 631/701 — Swami Sivananda, via vedicscriptures.github.io
+  commentary_english?: string; // 701/701 — Sivananda 631 / Ramanuja 48 / Shankaracharya 22.
+  // Coverage counts are generated per build into public/data/v1/manifest.json; these
+  // comments are a convenience and the manifest is the source of truth.
   commentary_author?: string;
-  context_kannada?: string; // 4/701
+  context_kannada?: string; // 4/701 — the one real remaining coverage gap
   context_telugu?: string; // 22/701
 }
 

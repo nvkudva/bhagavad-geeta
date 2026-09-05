@@ -64,6 +64,7 @@ const verseDomId = (chapter: number, verse: number): string => `c${chapter}v${ve
 
 /** Which way the rail should slide. Written before the navigation, because the
  *  view transition captures the old frame the moment `navigate` is called. */
+// eslint-disable-next-line react-refresh/only-export-components -- a DOM side effect called before navigate(); it belongs beside the rail it drives.
 export const setRailDirection = (dir: "prev" | "next"): void => {
   document.documentElement.dataset.railDir = dir;
 };

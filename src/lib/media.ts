@@ -4,8 +4,8 @@ import { useSyncExternalStore } from "react";
    media blocks cannot drift. Every `false` path in a component that reads
    these is the code that shipped before the desktop pass — a phone renders
    exactly as it did. */
-export const WIDE = "(min-width: 900px)";
-export const WIDE_PLUS = "(min-width: 1280px)";
+const WIDE = "(min-width: 900px)";
+const WIDE_PLUS = "(min-width: 1280px)";
 
 type Store = { subscribe: (fn: () => void) => () => void; get: () => boolean };
 

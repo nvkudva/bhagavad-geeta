@@ -8,6 +8,7 @@ import { Link, navigate } from "../lib/router";
 import type { SearchHit } from "../lib/search";
 import { loadIndex, parseReference, peekIndex, search } from "../lib/search";
 
+// eslint-disable-next-line react-refresh/only-export-components -- a static string map, not a component; no HMR boundary to lose.
 export const SEARCH_PLACEHOLDER: Record<Language, string> = { en: "Search verses", kn: "ಶ್ಲೋಕಗಳನ್ನು ಹುಡುಕಿ", te: "శ్లోకాలను వెతకండి" };
 
 /** The matched run, marked. The index carries plain strings, so this is a slice,

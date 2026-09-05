@@ -146,7 +146,7 @@ public/
       chapter-02.json          # 33.9 KB gz  [M]
       ...
       chapter-18.json          # 33.6 KB gz  [M]
-      search-index.json        # 72.8 KB gz  [M] (see 2.5)
+      search-index.json        # 224.4 KB gz [M 2026-09-05] (see 2.5)
 scripts/
   build-data.mjs               # canonical src/data/verses.json -> public/data/v1/*
 src/
@@ -191,11 +191,11 @@ export interface Verse {
   text_telugu?: string;         // 701/701 [M]
   transliteration: string;      // 701/701 [M]
   translation_english: string;  // 701/701 [M]
-  translation_kannada?: string; // 4/701   [M]
-  translation_telugu?: string;  // 4/701   [M]
+  translation_kannada?: string; // 701/701 [M 2026-09-05]
+  translation_telugu?: string;  // 701/701 [M 2026-09-05]
   context_english?: string;     // 701/701 [M]
-  context_kannada?: string;     // 4/701   [M]
-  context_telugu?: string;      // 4/701   [M]
+  context_kannada?: string;     // 4/701   [M 2026-09-05]
+  context_telugu?: string;      // 22/701  [M 2026-09-05]
 }
 
 export interface ChapterMeta {
@@ -222,10 +222,6 @@ export function loadVerse(c: ChapterId, v: number): Promise<Verse | undefined>;
  *  (fetch(..., {priority:"low"}) where supported). Idempotent. */
 export function prefetchChapter(id: ChapterId): void;
 
-/** Suspense-friendly resource for use with React 19 `use()`.
- *  Returns the SAME promise identity for the same id, which `use()` requires. */
-export function chapterResource(id: ChapterId): Promise<readonly Verse[]>;
-
 /** Lazy, ~73 KB gz [M]. Only loaded when search UI is opened. */
 export function loadSearchIndex(): Promise<SearchIndex>;
 
@@ -248,8 +244,11 @@ parse, not a download.
 
 ### 2.5 Search
 
-The measured index of `translation_english + transliteration` for all 701 verses is
-**202.0 KB raw / 72.8 KB gzip [M]**.
+The index now carries Devanagari, Kannada, Telugu, transliteration *and* English for all
+701 verses: **743.5 KB raw / 224.4 KB gzip [M 2026-09-05]**. (It was 202.0 KB raw /
+72.8 KB gzip when it held only `translation_english + transliteration`.) It is deliberately
+outside the precache and served by the `/data/v1/*.json` CacheFirst rule, so offline search
+works only after a first online search until `ensureOffline()` warms it.
 
 Recommendation: **ship a plain array and use `String.prototype.includes` over a
 pre-normalised lowercase/diacritic-folded field.** 701 documents × ~300 chars is ~200 KB of
@@ -490,7 +489,7 @@ split is per-chapter and not per-verse.
 - **Same-chapter navigation**: `peekChapter(n)` hits, render synchronously. No Suspense
   boundary is entered, no spinner is ever mounted. This should be a <16 ms commit **[E]**.
 - **Cross-chapter navigation**: wrap `navigate()` in `startTransition`. React keeps the
-  current verse on screen while `chapterResource(n)` resolves, and `useTransition`'s
+  current verse on screen while `loadChapter(n)` resolves, and `useTransition`'s
   `isPending` drives a subtle inline progress affordance rather than a full-screen
   skeleton. On a warm Cache Storage hit this resolves in <5 ms **[E]** and the pending
   state never becomes visible.
@@ -781,7 +780,7 @@ Each line is independently shippable and leaves the app working.
 **P0 — correctness and the 377 KB problem**
 
 - [ ] P0.1 Add `scripts/build-data.mjs`; emit `public/data/v1/{manifest,chapters,chapter-NN}.json`; wire to `prebuild`/`predev`. No app change yet.
-- [ ] P0.2 Add `src/lib/gita.ts` (`getChapters`/`peekChapter`/`loadChapter`/`prefetchChapter`/`chapterResource`) with in-memory memo + in-flight dedup.
+- [ ] P0.2 Add `src/lib/gita.ts` (`getChapters`/`peekChapter`/`loadChapter`/`prefetchChapter`) with in-memory memo + in-flight dedup.
 - [ ] P0.3 Switch `App.tsx` to the loader, delete the `verses.json` import and both `versesData.filter` calls — initial JS drops from 377 KB gz to ~50 KB gz **[E]**.
 - [ ] P0.4 Add `no-restricted-imports` on `src/data/verses.json` and the `size-limit` gate so P0.3 cannot regress.
 - [ ] P0.5 Add the `/data/v1/*.json` `CacheFirst` runtime rule and `navigateFallback` + `navigateFallbackDenylist` to `vite.config.ts`.

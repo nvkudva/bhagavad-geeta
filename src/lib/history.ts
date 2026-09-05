@@ -64,10 +64,6 @@ export function rememberSearch(query: string): void {
   commit([q, ...rest].slice(0, LIMIT));
 }
 
-export function forgetSearch(query: string): void {
-  commit(snapshot.filter((item) => item !== query));
-}
-
 export function clearSearchHistory(): void {
   commit(EMPTY);
 }

@@ -1,0 +1,6 @@
+# Geeta — a Bhagavad Gita progressive web app.
+User-agent: *
+Allow: /
+
+# The corpus projection is machine-readable but not worth crawling as pages.
+Disallow: /data/

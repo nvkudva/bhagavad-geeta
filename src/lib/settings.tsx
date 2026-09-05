@@ -5,7 +5,7 @@ import type React from "react";
 import { createContext, use, useCallback, useEffect, useMemo, useState } from "react";
 import type { Language } from "./gita.types";
 
-export type Theme = "light" | "dark";
+type Theme = "light" | "dark";
 
 /** The five parts of a verse the reader can turn off independently. Someone
  *  memorising works from the sloka alone; someone studying wants the glosses

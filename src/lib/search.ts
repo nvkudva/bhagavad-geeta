@@ -22,7 +22,7 @@ export interface SearchHit {
 /** Diacritic- and case-insensitive: "krsna", "kṛṣṇa" and "Krishna" must not be
  *  three different queries. Indic scripts are left alone — NFD there separates
  *  vowel signs that are part of the letter, not accents on it. */
-export const normalize = (s: string): string =>
+const normalize = (s: string): string =>
   s
     .toLowerCase()
     .normalize("NFD")

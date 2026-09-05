@@ -8,7 +8,7 @@ marked SUPERSEDED were written against the earlier warm-paper direction.
 
 - [x] Telugu: solved. te.wikisource.org carries a full per-verse Telugu translation (CC BY-SA 4.0) for all 701, and its chapter 13 has the same 35 verses this corpus does. See scripts/data-sources/README.md.
 - [x] Kannada: no legally-usable source exists — kn.wikisource has only Sanskrit in Kannada script plus one unproofread OCR scan; the one 701-verse GitHub dataset is unlicensed and itself machine-generated; HuggingFace carries script transliterations, not translations; the PD-in-India 1936 archive.org text is old-Kannada ṣaṭpadi metre with no verse alignment. Shipped machine-assisted with a visible label instead — all 701 verses, rendered from the Sanskrit with the English and Telugu alongside, deliberately without reference to any copyrighted Kannada edition.
-- [ ] BLOCKED: source a clean per-verse English commentary. Sivananda is corrupted identically in every JSON mirror (13,006 commas replaced by `?`, letter `q` deleted corpus-wide). Sastry/Shankara OCR parses at only 52% — verse 2.47 does not survive either scan. Next viable step is re-OCR of the archive.org page images with Tesseract 5; alternatives are asking wisdomlib for their clean transcription, or switching to Swarupananda (parses at 84%).
+- [ ] Commentary QUALITY, not coverage: `commentary_english` is 701/701 [M 2026-09-05], attributed Sivananda 631 / Ramanuja 48 / Shankaracharya 22. What remains: 52 verses share a commentary string across 8 groups (chapter 1 pastes one 1,885-char essay onto 14 consecutive verses), 8.5 and 18.77 hold placeholder strings, and 4 verses say "Swami Sivananda did not comment on this sloka". These need a `span` schema field and an empty state, not a new source.
 - [x] Credit each translation under the verse — "AI translated" for the Kannada, the Wikisource licence for the Telugu — and suppress the credit where the section fell back to English, so no English prose is ever labelled as a Kannada or Telugu rendering.
 - [x] Confirmed the chapter 13 recension: 35 verses, hence 701 total. te.wikisource independently carries the same 35, which is a second witness for it.
 - [ ] Evaluate importing per-verse Sanskrit recitation MP3s from github.com/gita/gita (data/verse_recitation/, all 701 verses) for an audio playback feature.
@@ -17,7 +17,7 @@ marked SUPERSEDED were written against the earlier warm-paper direction.
 
 - [ ] Switch PWA registerType from "autoUpdate" to "prompt", add an UpdatePrompt with useRegisterSW, hourly r.update(), and an "offline ready" confirmation.
 - [ ] Implement ensureOffline() idle warm-up over manifest.json plus an "Available offline" indicator; honour saveData and 2g.
-- [ ] Wire up prefetchChapter — it exists in src/lib/gita.ts but nothing calls it. Trigger on Link pointerenter/focus, the last and first 3 verses of a chapter, and home-screen idle.
+- [ ] Add the two remaining prefetchChapter triggers: Link pointerenter/focus (guarded behind `pointer: fine`) and a home-screen idle warm-up. The chapter ± 1 idle warm is already wired at src/App.tsx:77-78 [M 2026-09-05].
 - [ ] Wrap cross-chapter navigation in startTransition; render chapter metadata optimistically from chapters.json while the verse body resolves.
 - [ ] Finish the memoisation pass: VerseBlock is memoised and handlers use useCallback, but Header and ChapterList are not, and there is no verse-number to index Map.
 - [ ] Persist reading position to localStorage and add a "Continue reading" entry point on the home screen.
@@ -42,10 +42,10 @@ marked SUPERSEDED were written against the earlier warm-paper direction.
 - [ ] Add a long-press context sheet on chapter rows (Start from verse 1, Bookmark chapter).
 - [ ] Add document.startViewTransition around navigation, feature-detected and gated on prefers-reduced-motion.
 - [ ] Inline all CSS into index.html and add a static app-shell skeleton; drop the CSS request.
-- [ ] Add .github/workflows/ci.yml (typecheck, lint, format-check, build) plus Lighthouse CI with a budget.json.
+- [ ] Add .github/workflows/ci.yml (typecheck, lint, format-check, build) plus Lighthouse CI with a budget.json. Lighthouse 13 has NO pwa category (removed after LH 11) — gate on lighthouse@11 for PWA and lighthouse@13 for mobile Performance, or the gate asserts a category that does not exist.
 - [ ] Add tests for build-data.mjs output shape, router path round-trip, and the language fallback selection.
 - [ ] Run npx update-browserslist-db@latest.
-- [ ] TRIGGER not a task: when translation_kannada coverage exceeds ~50% of 701, execute the per-language data split and bump data/v1 to data/v2.
+- [ ] TRIGGER MET but SUPERSEDED: translation_kannada is 701/701 [M 2026-09-05]. Measurement says the per-language axis is wrong — kn+te translations are 21% of corpus bytes, commentary alone is 29%. Split by section (commentary-NN.json), which is additive and needs no v2 bump.
 
 ## Superseded by a direction change
 
@@ -96,4 +96,4 @@ marked SUPERSEDED were written against the earlier warm-paper direction.
 ## Language — still open
 
 - [ ] Localise the rest of the UI chrome. The chapter cards, the reader's chapter title, search and saved rows now follow the reader's language, but "Verse N", "Previous chapter", the verse rail, the tab labels and the Settings screen are still English in every language.
-- [ ] context_kannada is 4/701 and context_telugu 22/701, so a Kannada or Telugu reader gets English commentary on nearly every verse. It is labelled as such; sourcing it is a separate problem from the translations.
+- [ ] context_kannada is 4/701 and context_telugu 22/701 [M 2026-09-05], so a Kannada or Telugu reader gets English commentary on nearly every verse. It is labelled as such; sourcing it is a separate problem from the translations.

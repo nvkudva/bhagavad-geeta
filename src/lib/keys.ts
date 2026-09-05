@@ -122,8 +122,6 @@ export function installKeys(actions: () => KeyActions): () => void {
   return () => window.removeEventListener("keydown", onKeyDown);
 }
 
-/** The platform's own name for the palette chord, for the sidebar hint. */
-export const modKeyLabel = (): string => (typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? "⌘K" : "Ctrl K");
 
 export const SHORTCUTS: readonly { keys: string; label: string }[] = [
   { keys: "J / ↓", label: "Next verse" },

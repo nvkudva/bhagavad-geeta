@@ -5,7 +5,7 @@
 import type React from "react";
 import { useCallback, useLayoutEffect, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
-import { getChapterMeta, getChapters } from "./gita";
+import { getChapterMeta } from "./gita";
 
 export type Route = { name: "home" } | { name: "verse"; chapter: number; verse: number } | { name: "search"; q: string } | { name: "saved" } | { name: "settings" };
 
@@ -31,7 +31,7 @@ const clampVerse = (verse: number): number => (Number.isFinite(verse) && verse >
 
 /** An out-of-range chapter or verse lands somewhere useful rather than erroring:
  *  a truncated shared link should still open a verse. */
-export function parseLocation(pathname: string, search: string): Route {
+function parseLocation(pathname: string, search: string): Route {
   const path = (pathname.startsWith(BASE) ? pathname.slice(BASE.length) : pathname).replace(/\/+$/, "");
   const segments = path.split("/").filter(Boolean);
 
@@ -52,7 +52,7 @@ export function parseLocation(pathname: string, search: string): Route {
   return { name: "home" };
 }
 
-export function toPath(route: Route): string {
+function toPath(route: Route): string {
   switch (route.name) {
     case "home":
       return `${BASE}/`;
@@ -79,10 +79,6 @@ let pendingScroll: number | null = null;
 /** How the current route was reached. The reader consults this to decide whether
  *  it owns the viewport (a push/replace) or scroll restoration does (a pop). */
 let navKind: "boot" | "push" | "replace" | "pop" = "boot";
-
-export function getNavKind(): "boot" | "push" | "replace" | "pop" {
-  return navKind;
-}
 
 function initScroll(): void {
   if (typeof window === "undefined") return;
@@ -284,4 +280,3 @@ export const Link: React.FC<LinkProps> = ({ to, replace, onClick, ...rest }) => 
 };
 
 /** Chapter ids that exist, for callers that need to validate at an edge. */
-export const chapterIds: readonly number[] = getChapters().map((c) => c.id);

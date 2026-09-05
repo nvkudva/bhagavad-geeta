@@ -72,7 +72,7 @@ const subscribe = (listener: () => void): (() => void) => {
 
 const getSnapshot = (): readonly Bookmark[] => snapshot;
 
-export function isSaved(chapter: number, verse: number): boolean {
+function isSaved(chapter: number, verse: number): boolean {
   return index.has(idOf(chapter, verse));
 }
 

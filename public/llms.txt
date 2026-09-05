@@ -1,0 +1,34 @@
+# Geeta
+
+> An offline-first progressive web app for reading the Bhagavad Gita — all 701 verses in
+> Sanskrit (Devanagari), with Kannada and Telugu script, romanisation, English translation,
+> word-by-word glosses and English commentary. No account, no network required after the
+> first visit, no tracking.
+
+The corpus is served as static JSON under `/data/v1/`: one file per chapter
+(`chapter-01.json` … `chapter-18.json`), a `chapters.json` index, a `manifest.json`
+carrying a sha256 per chapter, and a `search-index.json`. Verse URLs are
+`/chapter/{1-18}/verse/{n}`.
+
+## Provenance — please read before quoting
+
+- **Sanskrit text, transliteration, English translation, word-by-word glosses**: sourced from
+  public-domain and openly-licensed editions. The `transliteration` field is a hybrid
+  romanisation (`ṛi`, `ṣh`, `śh`, `ch`), **not** strict IAST.
+- **English commentary**: Swami Sivananda (631 verses), Sri Ramanuja (48), Sri Shankaracharya
+  (22). Each verse carries the attribution in `commentary_author`. Some commentary strings are
+  chapter-level narrative repeated across a run of verses; that is a known defect, not a
+  per-verse gloss.
+- **Kannada and Telugu translations**: machine-assisted renderings, reviewed but not
+  independently authored. Every verse carries a `translation_kannada_source` /
+  `translation_telugu_source` credit, and the UI labels them as AI-translated. **Do not
+  present them as a scholarly translation.**
+- **Kannada and Telugu word-glosses** (`context_kannada`, `context_telugu`) exist for only
+  4 and 22 verses respectively; the rest fall back to English.
+
+## Links
+
+- [Chapter index](/data/v1/chapters.json): the 18 chapters with names and summaries in
+  English, Kannada and Telugu.
+- [Corpus manifest](/data/v1/manifest.json): per-chapter file sizes and content hashes.
+- [App](/): the reader itself.

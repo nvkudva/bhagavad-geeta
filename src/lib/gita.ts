@@ -50,10 +50,6 @@ export function peekChapter(id: ChapterId): readonly Verse[] | undefined {
   return memo.get(id);
 }
 
-export function peekVerse(c: ChapterId, v: number): Verse | undefined {
-  return memo.get(c)?.find((x) => x.verse_number === v);
-}
-
 /** Async load, memoised by chapter id and de-duplicated in flight. */
 export function loadChapter(id: ChapterId): Promise<readonly Verse[]> {
   const existing = inflight.get(id);
@@ -78,17 +74,9 @@ export function loadChapter(id: ChapterId): Promise<readonly Verse[]> {
   return request;
 }
 
-export function loadVerse(c: ChapterId, v: number): Promise<Verse | undefined> {
-  return loadChapter(c).then((verses) => verses.find((x) => x.verse_number === v));
-}
-
 /** Fire-and-forget warm-up. Never rejects, never blocks. Idempotent. */
 export function prefetchChapter(id: ChapterId): void {
   if (!chapterById.has(id) || inflight.has(id)) return;
   void loadChapter(id).catch(() => undefined);
 }
 
-/** Suspense-friendly resource: the SAME promise identity per id, which `use()` requires. */
-export function chapterResource(id: ChapterId): Promise<readonly Verse[]> {
-  return loadChapter(id);
-}
