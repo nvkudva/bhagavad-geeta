@@ -315,6 +315,15 @@
     --book-turn-zone: 4rem;
     --dur-book-turn: 420ms;
 
+    /* The book sets smaller than the card reader: a card shows one verse and
+       can afford 17px, a page of continuous text reads better at 15. Still
+       multiplied by --reading-scale, so the size control still works. */
+    --book-fs-verse: calc(1.0625rem * var(--reading-scale));
+    --book-fs-translit: calc(0.75rem * var(--reading-scale));
+    --book-fs-trans: calc(0.9375rem * var(--reading-scale));
+    --book-fs-comment: calc(0.8125rem * var(--reading-scale));
+    --book-fs-gloss: calc(0.75rem * var(--reading-scale));
+
     /* Measure by role. One width cannot serve centred Devanagari padas, a
        translation and a page of commentary at the same time. */
     --measure-script: 46rem;
@@ -981,7 +990,8 @@
     max-width: calc(var(--book-pages-per-spread) * var(--book-page-w) + var(--book-gutter) + 2 * var(--book-margin-out));
     margin-inline: auto;
     padding: var(--book-margin-y) var(--book-margin-out);
-    background: var(--surface-1);
+    background: var(--book-paper);
+    color: var(--book-ink);
     border-radius: var(--r-md);
     box-shadow: var(--el-3);
   }
@@ -1018,7 +1028,7 @@
 
   .book-opener-number {
     margin: 0 0 var(--sp-4);
-    color: var(--ink-4);
+    color: var(--book-ink-4);
     font-size: var(--fs-caption1);
     letter-spacing: var(--tr-caps);
     text-transform: uppercase;
@@ -1027,22 +1037,22 @@
   .book-opener-name {
     margin: 0;
     font-family: var(--font-read);
-    font-size: var(--fs-title1);
+    font-size: var(--fs-title3);
     font-weight: var(--fw-medium);
-    color: var(--ink-1);
+    color: var(--book-ink);
   }
 
   .book-opener-meaning {
     margin: var(--sp-2) 0 var(--sp-8);
-    color: var(--ink-3);
-    font-size: var(--fs-callout);
+    color: var(--book-ink-3);
+    font-size: var(--fs-subhead);
     font-style: italic;
   }
 
   .book-opener-summary {
     margin: 0;
-    color: var(--ink-2);
-    font-size: var(--fs-trans);
+    color: var(--book-ink-2);
+    font-size: var(--book-fs-trans);
     line-height: var(--lh-read);
     text-align: start;
   }
@@ -1060,9 +1070,9 @@
     break-inside: avoid;
     margin: 0;
     text-align: center;
-    font-size: var(--fs-verse);
+    font-size: var(--book-fs-verse);
     line-height: var(--lh-verse);
-    color: var(--ink-1);
+    color: var(--book-ink);
     white-space: pre-line;
   }
 
@@ -1071,7 +1081,7 @@
   .book-folio-num {
     display: block;
     margin-bottom: var(--sp-2);
-    color: var(--ink-4);
+    color: var(--book-ink-4);
     font-family: var(--font-sys);
     font-size: var(--fs-caption2);
     letter-spacing: var(--tr-caps);
@@ -1085,9 +1095,9 @@
     break-inside: avoid;
     margin: var(--sp-2) 0 0;
     text-align: center;
-    font-size: var(--fs-translit);
+    font-size: var(--book-fs-translit);
     font-style: italic;
-    color: var(--ink-3);
+    color: var(--book-ink-3);
   }
 
   .book-prose {
@@ -1104,33 +1114,33 @@
   }
 
   .book-trans {
-    font-size: var(--fs-trans);
+    font-size: var(--book-fs-trans);
     line-height: var(--lh-read);
-    color: var(--ink-1);
+    color: var(--book-ink);
   }
 
   /* Indent or space, never both. */
   .book-comment {
     margin-top: 0;
     text-indent: var(--sp-6);
-    font-size: var(--fs-comment);
+    font-size: var(--book-fs-comment);
     line-height: var(--lh-body);
-    color: var(--ink-2);
+    color: var(--book-ink-2);
   }
 
   .book-attrib {
-    color: var(--ink-4);
+    color: var(--book-ink-4);
     font-size: var(--fs-caption1);
   }
 
   .book-words {
-    font-size: var(--fs-gloss);
+    font-size: var(--book-fs-gloss);
     line-height: var(--lh-body);
-    color: var(--ink-3);
+    color: var(--book-ink-3);
   }
 
   .book-words-label {
-    color: var(--ink-4);
+    color: var(--book-ink-4);
     font-size: var(--fs-caption2);
     font-weight: var(--fw-medium);
     letter-spacing: var(--tr-caps);
@@ -1141,7 +1151,7 @@
     margin: 0;
     padding-block: var(--sp-16);
     text-align: center;
-    color: var(--ink-3);
+    color: var(--book-ink-3);
   }
 
   /* Outer-edge turn zones. Laid over the page's own margin rather than taking
@@ -1176,7 +1186,7 @@
   .book-folio {
     position: absolute;
     margin: 0;
-    color: var(--ink-4);
+    color: var(--book-ink-4);
     font-family: var(--font-sys);
     font-size: var(--fs-caption2);
     letter-spacing: var(--tr-caps);
@@ -1213,7 +1223,7 @@
     inset-inline: var(--book-margin-out);
     bottom: 0;
     height: 2px;
-    background: var(--separator);
+    background: var(--book-rule);
     border-radius: var(--r-pill);
     overflow: hidden;
   }
@@ -1221,7 +1231,7 @@
   .book-progress > span {
     display: block;
     height: 100%;
-    background: var(--accent);
+    background: var(--book-ink-4);
     transform-origin: left center;
   }
 
@@ -1683,7 +1693,7 @@
   }
 
   .book-turn:hover:not(:disabled) {
-    color: var(--ink-4);
+    color: var(--book-ink-4);
   }
 
   .book-progress > span {

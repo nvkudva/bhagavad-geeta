@@ -359,6 +359,17 @@
 
   --paper: #0b0709;
   --surface-1: #141416;
+
+  /* Book View is paper in both appearances — a book does not have a dark mode.
+     The dark setting takes a deeper, duller stock and a softer ink so a lit
+     page is not a lamp in an unlit room. */
+  --book-paper: #d9ccb0;
+  --book-paper-edge: #c8bb9e;
+  --book-ink: #33241a;
+  --book-ink-2: #4a382a;
+  --book-ink-3: #6b5540;
+  --book-ink-4: #8a7358;
+  --book-rule: rgba(51, 36, 26, 0.18);
   --surface-2: #1c1c1f;
   --surface-3: #26262a;
   --separator: rgba(255, 255, 255, 0.09);
@@ -501,6 +512,14 @@
 
 /* ---------- Light appearance — secondary, and fully correct ---------- */
 [data-theme="light"] {
+  --book-paper: #f4e9d2;
+  --book-paper-edge: #e6d9bd;
+  --book-ink: #3a2a1c;
+  --book-ink-2: #513c2a;
+  --book-ink-3: #715942;
+  --book-ink-4: #94795c;
+  --book-rule: rgba(58, 42, 28, 0.16);
+
   color-scheme: light;
 
   --paper: #f3ebf9;
