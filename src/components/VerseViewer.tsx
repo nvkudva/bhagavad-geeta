@@ -211,18 +211,24 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
               )}
             </div>
 
-            {tab === "words" && glossList ? (
-              glossList
-            ) : (
-              commentary && (
-                <>
+            {/* Both panels share one grid cell, so the card stands as tall as
+                the taller of them: the words tab fills the same envelope the
+                commentary does instead of collapsing the verse under it. */}
+            <div className="verse-tabpanels">
+              {commentary && (
+                <div className="verse-tabpanel" data-active={tab === "commentary"}>
                   <p className="verse-section-content" lang={commentary.lang}>
-            {commentary.text}
-          </p>
+                    {commentary.text}
+                  </p>
                   {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
-                </>
-              )
-            )}
+                </div>
+              )}
+              {glossList && (
+                <div className="verse-tabpanel" data-active={tab === "words"}>
+                  {glossList}
+                </div>
+              )}
+            </div>
           </div>
         )
       )}

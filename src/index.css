@@ -1834,6 +1834,22 @@ body::before {
   margin-top: var(--sp-3);
 }
 
+/* Both tab panels occupy one grid cell, so the card is as tall as the taller
+   of them. Switching tabs then fills the same envelope rather than resizing
+   the verse, and the shorter panel stretches instead of leaving the card
+   short. visibility, not display, is what keeps the cell measured. */
+.verse-tabpanels {
+  display: grid;
+}
+
+.verse-tabpanels > * {
+  grid-area: 1 / 1;
+}
+
+.verse-tabpanels > [data-active="false"] {
+  visibility: hidden;
+}
+
 .verse-tabs {
   display: flex;
   gap: var(--sp-1);
