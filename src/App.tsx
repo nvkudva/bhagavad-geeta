@@ -469,7 +469,10 @@ const AppShell: React.FC = () => {
         // iOS-style contextual leading item: absent on Home, and on a chapter it
         // is labelled with where it goes back to.
         back={inReader ? { label: "Home", onClick: () => navigate({ name: "home" }) } : undefined}
-        title={inReader ? (chapterName(route.chapter, language) ?? APP_NAME[language]) : APP_NAME[language]}
+        // The number leads, as it does in the chapter list and the pager: it is
+        // how a reader says where they are, and the name alone does not say it.
+        title={inReader ? `${route.chapter}. ${chapterName(route.chapter, language) ?? ""}`.trim() : APP_NAME[language]}
+        titleLang={language}
         // Only Home takes a large title. The reader's masthead was removed on
         // purpose, so its chapter name stays in the compact bar.
         largeTitle={inReader ? undefined : APP_NAME[language]}

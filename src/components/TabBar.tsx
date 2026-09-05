@@ -1,5 +1,6 @@
-import { Bookmark, House, Minus, Plus, Search, Settings2, SunMoon } from "lucide-react";
+import { Bookmark, House, Minus, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings2, SunMoon } from "lucide-react";
 import type React from "react";
+import { useState } from "react";
 import type { Route } from "../lib/router";
 import { Link, navigate } from "../lib/router";
 import { LANGUAGE_LABELS, LANGUAGES, READING_SCALES, useSettings } from "../lib/settings";
@@ -13,6 +14,24 @@ const TABS: readonly { id: TabId; label: string; Icon: typeof House; to: Route }
   { id: "saved", label: "Saved", Icon: Bookmark, to: { name: "saved" } },
   { id: "settings", label: "Settings", Icon: Settings2, to: { name: "settings" } },
 ];
+
+/* Collapsed to a rail of icons. The width is a root custom property, so the
+   grid column, the labels and the fixed nav bar all follow one attribute
+   rather than each needing to be told. Read back on mount: a reader who chose
+   the rail keeps it across reloads. */
+const RAIL_KEY = "gita-sidebar-rail";
+
+const applyRail = (on: boolean): void => {
+  document.documentElement.dataset.sidebar = on ? "rail" : "full";
+};
+
+const railFromStorage = (): boolean => {
+  try {
+    return localStorage.getItem(RAIL_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
 
 /** Search is the nav bar's own field at this width, not a row in the list. */
 const SIDEBAR_TABS = TABS.filter((tab) => tab.id !== "search");
@@ -70,6 +89,22 @@ export const Sidebar: React.FC<{ route: Route; title: string }> = ({ route, titl
   const active = activeTab(route);
   const { theme, toggleTheme, language, setLanguage, readingScale, setReadingScale } = useSettings();
   const scaleIndex = READING_SCALES.indexOf(readingScale);
+  const [rail, setRail] = useState(() => {
+    const saved = railFromStorage();
+    applyRail(saved);
+    return saved;
+  });
+
+  const toggleRail = (): void => {
+    const next = !rail;
+    setRail(next);
+    applyRail(next);
+    try {
+      localStorage.setItem(RAIL_KEY, next ? "1" : "0");
+    } catch {
+      /* private mode: the choice lasts the session */
+    }
+  };
 
   const row = ({ id, label, Icon, to }: (typeof SIDEBAR_TABS)[number]) => {
     const isActive = active === id;
@@ -97,6 +132,11 @@ export const Sidebar: React.FC<{ route: Route; title: string }> = ({ route, titl
       <div className="app-sidebar-head">
         <Logo size={28} />
         <span className="app-sidebar-wordmark">{title}</span>
+        {/* The masthead is the one row that is not a destination, so it is where
+            a control over the sidebar itself belongs. */}
+        <button type="button" className="sidebar-rail-toggle pressable" onClick={toggleRail} aria-pressed={rail} aria-label={rail ? "Expand sidebar" : "Collapse sidebar to icons"} data-tip={rail ? "Expand sidebar" : "Collapse sidebar"}>
+          {rail ? <PanelLeftOpen size={18} strokeWidth={1.8} aria-hidden /> : <PanelLeftClose size={18} strokeWidth={1.8} aria-hidden />}
+        </button>
       </div>
 
       {SIDEBAR_TABS.map(row)}

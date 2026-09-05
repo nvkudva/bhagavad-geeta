@@ -207,6 +207,77 @@
     max-width: calc(var(--measure) + 2 * var(--sp-10));
     margin-inline: auto;
   }
+
+  /* The mark is 28px and a row icon is 20px, so boxes flush left leave the
+     mark's centre 4px off the icons' axis. Pull the masthead back by the
+     difference: mark over icons, wordmark over labels, two straight lines. */
+  .app-sidebar-head {
+    padding-left: calc(var(--sp-3) - 4px);
+  }
+
+  .sidebar-rail-toggle {
+    margin-left: auto;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: var(--r-sm);
+    color: var(--ink-3);
+    cursor: pointer;
+  }
+
+  .sidebar-rail-toggle:hover {
+    background: var(--surface-2);
+    color: var(--ink-1);
+  }
+
+  /* Collapsed: one width variable moves the grid column, the nav bar and the
+     pager together, and everything that needs a label to make sense goes with
+     it. What is left is the icon column the labels were annotating. */
+  :root[data-sidebar="rail"] {
+    --sidebar-w: 4.5rem;
+  }
+
+  :root[data-sidebar="rail"] .app-sidebar-wordmark,
+  :root[data-sidebar="rail"] .app-sidebar .tab-label,
+  :root[data-sidebar="rail"] .sidebar-langs,
+  :root[data-sidebar="rail"] .sidebar-scale,
+  :root[data-sidebar="rail"] .sidebar-search-label,
+  :root[data-sidebar="rail"] .sidebar-search kbd {
+    display: none;
+  }
+
+  :root[data-sidebar="rail"] .app-sidebar {
+    padding-inline: var(--sp-2);
+  }
+
+  /* Mark above the control that put the sidebar in this state, both centred:
+     side by side they would not fit the rail. */
+  :root[data-sidebar="rail"] .app-sidebar-head {
+    flex-direction: column;
+    gap: var(--sp-1);
+    min-height: auto;
+    padding: var(--sp-2) 0;
+  }
+
+  :root[data-sidebar="rail"] .sidebar-rail-toggle {
+    margin-left: 0;
+  }
+
+  :root[data-sidebar="rail"] .app-sidebar .tab-item,
+  :root[data-sidebar="rail"] .sidebar-search {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  /* Centred in the field's trailing end, and gone the moment there is a query
+     to clear. */
+  .nav-search-kbd {
+    flex: 0 0 auto;
+  }
 }
 
 /* ================================================================= desktop

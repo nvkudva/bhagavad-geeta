@@ -9,6 +9,10 @@ interface HeaderProps {
    *  labelled with the screen it returns to. */
   back?: { label: string; onClick: () => void };
   title: string;
+  /** Reading language of `title` and `largeTitle`. Untagged, an Indic title
+   *  renders in the Latin face's fallback at Latin line-height, and the tall
+   *  Kannada and Telugu glyphs clip against the bar's overflow. */
+  titleLang?: string;
   /** When present, a 34px large title sits below the bar and collapses into it
    *  on scroll, the way a UINavigationBar with prefersLargeTitles does. */
   largeTitle?: string;
@@ -64,6 +68,10 @@ const NavSearch: React.FC<NonNullable<HeaderProps["search"]>> = ({ query, placeh
           }
         }}
       />
+      {/* ⌘K reaches the palette from anywhere, but the field is where a reader
+          looks for a way in, so the hint lives here. It steps aside for the
+          clear button rather than crowding it. */}
+      {!value && <kbd className="nav-search-kbd">⌘K</kbd>}
       {value && (
         <button
           type="button"
@@ -82,7 +90,7 @@ const NavSearch: React.FC<NonNullable<HeaderProps["search"]>> = ({ query, placeh
 
 /** The edge-to-edge sticky nav bar of DESIGN_PLAN §3.3. Global navigation lives
  *  in the bottom tab bar; the nav carries only the leading item and the title. */
-export const Header: React.FC<HeaderProps> = ({ onHomeClick, back, title, largeTitle, trailing, search }) => {
+export const Header: React.FC<HeaderProps> = ({ onHomeClick, back, title, titleLang, largeTitle, trailing, search }) => {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -116,18 +124,30 @@ export const Header: React.FC<HeaderProps> = ({ onHomeClick, back, title, largeT
         ) : (
           <button type="button" onClick={onHomeClick} className="nav-logo-button pressable" aria-label={title}>
             <Logo size={40} />
-            {!largeTitle && <span className="nav-title">{title}</span>}
+            {!largeTitle && (
+              <span className="nav-title" lang={titleLang}>
+                {title}
+              </span>
+            )}
           </button>
         )}
 
-        {(back || largeTitle) && <span className="nav-title nav-title-compact">{title}</span>}
+        {(back || largeTitle) && (
+          <span className="nav-title nav-title-compact" lang={titleLang}>
+            {title}
+          </span>
+        )}
 
         {search && <NavSearch {...search} />}
 
         {trailing}
       </div>
 
-      {largeTitle && <h1 className="nav-large-title">{largeTitle}</h1>}
+      {largeTitle && (
+        <h1 className="nav-large-title" lang={titleLang}>
+          {largeTitle}
+        </h1>
+      )}
     </header>
   );
 };
