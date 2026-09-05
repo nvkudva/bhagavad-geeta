@@ -31,5 +31,6 @@ public/data/v1
 # vite-plugin-pwa dev output
 dev-dist
 
-# Python bytecode from the local translation scripts
+# local IndicTrans2 virtualenv, and Python bytecode from the translation scripts
+.venv-it2/
 __pycache__/
