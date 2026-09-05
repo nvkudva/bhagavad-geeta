@@ -16,7 +16,7 @@ import type { Language, Verse } from "./lib/gita.types";
 import type { KeyActions } from "./lib/keys";
 import { installKeys } from "./lib/keys";
 import { useWide } from "./lib/media";
-import { applyUpdate, checkForUpdate } from "./lib/sw";
+import { applyUpdate, checkForUpdate, hardReload } from "./lib/sw";
 import type { Route } from "./lib/router";
 import { Link, navigate, useRoute, useScrollRestoration } from "./lib/router";
 import type { FontKey, PaletteKey, SectionKey } from "./lib/settings";
@@ -312,6 +312,14 @@ const SettingsScreen: React.FC = () => {
         <SettingsSection id="updates" header="Updates" footer="The app keeps a copy of itself on the device so it opens offline. A new version installs in the background and asks before it replaces the one you are reading.">
           <UpdateRow />
         </SettingsSection>
+
+        <p className="settings-version">
+          <button type="button" className="settings-version-action" onClick={() => void hardReload()}>
+            Force refresh
+          </button>
+          <span aria-hidden="true"> · </span>
+          <span>{__APP_VERSION__}</span>
+        </p>
       </div>
     </div>
   );

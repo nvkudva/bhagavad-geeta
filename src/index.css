@@ -1201,6 +1201,26 @@ body::before {
   margin-bottom: var(--sp-8);
 }
 
+/* Build stamp and its escape hatch: the last thing on the page, sized so it is
+   readable when looked for and invisible when not. */
+.settings-version {
+  margin: calc(-1 * var(--sp-4)) 0 var(--sp-8);
+  padding: 0 var(--sp-4);
+  text-align: center;
+  font-size: var(--fs-caption2);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-version-action {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+}
+
 .settings-note {
   margin: var(--sp-2) 0 0;
   padding: 0 var(--sp-4);

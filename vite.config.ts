@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { copyFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
@@ -35,7 +36,21 @@ const minifyLinkedCss = (): Plugin => ({
   },
 });
 
+// One string identifying the deployed build: the commit it came from plus the day
+// it was built, so a bug report from a device names an exact tree.
+const buildVersion = () => {
+  const sha = (() => {
+    try {
+      return execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim();
+    } catch {
+      return "nogit";
+    }
+  })();
+  return `${new Date().toISOString().slice(0, 10)} ${sha}`;
+};
+
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify(buildVersion()) },
   server: { host: true, allowedHosts: ["vijaymac.merino-brill.ts.net"] },
   build: {
     rollupOptions: {

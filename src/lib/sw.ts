@@ -120,3 +120,19 @@ export const registerServiceWorker = (): void => {
   if (document.readyState === "complete") void register();
   else window.addEventListener("load", () => void register(), { once: true });
 };
+
+/** The escape hatch for a device stuck on a stale build: drop the worker and
+ *  every precache, then reload uncontrolled so the next load comes off the
+ *  network and registers fresh. */
+export const hardReload = async (): Promise<void> => {
+  try {
+    const regs = (await navigator.serviceWorker?.getRegistrations()) ?? [];
+    await Promise.all(regs.map((reg) => reg.unregister()));
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    }
+  } finally {
+    window.location.reload();
+  }
+};
