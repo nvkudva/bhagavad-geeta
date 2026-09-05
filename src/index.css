@@ -3446,26 +3446,45 @@ body::before {
     display: none;
   }
 
-  /* The verse is a row: the reading card, and the glosses beside it. */
+  /* The verse is a row: the reading card, and the glosses beside it. The
+     aside is taken out of flow and pinned to the row's full height, so it is
+     always exactly as tall as the card — a grid track would instead let a long
+     gloss list stretch the row and push the next verse down. */
   .verse-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--gloss-w);
-    column-gap: var(--sp-6);
-    align-items: start;
+    position: relative;
+    padding-right: calc(var(--gloss-w) + var(--sp-6));
   }
   .verse-row:not(:has(.verse-glosses-aside)) {
-    grid-template-columns: minmax(0, 1fr);
+    padding-right: 0;
   }
 
-  /* Its own panel, sticky to the top of the card it belongs to, so a long
-     commentary does not leave the glosses stranded at the top of a tall row. */
   .verse-glosses-aside {
-    position: sticky;
-    top: calc(var(--rail-top) + var(--sp-2));
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: var(--gloss-w);
+    display: flex;
+    flex-direction: column;
     padding: var(--sp-5);
     background: var(--well);
     border: 1px solid var(--well-border);
     border-radius: var(--r-lg);
+    overflow: hidden;
+  }
+
+  .verse-glosses-aside .verse-pane-label {
+    flex: 0 0 auto;
+  }
+
+  /* More words than the card is tall: the list scrolls inside the panel rather
+     than the panel growing past the verse it belongs to. */
+  .verse-glosses-aside .verse-glosses {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
   }
 
   /* One column: the panel is 240px, and two of them would be four words wide. */
