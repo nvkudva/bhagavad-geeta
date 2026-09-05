@@ -234,7 +234,6 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
   const widePlus = useWidePlus();
   const trackRef = useRef<HTMLDivElement | null>(null);
   const columnRef = useRef<HTMLDivElement | null>(null);
-  const railRef = useRef<HTMLElement | null>(null);
   const activeSlideRef = useRef<HTMLDivElement | null>(null);
   /** The verse currently under the snap point. Mirrors `active` without the
    *  render lag, so the scroll listener can tell a settled page from a new one. */
@@ -386,17 +385,11 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
     el.scrollIntoView({ block: "start", behavior: near && !reducedMotion() ? "smooth" : "auto" });
   }, [wide, chapter, count, targetVerse, targetNonce]);
 
-  // The rail is an index of 78 rows in a 700px-tall box: the row for the verse
-  // being read has to come to the reader.
-  useEffect(() => {
-    const rail = railRef.current;
-    const row = rail?.querySelector<HTMLElement>('[aria-current="true"]');
-    if (!rail || !row) return;
-    // scrollTop rather than scrollIntoView: the latter walks up and scrolls the
-    // page too, which would fight the column's own scroll position.
-    const top = row.offsetTop - rail.clientHeight / 2 + row.offsetHeight / 2;
-    if (Math.abs(rail.scrollTop - top) > rail.clientHeight / 3) rail.scrollTop = top;
-  }, [active, count]);
+  // The rail never scrolls, and nothing scrolls it: the whole chapter fits the
+  // sticky box as a grid of numbers. Following the active row — however gently
+  // — moved the index out from under the cursor on every click and on every
+  // reading scroll, and an index taller than its box moves anyway the moment
+  // the wheel passes over it.
 
   // Column -> route. The band is the middle of the viewport: a verse owns the
   // URL while its top third is in the reading position.
@@ -450,24 +443,27 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
     return (
       <div className="verse-viewer-container">
         {widePlus && count > 0 && (
-          <nav className="verse-rail" aria-label={`Verses in chapter ${chapter}`} ref={railRef}>
+          <nav className="verse-rail" aria-label={`Verses in chapter ${chapter}`}>
             <button type="button" className="verse-rail-chapter pressable" onClick={onPrevChapter} disabled={!hasPrevChapter}>
               <ChevronLeft size={14} aria-hidden /> Previous chapter
             </button>
             <div className="verse-rail-label">Chapter {chapter}</div>
-            {verses.map((v) => (
-              <a
-                key={v.verse_number}
-                href={`#${verseDomId(chapter, v.verse_number)}`}
-                className="verse-rail-item"
-                aria-current={v.verse_number === active ? "true" : undefined}
-                onClick={(event) => {
-                  event.preventDefault();
-                  onGoToVerse(v.verse_number);
-                }}>
-                Verse {v.verse_number}
-              </a>
-            ))}
+            <div className="verse-rail-grid">
+              {verses.map((v) => (
+                <a
+                  key={v.verse_number}
+                  href={`#${verseDomId(chapter, v.verse_number)}`}
+                  className="verse-rail-item"
+                  aria-label={`Verse ${v.verse_number}`}
+                  aria-current={v.verse_number === active ? "true" : undefined}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    onGoToVerse(v.verse_number);
+                  }}>
+                  {v.verse_number}
+                </a>
+              ))}
+            </div>
             <button type="button" className="verse-rail-chapter pressable" onClick={onNextChapter} disabled={!hasNextChapter}>
               Next chapter <ChevronRight size={14} aria-hidden />
             </button>

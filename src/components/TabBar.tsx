@@ -1,6 +1,5 @@
 import { Bookmark, House, Minus, Plus, Search, Settings2, SunMoon } from "lucide-react";
 import type React from "react";
-import { modKeyLabel } from "../lib/keys";
 import type { Route } from "../lib/router";
 import { Link, navigate } from "../lib/router";
 import { READING_SCALES, useSettings } from "../lib/settings";
@@ -9,11 +8,14 @@ import { Logo } from "./Logo";
 type TabId = "read" | "search" | "saved" | "settings";
 
 const TABS: readonly { id: TabId; label: string; Icon: typeof House; to: Route }[] = [
-  { id: "read", label: "Read", Icon: House, to: { name: "home" } },
+  { id: "read", label: "Home", Icon: House, to: { name: "home" } },
   { id: "search", label: "Search", Icon: Search, to: { name: "search", q: "" } },
   { id: "saved", label: "Saved", Icon: Bookmark, to: { name: "saved" } },
   { id: "settings", label: "Settings", Icon: Settings2, to: { name: "settings" } },
 ];
+
+/** Search is the nav bar's own field at this width, not a row in the list. */
+const SIDEBAR_TABS = TABS.filter((tab) => tab.id !== "search");
 
 /** The Read tab owns the chapter list and everything pushed on top of it. */
 const activeTab = (route: Route): TabId => {
@@ -64,10 +66,31 @@ export const TabBar: React.FC<{ route: Route }> = ({ route }) => {
    persistent sidebar is what a Mac or an iPad in landscape expects, and a
    floating bottom capsule is what a phone expects. One TABS table, two
    presentations — which one is visible is decided entirely in CSS. */
-export const Sidebar: React.FC<{ route: Route; title: string; onOpenPalette: () => void }> = ({ route, title, onOpenPalette }) => {
+export const Sidebar: React.FC<{ route: Route; title: string }> = ({ route, title }) => {
   const active = activeTab(route);
   const { theme, toggleTheme, readingScale, setReadingScale } = useSettings();
   const scaleIndex = READING_SCALES.indexOf(readingScale);
+
+  const row = ({ id, label, Icon, to }: (typeof SIDEBAR_TABS)[number]) => {
+    const isActive = active === id;
+    return (
+      <Link
+        key={id}
+        to={to}
+        className="tab-item pressable"
+        aria-label={label}
+        aria-current={isActive ? "page" : undefined}
+        onClick={(event) => {
+          if (!isActive) return;
+          event.preventDefault();
+          if (id === "read" && route.name !== "home") navigate({ name: "home" });
+          else window.scrollTo({ top: 0, behavior: "smooth" });
+        }}>
+        <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} aria-hidden />
+        <span className="tab-label">{label}</span>
+      </Link>
+    );
+  };
 
   return (
     <nav className="app-sidebar" aria-label="Primary">
@@ -76,34 +99,7 @@ export const Sidebar: React.FC<{ route: Route; title: string; onOpenPalette: () 
         <span className="app-sidebar-wordmark">{title}</span>
       </div>
 
-      {/* The palette is the desktop's front door to search; the Search tab
-          below it is still the results page. */}
-      <button type="button" className="sidebar-search pressable" data-current={active === "search" ? "true" : undefined} onClick={onOpenPalette} aria-keyshortcuts="Meta+K Control+K">
-        <Search size={20} strokeWidth={1.8} aria-hidden />
-        <span className="sidebar-search-label">Search</span>
-        <kbd>{modKeyLabel()}</kbd>
-      </button>
-      {/* Search is the launcher above, not a fifth row saying the same word. */}
-      {TABS.filter((tab) => tab.id !== "search").map(({ id, label, Icon, to }) => {
-        const isActive = active === id;
-        return (
-          <Link
-            key={id}
-            to={to}
-            className="tab-item pressable"
-            aria-label={label}
-            aria-current={isActive ? "page" : undefined}
-            onClick={(event) => {
-              if (!isActive) return;
-              event.preventDefault();
-              if (id === "read" && route.name !== "home") navigate({ name: "home" });
-              else window.scrollTo({ top: 0, behavior: "smooth" });
-            }}>
-            <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} aria-hidden />
-            <span className="tab-label">{label}</span>
-          </Link>
-        );
-      })}
+      {SIDEBAR_TABS.map(row)}
 
       {/* The two settings a reader reaches for mid-sentence, kept where the
           cursor already is rather than three clicks away in Settings. */}

@@ -731,8 +731,14 @@ body::before {
   min-height: var(--nav-h);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--sp-3);
+}
+
+/* The trailing item is the only thing that hangs off the far edge; the title
+   claims the slack when there is no search field to take it. */
+.app-nav-bar > :last-child:not(.nav-title-compact):not(.nav-search) {
+  margin-left: auto;
 }
 
 /* Large title — 34px, collapsing into the compact bar as the reader scrolls.
@@ -1043,13 +1049,46 @@ body::before {
   inset: calc((var(--control-round) - var(--tap-min)) / 2);
 }
 
-/* The compact title is the collapsed form of the large one, so it exists at
-   every width; the circular back button leaves room for it at 375px. */
-.nav-title-centered {
+/* The search field, in the bar. Sized off the same pill as the search screen's
+   own field but on the 36pt scale the round bar controls use, and capped so a
+   wide window gets a field rather than a trough. */
+.nav-search {
+  /* Centred on the bar, not on the space left over by the title, so it stays
+     put as the title changes length from screen to screen. */
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  max-width: 52%;
+  width: min(22rem, 42%);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: 0 var(--sp-3);
+  height: var(--control-round);
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+}
+
+.nav-search:focus-within {
+  border-color: var(--accent-line);
+}
+
+.nav-search-input {
+  font-size: var(--fs-subhead);
+}
+
+/* The compact title is the collapsed form of the large one, so it exists at
+   every width. It sits flush with the leading edge — the same line the large
+   title, the logo and the content column all start on — and takes the free
+   space so anything trailing it is pushed to the far edge. */
+.nav-title-compact {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1057,14 +1096,8 @@ body::before {
 }
 
 /* With a large title below it, the compact one only arrives as that leaves. */
-.app-nav[data-large="true"] .nav-title-centered {
+.app-nav[data-large="true"] .nav-title-compact {
   opacity: calc(var(--nav-progress, 0) * 2 - 1);
-}
-
-@media (min-width: 600px) {
-  .nav-title-centered {
-    max-width: 46%;
-  }
 }
 
 .settings-screen {
@@ -2337,7 +2370,9 @@ body::before {
     display: flex;
     flex-direction: column;
     gap: var(--sp-1);
-    padding: max(var(--sp-4), var(--sa-top)) var(--sp-3) var(--sp-4) max(var(--sp-3), var(--sa-left));
+    /* Same top inset as the nav bar's, so the wordmark and the bar's title sit
+       on one line across the two columns. */
+    padding: calc(var(--sa-top) + var(--sp-1)) var(--sp-3) var(--sp-4) max(var(--sp-3), var(--sa-left));
     background: var(--mat-chrome);
     -webkit-backdrop-filter: var(--mat-blur);
     backdrop-filter: var(--mat-blur);
@@ -2381,20 +2416,32 @@ body::before {
     letter-spacing: var(--tr-body);
   }
 
+  /* The bar sits beside the sidebar, over the content column, and stays on
+     every screen. It starts bare and the material fades in with
+     --nav-progress exactly as it does on a phone. */
   .app-nav,
   .app-main {
     grid-column: 2;
   }
 
-  /* App identity lives in the sidebar now, so a toolbar whose only content
-     would be the app name is an empty 44pt strip. It stays for a pushed screen
-     — where it carries the back item and the title — and collapses otherwise. */
-  .app-nav:not(:has(.nav-back-button)) {
+  .app-main {
+    padding-top: var(--sp-6);
+  }
+
+  /* A fixed-height bar, so the large title collapse — a phone gesture — gives
+     way to the compact title, which is simply always there. */
+  .nav-large-title {
     display: none;
   }
 
-  .app-nav:not(:has(.nav-back-button)) + .app-main {
-    padding-top: var(--sp-6);
+  .app-nav[data-large="true"] .nav-title-compact {
+    opacity: 1;
+  }
+
+  /* Half the bar, less half the field and a gutter: the title ellipsises
+     rather than sliding under the centred field. */
+  .nav-title-compact {
+    max-width: calc(50% - min(11rem, 21%) - var(--sp-4));
   }
 
   /* No floating capsule to clear at the bottom of the content column. */
@@ -2403,8 +2450,15 @@ body::before {
   }
 
   /* The sidebar carries Settings at this width, so the reader's trailing pill
-     would be a second door to the same room. */
-  .nav-action-button {
+     would be a second door to the same room — and Read in that same sidebar is
+     the way back, so the leading chevron goes with it. */
+  .nav-action-button,
+  .nav-back-button {
+    display: none;
+  }
+
+  /* One mark per window: the sidebar's masthead carries it. */
+  .nav-logo-button {
     display: none;
   }
 
@@ -2567,8 +2621,10 @@ body::before {
   /* ------------------------------------------------------------ search ---
      A one-column stack of 90-character snippets inside a 60rem column is a
      wall. Two columns, each a real card. */
+  /* The nav bar carries the field at this width, so the screen's own would be
+     the second one on the page. */
   .search-field {
-    max-width: 46rem;
+    display: none;
   }
 
   .search-results {
@@ -2727,16 +2783,6 @@ body::before {
   /* ------------------------------------------------------- desktop title --
      The nav bar collapses on every root screen at this width, which took the
      large title with it. The heading comes back inside the content column. */
-  .screen-title {
-    margin: 0 0 var(--sp-6);
-    font-family: var(--font-read);
-    font-size: var(--fs-title1);
-    font-weight: var(--fw-bold);
-    letter-spacing: var(--tr-large);
-    line-height: 1.15;
-    color: var(--ink-1);
-  }
-
   /* ---------------------------------------------------------- sidebar ----*/
   .app-sidebar .tab-item {
     position: relative;
@@ -2754,6 +2800,8 @@ body::before {
     background: var(--accent);
   }
 
+  /* Shared by the appearance toggle, the last row-shaped button in the
+     sidebar now that search has moved into the nav bar. */
   .sidebar-search {
     display: flex;
     align-items: center;
@@ -2775,10 +2823,6 @@ body::before {
   .sidebar-search-label {
     flex: 1;
     text-align: left;
-  }
-
-  .sidebar-search[data-current="true"] {
-    color: var(--accent);
   }
 
   kbd,
@@ -3185,6 +3229,10 @@ body::before {
   }
 
   /* ------------------------------------------------------- two-pane -----*/
+  :root {
+    --rail-top: calc(var(--nav-total) + var(--sp-6) + var(--gutter));
+  }
+
   .verse-viewer-container {
     display: grid;
     grid-template-columns: 12rem minmax(0, var(--measure));
@@ -3199,20 +3247,37 @@ body::before {
     grid-column: 1 / -1;
   }
 
+  /* The index is a keypad, not a list: the whole chapter — 78 verses at the
+     longest — fits the sticky box, so the rail has nothing to scroll and never
+     moves under the pointer. */
   .verse-rail {
     position: sticky;
-    top: calc(var(--nav-total) + var(--sp-6));
+    /* Exactly where the rail already sits at scroll 0 — the bar, the main
+       column's inset and the container's own gutter. A sticky top any higher
+       than its natural offset means the rail falls that far before it catches,
+       which is the whole chapter list jumping on the first scroll away from
+       the top. Matching them makes it stick from the first pixel. */
+    top: var(--rail-top);
     align-self: start;
-    max-height: calc(100dvh - var(--nav-total) - 2 * var(--sp-6));
+    max-height: calc(100dvh - var(--rail-top) - var(--sp-6));
     overflow-y: auto;
+    overscroll-behavior: contain;
     scrollbar-width: none;
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: var(--sp-2);
     padding-bottom: var(--sp-4);
   }
   .verse-rail::-webkit-scrollbar {
     display: none;
+  }
+
+  .verse-rail-grid {
+    display: grid;
+    /* Auto-fill rather than a fixed count: the grid gets as narrow as it must
+       to keep the longest chapter inside the box at short window heights. */
+    grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+    gap: 4px;
   }
 
   .verse-rail-label {
@@ -3224,20 +3289,20 @@ body::before {
     text-transform: uppercase;
   }
 
+  /* Numbers on a quiet grid, not a wall of boxes: at a glance the rail reads
+     as the shape of the chapter, and the only thing wearing a ground is the
+     verse being read. */
   .verse-rail-item {
     display: flex;
     align-items: center;
-    gap: var(--sp-2);
-    min-height: 30px;
-    padding: 0 var(--sp-3);
-    background: none;
-    border: 0;
+    justify-content: center;
+    min-height: 28px;
+    padding: 0 2px;
     border-radius: var(--r-sm);
     color: var(--ink-3);
     font-family: inherit;
-    font-size: var(--fs-footnote);
+    font-size: var(--fs-caption1);
     font-variant-numeric: tabular-nums;
-    text-align: left;
     text-decoration: none;
     cursor: pointer;
   }

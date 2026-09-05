@@ -8,7 +8,7 @@ import { Link, navigate } from "../lib/router";
 import type { SearchHit } from "../lib/search";
 import { loadIndex, parseReference, peekIndex, search } from "../lib/search";
 
-const PLACEHOLDER: Record<Language, string> = { en: "Search verses", kn: "ಶ್ಲೋಕಗಳನ್ನು ಹುಡುಕಿ", te: "శ్లోకాలను వెతకండి" };
+export const SEARCH_PLACEHOLDER: Record<Language, string> = { en: "Search verses", kn: "ಶ್ಲೋಕಗಳನ್ನು ಹುಡುಕಿ", te: "శ్లోకాలను వెతకండి" };
 
 /** The matched run, marked. The index carries plain strings, so this is a slice,
  *  not dangerouslySetInnerHTML. */
@@ -99,12 +99,12 @@ export const SearchScreen: React.FC<{ query: string; language: Language }> = ({ 
           className="search-input"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          placeholder={PLACEHOLDER[language]}
+          placeholder={SEARCH_PLACEHOLDER[language]}
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
           enterKeyHint="search"
-          aria-label={PLACEHOLDER[language]}
+          aria-label={SEARCH_PLACEHOLDER[language]}
           // The field rises on focus, not on the first keystroke: on iOS the
           // keyboard scrolls the focused element into view, and a field sitting
           // 200-odd px down a page that is barely taller than the viewport gets

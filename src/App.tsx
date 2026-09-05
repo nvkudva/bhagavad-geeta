@@ -6,7 +6,7 @@ import { CommandPalette } from "./components/CommandPalette";
 import { ShortcutsSheet } from "./components/ShortcutsSheet";
 import { Header } from "./components/Header";
 import { SavedScreen } from "./components/SavedScreen";
-import { SearchScreen } from "./components/SearchScreen";
+import { SEARCH_PLACEHOLDER, SearchScreen } from "./components/SearchScreen";
 import { Sidebar, TabBar } from "./components/TabBar";
 import { VerseOfMoment } from "./components/VerseOfMoment";
 import { VerseViewer } from "./components/VerseViewer";
@@ -31,12 +31,9 @@ const APP_NAME: Record<Language, string> = { en: "Bhagavad Geeta", kn: "ಭಗ�
 
 /** No title or corpus line: the nav bar already names the app, and the random
  *  verse is what should greet the reader. */
-const Home: React.FC<{ language: Language; wide: boolean }> = ({ language, wide }) => {
+const Home: React.FC<{ language: Language }> = ({ language }) => {
   return (
     <div className="animate-fade-in home-container">
-      {/* The nav bar collapses on every root screen at desktop width, which
-          took the large title with it. The heading returns inside the column. */}
-      {wide && <h1 className="screen-title">{APP_NAME[language]}</h1>}
       <VerseOfMoment language={language} />
       <ChapterList chapters={chapters} onSelectChapter={(id) => navigate({ name: "verse", chapter: id, verse: 1 })} />
     </div>
@@ -45,7 +42,6 @@ const Home: React.FC<{ language: Language; wide: boolean }> = ({ language, wide 
 
 const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }) => {
   const { language } = useSettings();
-  const wide = useWide();
   const [, onChapterLoaded] = useReducer((n: number) => n + 1, 0);
 
   // Sync read of the resident chapter; the effect only wakes the component once a
@@ -84,7 +80,7 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
     return getChapterMeta(id)?.verses_count ?? 1;
   };
 
-  if (!meta) return <Home language={language} wide={wide} />;
+  if (!meta) return <Home language={language} />;
 
   return (
     <VerseViewer
@@ -246,7 +242,7 @@ const SettingsScreen: React.FC = () => {
   );
 };
 
-const Screen: React.FC<{ route: ReturnType<typeof useRoute>; language: Language; wide: boolean }> = ({ route, language, wide }) => {
+const Screen: React.FC<{ route: ReturnType<typeof useRoute>; language: Language }> = ({ route, language }) => {
   switch (route.name) {
     case "verse":
       return <Reader chapter={route.chapter} verse={route.verse} />;
@@ -258,7 +254,7 @@ const Screen: React.FC<{ route: ReturnType<typeof useRoute>; language: Language;
     case "settings":
       return <SettingsScreen />;
     default:
-      return <Home language={language} wide={wide} />;
+      return <Home language={language} />;
   }
 };
 
@@ -272,6 +268,8 @@ const AppShell: React.FC = () => {
   const [shortcuts, setShortcuts] = useState(false);
 
   const inReader = route.name === "verse";
+
+  const runSearch = useCallback((q: string) => navigate({ name: "search", q }, { replace: route.name === "search", scroll: "preserve" }), [route.name]);
 
   /* The keyboard layer. Read through a ref so the listener is installed once
      and never re-bound as the route moves, and installed only at desktop
@@ -369,7 +367,7 @@ const AppShell: React.FC = () => {
 
   return (
     <>
-      <Sidebar route={route} title={APP_NAME[language]} onOpenPalette={() => setPalette(true)} />
+      <Sidebar route={route} title={APP_NAME[language]} />
 
       <Header
         onHomeClick={() => navigate({ name: "home" })}
@@ -382,6 +380,9 @@ const AppShell: React.FC = () => {
         largeTitle={inReader ? undefined : APP_NAME[language]}
         // The tab bar is gone in the reader, so Settings needs a door: the
         // trailing bar slot, as a round glass control matching the back item.
+        // The sidebar's search row became this field; a phone still reaches
+        // search through its tab bar, so it is a wide-width item only.
+        search={wide ? { query: route.name === "search" ? route.q : "", placeholder: SEARCH_PLACEHOLDER[language], onQueryChange: runSearch } : undefined}
         trailing={
           inReader ? (
             <Link to={{ name: "settings" }} className="nav-action-button pressable" aria-label="Settings">
@@ -392,7 +393,7 @@ const AppShell: React.FC = () => {
       />
 
       <main className="app-main" data-reader={inReader ? "true" : "false"}>
-        <Screen route={route} language={language} wide={wide} />
+        <Screen route={route} language={language} />
       </main>
 
       {!inReader && <TabBar route={route} />}
