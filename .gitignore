@@ -30,3 +30,6 @@ public/data/v1
 
 # vite-plugin-pwa dev output
 dev-dist
+
+# Python bytecode from the local translation scripts
+__pycache__/

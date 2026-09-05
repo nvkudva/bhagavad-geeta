@@ -45,8 +45,17 @@ shippable. It fails in two specific ways:
 It does sometimes keep terms correctly (ರಾಗ came through fine), which makes the
 failures harder to spot: output that is 90% right and fluent invites trust.
 
-**Verdict: not for production text.** Its genuinely good use is
-back-translation checking (see below), where a spelling slip costs nothing.
+**On word-by-word glosses it is markedly worse than on prose**, because
+`context_english`'s `headword—meaning; headword—meaning` shape is nothing like
+the sentences it was trained on. Measured on 1.3 and 1.4: ಪಾಶ್ಯ for *paśhya*
+(should be ಪಶ್ಯ — it transliterated the source's `śh` digraph literally),
+ಮಹಾ-ಇಸು-ಆಸ for *mahā-iṣhu-āsa*, ವಾಯುದಮ್ for *vyūḍhām*, and — the clearest tell —
+the English word "here" rendered phonetically as ಹಿಯರ್ instead of translated.
+Glosses need a human source or a frontier model.
+
+**Verdict: usable as a draft generator for plain prose, not for glosses or
+bhāṣya.** Its unambiguously good use is back-translation checking (see below),
+where a spelling slip costs nothing.
 
 ### Smaller/faster frontier models
 
