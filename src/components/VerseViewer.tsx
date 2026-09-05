@@ -60,6 +60,18 @@ const COMMENTARY_LABEL: Record<Language, string> = { en: "Commentary", kn: "\u0c
 const WORD_MEANINGS_LABEL = "Word meanings";
 const SECTION_LANG: Record<Language, string> = { en: "en", kn: "kn", te: "te" };
 
+/* Commentary arrives as one string with blank lines between paragraphs; a
+   single <p> would collapse them into a wall. */
+const Prose: React.FC<{ text: string; lang: string }> = ({ text, lang }) => (
+  <>
+    {text.split(/\n{2,}/).map((para, i) => (
+      <p key={i} className="verse-section-content" lang={lang}>
+        {para}
+      </p>
+    ))}
+  </>
+);
+
 const verseDomId = (chapter: number, verse: number): string => `c${chapter}v${verse}`;
 
 /** Which way the rail should slide. Written before the navigation, because the
@@ -187,9 +199,7 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
           <h3 className="verse-pane-label" lang={SECTION_LANG[language]}>
             {COMMENTARY_LABEL[language]}
           </h3>
-          <p className="verse-section-content" lang={commentary.lang}>
-            {commentary.text}
-          </p>
+          <Prose text={commentary.text} lang={commentary.lang} />
           {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
         </div>
       ) : panes ? null : (
@@ -213,9 +223,7 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
             ) : (
               commentary && (
                 <>
-                  <p className="verse-section-content" lang={commentary.lang}>
-                    {commentary.text}
-                  </p>
+                  <Prose text={commentary.text} lang={commentary.lang} />
                   {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
                 </>
               )
@@ -286,6 +294,9 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
   );
   const start = Math.max(0, index - WINDOW);
   const end = Math.min(count - 1, index + WINDOW);
+  /** The one verse the wide reader mounts. `index` is already clamped, so this
+   *  is defined whenever the chapter has arrived. */
+  const shown = verses[index];
 
   // Route -> track. Layout effect so a deep link never paints the wrong verse
   // first, and after the render that put the target slide in the window.
@@ -397,12 +408,12 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
     // Already the verse under the reading position — this is the URL catching
     // up with the scroll, not a request to move.
     if (activeRef.current === targetVerse) return;
-    const el = document.getElementById(verseDomId(chapter, targetVerse));
-    if (!el) return;
     activeRef.current = targetVerse;
-    // Always instant. A smooth scroll across forty verses is a smear the eye
-    // cannot follow, and even across one it lands late enough to read as lag.
-    el.scrollIntoView({ block: "start", behavior: "auto" });
+    // The new verse is the only thing mounted, so the reading position is the
+    // top of the page — not the top of the card, which scrollIntoView would put
+    // flush against the bar and eat the gutter above it. Always instant: a
+    // smooth scroll lands late enough to read as lag.
+    window.scrollTo({ top: 0, behavior: "auto" });
     // The cut that leaves is softened by a fade rather than by animating the
     // scroll: the destination resolves in place, so nothing travels. Any fade
     // still running is cancelled first, so holding J is one steady dissolve
@@ -537,10 +548,14 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
         {count === 0 ? (
           <p className="verse-viewer-loading">Loading chapter…</p>
         ) : (
+          /* One verse at a time, as on the phone. The column used to mount the
+             whole chapter and let the wheel page through it, but a card that
+             fills the window then always showed a sliver of its neighbours, and
+             the rail — which is the pager here — was navigating a page the
+             reader was also scrolling. Navigation is the rail, the pager and
+             J/K; the wheel only reads down a long commentary. */
           <div className="verse-column" ref={columnRef}>
-            {verses.map((verse) => (
-              <VerseBlock key={verse.verse_number} chapter={chapter} verse={verse} language={language} sections={sections} panes={widePlus} />
-            ))}
+            <VerseBlock key={shown.verse_number} chapter={chapter} verse={shown} language={language} sections={sections} panes={widePlus} />
           </div>
         )}
 

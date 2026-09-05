@@ -1736,6 +1736,11 @@ body::before {
   text-align: left;
 }
 
+/* Long commentary ships as several paragraphs; they need air between them. */
+.verse-section-content + .verse-section-content {
+  margin-top: var(--sp-3);
+}
+
 /* The commentary and the word glosses are reference prose, not the verse: they
    stay plain ink, or the whole card turns into an effect. */
 .commentary .verse-section-content {
@@ -2535,13 +2540,25 @@ body::before {
     gap: var(--gap-verse);
   }
 
-  /* The mobile card is a viewport-tall slide; in a column that would make
-     every verse a forced screenful of dead space. No content-visibility here:
-     skipped blocks are measured at their placeholder size, so a deep link into
-     a long chapter lands on an estimate and then drifts as the real heights
-     arrive. A chapter is 78 cards at most, which is cheap next to that. */
+  /* A card is still a screenful here, as it is on the phone: the column scrolls
+     one verse at a time and the reader is never shown two half-verses at once.
+     No content-visibility: skipped blocks are measured at their placeholder
+     size, so a deep link into a long chapter lands on an estimate and then
+     drifts as the real heights arrive. A chapter is 78 cards at most, which is
+     cheap next to that. */
   .verse-column .verse-block {
-    min-height: 0;
+    min-height: var(--reader-h);
+    /* So the commentary can take the slack. The sloka, the transliteration and
+       the translation are sized by their text; the commentary is the one band
+       that reads better tall, so it is the one that grows. */
+    display: flex;
+    flex-direction: column;
+  }
+  /* Grow into whatever the bands above leave, never shrink below its own prose:
+     a short commentary still reaches the foot of the card, a long one runs past
+     it and the page scrolls. */
+  .verse-column .verse-section-card.commentary {
+    flex: 1 0 auto;
   }
   /* The anchor is the row, not the card: the row is what carries the verse id
      now that the glosses sit beside the card. */
@@ -2845,6 +2862,57 @@ body::before {
     border-top: 0.5px solid var(--mat-border);
   }
 
+  /* A segmented capsule: the thumb is one element that slides, so the switch
+     reads as one control moving rather than a row of buttons lighting up. The
+     slot count comes from the language table, so adding a language is a data
+     change, not a layout change. */
+  .sidebar-langs {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--slots, 2), 1fr);
+    gap: 0;
+    margin-bottom: var(--sp-1);
+    padding: 2px;
+    background: var(--surface-2);
+    border: 0.5px solid var(--mat-border);
+    border-radius: var(--r-pill);
+  }
+
+  .sidebar-langs-thumb {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 2px;
+    width: calc((100% - 4px) / var(--slots, 2));
+    border-radius: var(--r-pill);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 0.5px var(--glass-border-hover);
+    transform: translateX(calc(var(--slot, 0) * 100%));
+    transition: transform var(--dur-base) var(--ease-out-ios);
+  }
+
+  .sidebar-lang {
+    position: relative;
+    min-height: 30px;
+    padding: 0 var(--sp-1);
+    background: none;
+    border: 0;
+    border-radius: var(--r-pill);
+    color: var(--ink-3);
+    font-family: inherit;
+    font-size: var(--fs-caption1);
+    font-weight: var(--fw-medium);
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: color 220ms ease;
+  }
+  .sidebar-lang[aria-pressed="true"] {
+    color: var(--accent);
+  }
+
   .sidebar-scale {
     display: flex;
     align-items: center;
@@ -3124,6 +3192,10 @@ body::before {
     color: var(--ink-1);
   }
 
+  .sidebar-lang[aria-pressed="false"]:hover {
+    color: var(--ink-1);
+  }
+
   .pager-btn:hover:not(:disabled),
   .nav-back-button:hover,
   .sidebar-step:hover {
@@ -3291,7 +3363,9 @@ body::before {
        the top. Matching them makes it stick from the first pixel. */
     top: var(--rail-top);
     align-self: start;
-    max-height: calc(100dvh - var(--rail-top) - var(--sp-6));
+    /* The same box as the reading card beside it, or the taller of the two
+       stretches the grid row and the page scrolls on a verse that fits. */
+    max-height: var(--reader-h);
     display: flex;
     flex-direction: column;
     gap: var(--sp-2);
@@ -3395,12 +3469,9 @@ body::before {
     align-items: baseline;
     gap: var(--sp-2);
     padding: var(--sp-2) var(--sp-3);
-    background: var(--glass);
-    -webkit-backdrop-filter: var(--mat-blur-thin);
-    backdrop-filter: var(--mat-blur-thin);
+    background: transparent;
     border: 1px solid var(--glass-border);
     border-radius: var(--r-md);
-    box-shadow: inset 0 1px 0 var(--spec-top);
     color: var(--ink-2);
     text-decoration: none;
     cursor: pointer;
@@ -3443,9 +3514,22 @@ body::before {
     box-shadow: none;
   }
 
-  /* The rail is the pager now. */
+  /* The rail is the pager now — so nothing has to be reserved for it, and the
+     verse card is a full screenful rather than one 56px short of it. */
   .verse-viewer-container .verse-pager {
     display: none;
+  }
+  /* One verse is mounted and there is no pager to clear, so the card is the
+     window: from its own top — under the bar and the two gutters above it — to
+     one gutter off the foot. Anything reserved below it is dead scroll. */
+  :root {
+    --reader-h: calc(100dvh - var(--nav-total) - var(--sp-6) - var(--gutter) - var(--sp-6));
+  }
+  .app-main[data-reader="true"] {
+    padding-bottom: 0;
+  }
+  .verse-viewer-container {
+    padding-bottom: var(--sp-6);
   }
 
   /* The verse is a row: the reading card, and the glosses beside it. The

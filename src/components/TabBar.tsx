@@ -2,7 +2,7 @@ import { Bookmark, House, Minus, Plus, Search, Settings2, SunMoon } from "lucide
 import type React from "react";
 import type { Route } from "../lib/router";
 import { Link, navigate } from "../lib/router";
-import { READING_SCALES, useSettings } from "../lib/settings";
+import { LANGUAGE_LABELS, LANGUAGES, READING_SCALES, useSettings } from "../lib/settings";
 import { Logo } from "./Logo";
 
 type TabId = "read" | "search" | "saved" | "settings";
@@ -68,7 +68,7 @@ export const TabBar: React.FC<{ route: Route }> = ({ route }) => {
    presentations — which one is visible is decided entirely in CSS. */
 export const Sidebar: React.FC<{ route: Route; title: string }> = ({ route, title }) => {
   const active = activeTab(route);
-  const { theme, toggleTheme, readingScale, setReadingScale } = useSettings();
+  const { theme, toggleTheme, language, setLanguage, readingScale, setReadingScale } = useSettings();
   const scaleIndex = READING_SCALES.indexOf(readingScale);
 
   const row = ({ id, label, Icon, to }: (typeof SIDEBAR_TABS)[number]) => {
@@ -104,6 +104,17 @@ export const Sidebar: React.FC<{ route: Route; title: string }> = ({ route, titl
       {/* The two settings a reader reaches for mid-sentence, kept where the
           cursor already is rather than three clicks away in Settings. */}
       <div className="app-sidebar-foot">
+        {/* Sized from the table, not hard-coded: a fourth language widens the
+            capsule into four slots without touching the CSS. */}
+        <div className="sidebar-langs" role="group" aria-label="Language" style={{ "--slots": LANGUAGES.length, "--slot": LANGUAGES.indexOf(language) } as React.CSSProperties}>
+          <span className="sidebar-langs-thumb" aria-hidden />
+          {LANGUAGES.map((lang) => (
+            <button key={lang} type="button" className="sidebar-lang" lang={lang} aria-pressed={language === lang} onClick={() => setLanguage(lang)}>
+              {LANGUAGE_LABELS[lang]}
+            </button>
+          ))}
+        </div>
+
         <div className="sidebar-scale">
           <span className="sidebar-scale-label">Reading size</span>
           <button type="button" className="sidebar-step" aria-label="Smaller reading size" disabled={scaleIndex <= 0} onClick={() => setReadingScale(READING_SCALES[Math.max(0, scaleIndex - 1)])}>

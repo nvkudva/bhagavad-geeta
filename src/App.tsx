@@ -19,7 +19,7 @@ import { useWide } from "./lib/media";
 import type { Route } from "./lib/router";
 import { Link, navigate, useRoute, useScrollRestoration } from "./lib/router";
 import type { FontKey, SectionKey } from "./lib/settings";
-import { FONT_KEYS, SECTION_KEYS, SettingsProvider, useSettings } from "./lib/settings";
+import { FONT_KEYS, LANGUAGE_LABELS, LANGUAGES, SECTION_KEYS, SettingsProvider, useSettings } from "./lib/settings";
 
 const chapters = getChapters();
 const NO_VERSES: readonly Verse[] = [];
@@ -134,9 +134,6 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
     />
   );
 };
-
-const LANGUAGE_LABELS: Record<Language, string> = { en: "English", kn: "ಕನ್ನಡ", te: "తెలుగు" };
-const LANGUAGES: readonly Language[] = ["en", "kn", "te"];
 
 /** Language and appearance moved off the nav bar and onto their own screen, so
  *  the bar carries navigation only. */

@@ -76,9 +76,16 @@ const readSections = (): Sections => {
   }
 };
 
+/** Every language the reader can choose, in the order they are offered. The
+ *  settings list and the sidebar's quick switch both read this one table, so
+ *  adding a language is a line here and a line in gita.types. */
+export const LANGUAGES: readonly Language[] = ["en", "kn", "te"];
+
+export const LANGUAGE_LABELS: Record<Language, string> = { en: "English", kn: "ಕನ್ನಡ", te: "తెలుగు" };
+
 const readLanguage = (): Language => {
   const saved = localStorage.getItem("gita-language");
-  return saved === "kn" || saved === "te" || saved === "en" ? saved : "en";
+  return LANGUAGES.includes(saved as Language) ? (saved as Language) : "en";
 };
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
