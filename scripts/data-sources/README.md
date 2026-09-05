@@ -120,3 +120,15 @@ a to-do list — investigate only if a count moves.
 - **70 `commentary_english` nulled.** They held Devanagari word-gloss lists,
   not commentary. Every one of those verses still has `context_english`, so no
   verse lost its whole reference section.
+- **Two more found in the residue and fixed (2026-09-05).** 1.15 was the same defect
+  in full — a gloss list tailed by "No Commentary." — and is now nulled; 10.7 had the
+  gloss list pasted in FRONT of real prose and had the run stripped. Both are handled
+  by `fix-corpus.mjs` and asserted by `check-corpus.mjs`
+  (`A-devanagari-gloss-run-in-commentary_english`).
+- **Eight verses carry Devanagari inside `commentary_english` and are CORRECT:**
+  13.21, 13.31, 15.6, 15.7, 15.9, 15.14, 17.8, 17.15. They quote the Chhandogya,
+  Katha and Brihadaranyaka Upanishads, the Manu Smriti, and the कारण/करण pair, in
+  script, inside English prose. Do not write a rule that strips Devanagari from
+  commentary — it will eat these. The remaining problem there is a *rendering* one:
+  the commentary block is set in a Latin reading face, so these runs fall back to
+  the system Devanagari face mid-paragraph.

@@ -17,6 +17,8 @@ const path = join(root, "src", "data", "verses.json");
 const verses = JSON.parse(readFileSync(path, "utf8"));
 const dry = process.argv.includes("--dry");
 
+const DEVANAGARI = /[\u0900-\u097F]/;
+
 /* Residue left by the mirror's `qu` deletion -> the word it must be. Anchored:
  * the left-hand side is never itself an English word in this register. */
 const QU = [
@@ -249,6 +251,36 @@ for (const v of verses) {
     v.translation_telugu_machine = true;
     bump("telugu-composed");
     notes.push(`${id}: translation_telugu composed (machine-assisted)`);
+  }
+
+  /* The residue of the word-gloss import: 70 commentary_english fields that held
+   * nothing but a Devanagari gloss list were nulled in an earlier pass. Two more had
+   * the gloss list pasted in FRONT of real prose, with the literal word "Commentary"
+   * separating the two — 1.15 (where nothing but "No Commentary." follows) and 10.7.
+   *
+   * The discriminator is deliberately narrow. Eight other verses carry Devanagari
+   * inside commentary_english and MUST be left alone: 13.21, 13.31, 15.6, 15.7, 15.9,
+   * 15.14, 17.8, 17.15 all quote the Upanishads, the Manu Smriti or a Sanskrit term in
+   * its own script, in the middle of real English prose. That is a citation, not a
+   * defect. None of them contains the word "Commentary", which is why this rule keys
+   * on it rather than on the presence of Devanagari. */
+  if (typeof v.commentary_english === "string" && DEVANAGARI.test(v.commentary_english)) {
+    const split = /\bCommentary\b/.exec(v.commentary_english);
+    if (split && DEVANAGARI.test(v.commentary_english.slice(0, split.index))) {
+      const rest = v.commentary_english.slice(split.index + "Commentary".length).replace(/^[\s.:?—-]+/, "").trim();
+      if (rest.length < 40) {
+        // 1.15: the whole field was the gloss list, tailed by "No Commentary."
+        // null, not delete: the 70 nulled by the earlier pass are null, and
+        // check-corpus.mjs treats an absent key as a blocking defect.
+        v.commentary_english = null;
+        bump("devanagari-gloss-nulled");
+        notes.push(`${id}: commentary_english was a Devanagari gloss list, nulled (context_english already carries the glosses)`);
+      } else {
+        v.commentary_english = rest;
+        bump("devanagari-gloss-header-stripped");
+        notes.push(`${id}: leading Devanagari gloss run stripped from commentary_english`);
+      }
+    }
   }
 
   if (typeof v.commentary_english === "string") {

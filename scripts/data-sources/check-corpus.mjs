@@ -190,6 +190,12 @@ for (const v of verses) {
     if (ambiguousQ) flag("A-question-mark-ambiguous-left-alone", id, `x${ambiguousQ}`);
     if (/\b(ality|alities|alified|estion|ite|ick|iet|eanimity|eal|eally|acire|acired|acisition|reired|conseence|conseently|freently|tranil|tranillity)\b/.test(c)) flag("A-deleted-qu-residual", id);
       if (blockShare(c, BLOCK.devanagari) > 0.3) flag("A-devanagari-in-commentary_english", id);
+    /* A gloss LIST pasted in front of the prose, which the import left with the word
+     * "Commentary" between the two. Narrower than the 0.3 block-share rule above on
+     * purpose: eight verses quote the Upanishads or the Manu Smriti in Devanagari
+     * mid-paragraph and are correct as they stand. See fix-corpus.mjs. */
+    const glossSplit = /\bCommentary\b/.exec(c);
+    if (glossSplit && BLOCK.devanagari.test(c.slice(0, glossSplit.index))) flag("A-devanagari-gloss-run-in-commentary_english", id);
     else if (!LATIN.test(c)) flag("A-no-latin-in-commentary_english", id);
   }
 }
@@ -229,7 +235,7 @@ for (const v of verses) {
 const BLOCKERS = new Set([
   "E-duplicate-key", "E-verse-gap", "E-chapter-verse-count", "E-field-absent",
   "A-replacement-char", "A-question-mark-for-comma", "A-not-NFC",
-  "A-devanagari-in-commentary_english", "A-deleted-qu-residual",
+  "A-devanagari-in-commentary_english", "A-devanagari-gloss-run-in-commentary_english", "A-deleted-qu-residual",
   "E-missing:translation_english", "E-missing:translation_kannada",
   "E-missing:transliteration", "E-missing:context_english",
 ]);

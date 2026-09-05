@@ -31,6 +31,12 @@ const VERSE_KEYS = [
   "context_telugu",
 ];
 
+// Present in the canonical corpus and deliberately NOT shipped per verse: both hold
+// exactly one distinct string across all 701 verses, so they travel once in the
+// manifest instead of 701 times in the chapter files. Listing them here is what keeps
+// validate() from flagging them as a dropped field.
+const SOURCE_KEYS = ["translation_telugu_source", "translation_kannada_source"];
+
 const CHAPTER_KEYS = [
   "id",
   "name",
@@ -66,6 +72,70 @@ const writeStable = (path, contents) => {
 const verses = JSON.parse(readFileSync(join(SRC, "verses.json"), "utf8"));
 const chapters = JSON.parse(readFileSync(join(SRC, "chapters.json"), "utf8"));
 
+/* A ratchet, not a repair: every rule below passes against the corpus as it stands.
+   pick() silently drops any key it does not know, so before this existed, renaming a
+   corpus field produced a clean build that quietly shipped nothing. */
+const KNOWN_KEYS = new Set([...VERSE_KEYS, ...SOURCE_KEYS]);
+const KANNADA = /[\u0C80-\u0CFF]/;
+const TELUGU = /[\u0C00-\u0C7F]/;
+const DEVANAGARI = /[\u0900-\u097F]/;
+
+function validate() {
+  const errors = [];
+  const seen = new Set();
+  const byId = new Map();
+
+  for (const v of verses) {
+    const ref = `${v.chapter_id}.${v.verse_number}`;
+    for (const k of Object.keys(v)) {
+      if (!KNOWN_KEYS.has(k)) errors.push(`unknown field "${k}" on verse ${ref} — add it to VERSE_KEYS or SOURCE_KEYS`);
+    }
+    if (seen.has(ref)) errors.push(`duplicate verse ${ref}`);
+    seen.add(ref);
+    if (!byId.has(v.chapter_id)) byId.set(v.chapter_id, []);
+    byId.get(v.chapter_id).push(v.verse_number);
+
+    for (const [field, re, script] of [
+      ["text_kannada", KANNADA, "Kannada"],
+      ["translation_kannada", KANNADA, "Kannada"],
+      ["text_telugu", TELUGU, "Telugu"],
+      ["translation_telugu", TELUGU, "Telugu"],
+    ]) {
+      if (v[field] && !re.test(v[field])) errors.push(`${field} on verse ${ref} contains no ${script} script`);
+    }
+    /* The residue of the word-gloss import. NOT "commentary contains no Devanagari":
+       eight verses legitimately quote the Upanishads or the Manu Smriti in Devanagari
+       mid-paragraph. The defect is a gloss LIST pasted in front of the prose, which
+       always has the word "Commentary" separating the two. */
+    if (v.commentary_english && DEVANAGARI.test(v.commentary_english)) {
+      const split = /\bCommentary\b/.exec(v.commentary_english);
+      if (split && DEVANAGARI.test(v.commentary_english.slice(0, split.index))) {
+        errors.push(`commentary_english on verse ${ref} opens with a Devanagari gloss run — run scripts/data-sources/fix-corpus.mjs`);
+      }
+    }
+  }
+
+  for (const meta of chapters) {
+    const numbers = (byId.get(meta.id) ?? []).slice().sort((a, b) => a - b);
+    if (numbers.length !== meta.verses_count) {
+      errors.push(`chapter ${meta.id} has ${numbers.length} verses, chapters.json says ${meta.verses_count}`);
+    }
+    for (let i = 0; i < numbers.length; i++) {
+      if (numbers[i] !== i + 1) {
+        errors.push(`chapter ${meta.id} verse sequence breaks at ${numbers[i]} (expected ${i + 1})`);
+        break;
+      }
+    }
+  }
+
+  if (errors.length) {
+    console.error("build-data: corpus validation failed\n  " + errors.join("\n  "));
+    process.exit(1);
+  }
+}
+
+validate();
+
 mkdirSync(OUT, { recursive: true });
 
 const byChapter = new Map();
@@ -80,9 +150,6 @@ const expected = new Set(["manifest.json", "chapters.json"]);
 
 for (const meta of chapters) {
   const list = byChapter.get(meta.id) ?? [];
-  if (list.length !== meta.verses_count) {
-    console.warn(`build-data: chapter ${meta.id} has ${list.length} verses, chapters.json says ${meta.verses_count}`);
-  }
   const file = `chapter-${String(meta.id).padStart(2, "0")}.json`;
   const contents = JSON.stringify(list);
   expected.add(file);
@@ -125,7 +192,20 @@ if (existsSync(manifestPath)) {
     /* regenerate */
   }
 }
-writeStable(manifestPath, JSON.stringify({ schema: 1, generated, chapters: manifestChapters }));
+// One entry per field, so the coverage numbers live in the artefact rather than in a
+// hand-written comment that goes stale the moment a merge script runs.
+const coverage = {};
+for (const k of VERSE_KEYS) coverage[k] = verses.filter((v) => v[k] !== undefined && v[k] !== null && v[k] !== "").length;
+
+// The two provenance strings are constant across all 701 verses, so they ship once here.
+const sources = {};
+for (const k of SOURCE_KEYS) {
+  const distinct = [...new Set(verses.map((v) => v[k]).filter(Boolean))];
+  if (distinct.length === 1) sources[k.replace(/_source$/, "")] = distinct[0];
+  else if (distinct.length) sources[k.replace(/_source$/, "")] = distinct;
+}
+
+writeStable(manifestPath, JSON.stringify({ schema: 1, generated, sources, coverage, chapters: manifestChapters }));
 
 // Drop files from a previous run that no longer belong (e.g. a removed chapter).
 for (const name of readdirSync(OUT)) {
@@ -134,4 +214,5 @@ for (const name of readdirSync(OUT)) {
 
 const total = manifestChapters.reduce((n, c) => n + c.bytes, 0);
 console.log(`build-data: ${manifestChapters.length} chapters, ${verses.length} verses, ${(total / 1024).toFixed(1)} KB raw -> public/data/v1/`);
+console.log(`build-data: coverage ${Object.entries(coverage).map(([k, n]) => `${k} ${n}`).join(", ")}`);
 console.log(`build-data: search index ${searchRows.length} rows, ${(Buffer.byteLength(searchContents) / 1024).toFixed(1)} KB raw`);

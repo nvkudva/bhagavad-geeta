@@ -56,6 +56,9 @@ export default defineConfig({
         theme_color: "#0a0a0b",
         background_color: "#0a0a0b",
         display: "standalone",
+        // No `orientation`: the app has a real two-pane layout at >=900px, so locking
+        // it to portrait would be wrong on every tablet and desktop install.
+        display_override: ["standalone", "minimal-ui"],
         icons: [
           { src: "pwa-192x192.png", sizes: "192x192", type: "image/png", purpose: "any" },
           { src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any" },
@@ -66,7 +69,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest,woff2}", "data/v1/manifest.json", "data/v1/chapters.json", "data/v1/chapter-01.json"],
+        // data/v1/chapters.json is NOT here: src/lib/gita.ts statically imports
+        // src/data/chapters.json, so the same 20 KB is already inside the JS shell and
+        // nothing ever fetches the emitted copy. It is still emitted, just not
+        // downloaded twice on every install.
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest,woff2}", "data/v1/manifest.json", "data/v1/chapter-01.json"],
         // Precaching every face pulls all of fonts/ on first visit, which undoes the
         // per-script @font-face loading. Only the two the first paint actually needs
         // stay precached: literata-latin (the default reading face — the UI takes the
@@ -86,7 +93,9 @@ export default defineConfig({
         // Never serve index.html for a missing JSON: the loader would die in JSON.parse.
         navigateFallbackDenylist: [/^\/data\//],
         cleanupOutdatedCaches: true,
-        maximumFileSizeToCacheInBytes: 3_000_000,
+        // Tight enough that search-index.json (726 KB) fails the build loudly if it
+        // ever matches a globPattern, rather than silently landing in the precache.
+        maximumFileSizeToCacheInBytes: 500_000,
         runtimeCaching: [
           {
             // Corpus data is immutable within a version directory.
