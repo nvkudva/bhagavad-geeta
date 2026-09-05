@@ -1201,18 +1201,24 @@ body::before {
   margin-bottom: var(--sp-8);
 }
 
-/* Build stamp and its escape hatch: the last thing on the page, sized so it is
-   readable when looked for and invisible when not. */
-.settings-version {
-  margin: calc(-1 * var(--sp-4)) 0 var(--sp-8);
+.settings-note {
+  margin: var(--sp-2) 0 0;
   padding: 0 var(--sp-4);
-  text-align: center;
-  font-size: var(--fs-caption2);
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-body);
   color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
 }
 
-.settings-version-action {
+/* Build stamp and its escape hatch: the last thing on the page, sized so it is
+   readable when looked for and invisible when not. Rides .settings-note for
+   the padding and colour a footnote already has. */
+.settings-version {
+  margin-top: calc(-1 * var(--sp-4));
+  text-align: center;
+  font-size: var(--fs-caption2);
+}
+
+.settings-version > button {
   padding: 0;
   border: 0;
   background: none;
@@ -1221,13 +1227,6 @@ body::before {
   text-decoration: underline;
 }
 
-.settings-note {
-  margin: var(--sp-2) 0 0;
-  padding: 0 var(--sp-4);
-  font-size: var(--fs-footnote);
-  line-height: var(--lh-body);
-  color: var(--ink-3);
-}
 
 /* Sentence case, as iOS has set grouped headers since the flat era; uppercase
    tracking is a pre-iOS 7 mannerism. */

@@ -313,8 +313,8 @@ const SettingsScreen: React.FC = () => {
           <UpdateRow />
         </SettingsSection>
 
-        <p className="settings-version">
-          <button type="button" className="settings-version-action" onClick={() => void hardReload()}>
+        <p className="settings-note settings-version">
+          <button type="button" onClick={() => void hardReload()}>
             Force refresh
           </button>
           <span aria-hidden="true"> · </span>
