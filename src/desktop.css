@@ -1,0 +1,1448 @@
+/* The >=900px tiers, split out of index.css and loaded from index.html behind
+   media="(min-width: 900px)". A media-qualified <link> is still fetched but is
+   NOT render-blocking on a viewport that does not match, so a phone no longer
+   parses ~40% of a stylesheet it can never apply.
+
+   Cascade: this file MUST load after index.css. Every rule here lives inside a
+   min-width media block, which carries no extra specificity, so source order is
+   the only thing making these overrides win.
+
+   Verify changes at 899/900/1279/1280/1599/1600px. */
+
+/* ------------------------------------------------------- wide-window layout
+   900px is the smallest window with room for a sidebar and a reading column
+   beside it. Width only, deliberately not ANDed with (pointer: fine): a
+   trackpad-less iPad in landscape has the room and expects the layout.
+   Everything narrower — phones and iPad portrait — keeps the bottom capsule,
+   which is still the correct HIG presentation there. Pointer affordances live
+   in the (hover: hover) block.
+
+   Nothing below 900px is touched by the desktop pass: every rule it adds lives
+   in this block, in the 1280px one, or in the section appended at the end. */
+@media (min-width: 900px) {
+  /* A Mac is read at ~60cm, a phone at ~30cm, so desktop type is *larger* in
+     CSS px, not smaller — the iOS scale shrunk to macOS proportions is the
+     usual mistake. Roughly one step up the scale across the board. */
+  :root {
+    /* A pointer does not need a phone's edge-to-edge economy. */
+    --gutter: var(--sp-6);
+
+    --fs-caption2: 0.75rem; /* 12px — metadata floor */
+    --fs-caption1: 0.8125rem; /* 13px — control label */
+    --fs-footnote: 0.875rem; /* 14px — secondary UI text */
+    --fs-subhead: 1rem; /* 16px — sidebar and list rows */
+    --fs-callout: 1.0625rem; /* 17px — inline emphasis */
+    --fs-body: 1.125rem; /* 18px — long-form UI prose */
+    --fs-headline: 1.125rem; /* 18px — row titles, wordmark */
+    --fs-title3: 1.375rem; /* 22px — card and section titles */
+    --fs-title1: 2rem; /* 32px — screen titles */
+    --fs-large: 2.5rem; /* 40px — display */
+
+    --fs-verse: calc(1.8125rem * var(--reading-scale)); /* 29px — the sloka is the point */
+    --fs-translit: calc(1.0625rem * var(--reading-scale)); /* 17px */
+    --fs-trans: calc(1.25rem * var(--reading-scale)); /* 20px — primary reading size */
+    --fs-comment: calc(1.125rem * var(--reading-scale)); /* 18px */
+    --fs-gloss: calc(0.9375rem * var(--reading-scale)); /* 15px — a lookup column, not prose */
+
+    /* The pager sits on --sp-6 here, not on the home indicator. */
+    --reader-h: calc(100dvh - var(--nav-total) - var(--pager-h) - var(--sp-6) - 2 * var(--gutter));
+
+    /* 46rem, not the 36rem a 65-character line would want: the Devanagari is
+       centred and set as whole padas, and breaking those to protect the
+       translation's measure is the wrong trade. ~67 characters per line. */
+    --measure: 46rem;
+  }
+
+  /* Capped only here. A list screen and a grid screen share --w-content so
+     they line up column-for-column when you switch tabs; the reader and the
+     single-column screens share the narrower --measure. */
+  .home-container,
+  .chapter-list-container,
+  .search-screen,
+  .saved-screen {
+    max-width: var(--w-content);
+  }
+
+  .verse-viewer-container,
+  .settings-screen,
+  .screen-placeholder {
+    max-width: var(--measure);
+  }
+
+  /* 280px tiles were sized for 15px text; at 18px the summary crowds. */
+  .chapter-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+
+  #root {
+    grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  }
+
+  .app-sidebar {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    /* Same top inset as the nav bar's, so the wordmark and the bar's title sit
+       on one line across the two columns. */
+    padding: calc(var(--sa-top) + var(--sp-1)) var(--sp-3) var(--sp-4) max(var(--sp-3), var(--sa-left));
+    background: var(--mat-chrome);
+    -webkit-backdrop-filter: var(--mat-blur);
+    backdrop-filter: var(--mat-blur);
+    border-right: 0.5px solid var(--mat-border);
+    box-shadow: var(--spec);
+  }
+
+  .app-sidebar-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: var(--nav-h);
+    padding: 0 var(--sp-3);
+    margin-bottom: var(--sp-2);
+    color: var(--accent);
+  }
+
+  .app-sidebar-wordmark {
+    font-family: var(--font-read);
+    font-size: var(--fs-headline);
+    font-weight: var(--fw-bold);
+    letter-spacing: var(--tr-title);
+    color: var(--ink-1);
+  }
+
+  /* A sidebar row is a row: icon then label, left-aligned, sized for a pointer
+     rather than a thumb. The aria-current accent and its glass pill carry over
+     from .tab-item unchanged. */
+  .app-sidebar .tab-item {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--sp-3);
+    width: auto;
+    height: auto;
+    min-height: var(--tap-min);
+    padding: 0 var(--sp-3);
+    border-radius: var(--r-md);
+    font-size: var(--fs-subhead);
+    font-weight: var(--fw-medium);
+    letter-spacing: var(--tr-body);
+  }
+
+  /* The bar sits beside the sidebar, over the content column, and stays on
+     every screen. It starts bare and the material fades in with
+     --nav-progress exactly as it does on a phone. */
+  .app-nav,
+  .app-main {
+    grid-column: 2;
+  }
+
+  .app-main {
+    padding-top: var(--sp-6);
+  }
+
+  /* A fixed-height bar, so the large title collapse — a phone gesture — gives
+     way to the compact title, which is simply always there. */
+  .nav-large-title {
+    display: none;
+  }
+
+  .app-nav[data-large="true"] .nav-title-compact {
+    opacity: 1;
+  }
+
+  /* Half the bar, less half the field and a gutter: the title ellipsises
+     rather than sliding under the centred field. */
+  .nav-title-compact {
+    max-width: calc(50% - min(11rem, 21%) - var(--sp-4));
+  }
+
+  /* No floating capsule to clear at the bottom of the content column. */
+  .app-tabbar {
+    display: none;
+  }
+
+  /* The sidebar carries Settings at this width, so the reader's trailing pill
+     would be a second door to the same room — and Read in that same sidebar is
+     the way back, so the leading chevron goes with it. */
+  .nav-action-button,
+  .nav-back-button {
+    display: none;
+  }
+
+  /* One mark per window: the sidebar's masthead carries it. */
+  .nav-logo-button {
+    display: none;
+  }
+
+  /* No nav bar and no tab bar on this screen at this width, so the empty
+     search field has the whole column to centre itself in. */
+  :root {
+    --search-rise: max(0px, calc((100dvh - 2 * var(--sp-6) - var(--tap-comfortable)) / 2));
+  }
+
+  .app-main {
+    padding-bottom: var(--sp-10);
+  }
+
+  .app-main[data-reader="true"] {
+    padding-bottom: calc(var(--pager-h) + var(--sp-6) + var(--gutter));
+  }
+
+  /* The pager floats over the content column only — it must not slide under
+     the sidebar's material. */
+  /* Floating capsule, not a full-width bottom bar. An edge-anchored bar would
+     be the only chrome in the app that the content does not visibly continue
+     beneath, and paired with the sidebar it would box the reader into an L.
+     Wider than the reading column, though — the capsule should frame the text
+     rather than sit on it, so it overhangs --measure by a gutter each side. */
+  .verse-pager {
+    left: calc(var(--sidebar-w) + var(--sp-6));
+    right: max(var(--sp-6), var(--sa-right));
+    bottom: var(--sp-6);
+    max-width: calc(var(--measure) + 2 * var(--sp-10));
+    margin-inline: auto;
+  }
+}
+
+/* ================================================================= desktop
+   Everything from here down is gated on 900px or 1280px and is purely
+   additive: below 900px not one declaration in this section applies, so the
+   phone rendering is byte-for-byte what it was before the desktop pass.
+   These blocks come last on purpose — they must win over the [lang] rules
+   above, which are otherwise the last word on Indic type. */
+@media (min-width: 900px) {
+  :root {
+    /* Density. A cursor does not need a thumb's clearance, but a 27" display
+       does need the card to stop looking like a phone screenshot. */
+    --pad-card: var(--sp-6);
+    --pad-tile: var(--sp-6);
+    --gap-section: var(--sp-6);
+    --gap-verse: var(--sp-10);
+    /* A pointer row, not a tap row. --tap-min itself stays 44px so nothing
+       below 900px moves. */
+    --row-min: 36px;
+    --control-round: 32px;
+
+    /* Measure by role. One width cannot serve centred Devanagari padas, a
+       translation and a page of commentary at the same time. */
+    --measure-script: 46rem;
+    --measure-read: 64ch;
+    --measure-prose: 74ch;
+
+    /* Tighter than the mobile matra floor, which was measured at 21px; at the
+       desktop 29px that leading reads as a ladder. Overridden here rather
+       than at the token definition so the documented mobile floor stands. */
+    --lh-indic: 1.62;
+    --lh-verse: 1.58;
+
+    /* A field centred in a 1400px-tall window looks unanchored. */
+    --search-rise: 14vh;
+
+    accent-color: var(--accent);
+    caret-color: var(--accent);
+  }
+
+  /* ---------------------------------------------------------- reader ----
+     The horizontal snap pager is a phone gesture. With a cursor and a scroll
+     wheel the chapter is one continuous column, which is also what makes the
+     verse rail and the keyboard layer possible. */
+  .verse-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-verse);
+  }
+
+  /* A card is still a screenful here, as it is on the phone: the column scrolls
+     one verse at a time and the reader is never shown two half-verses at once.
+     No content-visibility: skipped blocks are measured at their placeholder
+     size, so a deep link into a long chapter lands on an estimate and then
+     drifts as the real heights arrive. A chapter is 78 cards at most, which is
+     cheap next to that. */
+  .verse-column .verse-block {
+    min-height: var(--reader-h);
+    /* So the commentary can take the slack. The sloka, the transliteration and
+       the translation are sized by their text; the commentary is the one band
+       that reads better tall, so it is the one that grows. */
+    display: flex;
+    flex-direction: column;
+  }
+  /* Grow into whatever the bands above leave, never shrink below its own prose:
+     a short commentary still reaches the foot of the card, a long one runs past
+     it and the page scrolls. */
+  .verse-column .verse-section-card.commentary {
+    flex: 1 0 auto;
+  }
+  /* The anchor is the row, not the card: the row is what carries the verse id
+     now that the glosses sit beside the card. */
+  .verse-column .verse-row {
+    scroll-margin-top: calc(var(--nav-total) + var(--sp-6));
+  }
+
+  .verse-viewer-container {
+    max-width: var(--measure);
+    padding-bottom: var(--sp-10);
+  }
+
+  .verse-text-wrapper,
+  .verse-transliteration-wrapper {
+    max-width: var(--measure-script);
+    margin-inline: auto;
+  }
+
+  .verse-section-content {
+    max-width: var(--measure-read);
+    text-wrap: pretty;
+  }
+
+  .commentary .verse-section-content,
+  .verse-glosses {
+    max-width: var(--measure-prose);
+  }
+
+  /* The divider scales with the card instead of staying a 24px stub. */
+  .verse-viewer-title-wrapper::before,
+  .verse-viewer-title-wrapper::after {
+    width: 64px;
+    background: linear-gradient(to right, transparent, var(--accent-line));
+  }
+  .verse-viewer-title-wrapper::after {
+    background: linear-gradient(to left, transparent, var(--accent-line));
+  }
+
+  /* Indic shaping at display sizes. */
+  [lang="sa"],
+  [lang="kn"],
+  [lang="te"] {
+    font-feature-settings:
+      "kern" 1,
+      "calt" 1;
+    font-variant-ligatures: common-ligatures;
+    letter-spacing: 0;
+  }
+  .verse-text {
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ------------------------------------------------------ chapter grid ---
+     auto-fill inside a capped column flips between two and three columns as
+     the window moves. An editorial set is a decision, not an accident. */
+  .chapter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+
+  .chapter-card {
+    padding: var(--sp-6);
+    border-radius: var(--r-xl);
+    min-height: 200px;
+  }
+
+  .chapter-summary {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+
+  /* ------------------------------------------------------------ search ---
+     A one-column stack of 90-character snippets inside a 60rem column is a
+     wall. Two columns, each a real card. */
+  /* The nav bar carries the field at this width, so the screen's own would be
+     the second one on the page. */
+  .search-field {
+    display: none;
+  }
+
+  .search-results {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-3);
+    align-items: start;
+  }
+
+  .search-result {
+    padding: var(--sp-4);
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--spec);
+  }
+
+  .search-result-snippet {
+    font-size: var(--fs-callout);
+    line-height: var(--lh-read);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+
+  .search-result-snippet mark {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  .search-recent {
+    min-height: var(--row-min);
+  }
+
+  /* ------------------------------------------------------------- saved ---*/
+  .saved-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+    align-items: start;
+  }
+
+  .saved-item-link {
+    padding: var(--sp-4);
+  }
+
+  .saved-item-text {
+    font-size: var(--fs-trans);
+  }
+
+  /* A trash can floating on every card is the cheapest thing on the screen.
+     Under a pointer it appears when the card is engaged; a trackpad-less
+     iPad still gets :focus-within, and nothing below 900px hides it. */
+  .saved-item-remove,
+  .verse-save {
+    opacity: 0;
+    transition:
+      opacity var(--dur-fast) var(--ease-out-ios),
+      color var(--dur-fast) var(--ease-out-ios);
+  }
+  .saved-item:hover .saved-item-remove,
+  .saved-item:focus-within .saved-item-remove,
+  .saved-item-remove:focus-visible,
+  .verse-block:hover .verse-save,
+  .verse-block:focus-within .verse-save,
+  .verse-save:focus-visible,
+  .verse-save[aria-pressed="true"] {
+    opacity: 1;
+  }
+
+  /* ---------------------------------------------------------- settings ---
+     The iOS capsule-for-a-lone-control is a phone idiom; at width it reads as
+     a toy. A settings screen on a desktop is a form with an index. */
+  .settings-screen {
+    max-width: 62rem;
+    display: grid;
+    grid-template-columns: 14rem minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: var(--sp-10);
+    align-items: start;
+  }
+
+  .settings-heading {
+    grid-column: 1 / -1;
+  }
+
+  .settings-index {
+    position: sticky;
+    top: var(--sp-8);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    grid-row: 2;
+  }
+
+  .settings-index-link {
+    display: block;
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-md);
+    background: none;
+    border: 0;
+    color: var(--ink-2);
+    font-family: inherit;
+    font-size: var(--fs-subhead);
+    font-weight: var(--fw-medium);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .settings-index-link[aria-current="true"] {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .settings-body {
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-8);
+  }
+
+  .settings-section {
+    scroll-margin-top: var(--sp-8);
+  }
+
+  /* No capsule, no pill: every group is the same rounded panel. */
+  .settings-group,
+  .settings-group:has(> .settings-row:only-child) {
+    --group-r: var(--r-lg);
+  }
+  .settings-group:has(> .settings-row:only-child) .settings-row {
+    padding-inline: var(--sp-5);
+  }
+
+  .settings-row {
+    min-height: var(--row-min);
+    padding: var(--sp-2) var(--sp-5);
+  }
+
+  .settings-group-label {
+    font-size: var(--fs-subhead);
+    font-weight: var(--fw-semibold);
+    color: var(--ink-1);
+  }
+
+  /* -------------------------------------------------- empty placeholder ---*/
+  .screen-placeholder {
+    max-width: 34rem;
+    margin: var(--sp-16) auto;
+    padding: var(--sp-12) var(--sp-8);
+    border: 1px dashed var(--separator);
+    border-radius: var(--r-xl);
+  }
+
+  /* ------------------------------------------------------- desktop title --
+     The nav bar collapses on every root screen at this width, which took the
+     large title with it. The heading comes back inside the content column. */
+  /* ---------------------------------------------------------- sidebar ----*/
+  .app-sidebar .tab-item {
+    position: relative;
+    min-height: var(--row-min);
+  }
+
+  .app-sidebar .tab-item[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: 22%;
+    bottom: 22%;
+    width: 3px;
+    border-radius: var(--r-pill);
+    background: var(--accent);
+  }
+
+  /* Shared by the appearance toggle, the last row-shaped button in the
+     sidebar now that search has moved into the nav bar. */
+  .sidebar-search {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    min-height: var(--row-min);
+    margin-bottom: var(--sp-2);
+    padding: 0 var(--sp-3);
+    background: none;
+    border: 0;
+    border-radius: var(--r-md);
+    color: var(--ink-2);
+    font-family: inherit;
+    font-size: var(--fs-subhead);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+  }
+
+  .sidebar-search-label {
+    flex: 1;
+    text-align: left;
+  }
+
+  kbd,
+  .kbd {
+    padding: 1px 5px;
+    background: var(--surface-2);
+    border: 0.5px solid var(--mat-border);
+    border-radius: var(--r-xs);
+    color: var(--ink-4);
+    font-family: var(--font-sys);
+    font-size: var(--fs-caption2);
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  .app-sidebar-foot {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding-top: var(--sp-4);
+    border-top: 0.5px solid var(--mat-border);
+  }
+
+  /* A segmented capsule: the thumb is one element that slides, so the switch
+     reads as one control moving rather than a row of buttons lighting up. The
+     slot count comes from the language table, so adding a language is a data
+     change, not a layout change. */
+  .sidebar-langs {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--slots, 2), 1fr);
+    gap: 0;
+    margin-bottom: var(--sp-1);
+    padding: 2px;
+    background: var(--surface-2);
+    border: 0.5px solid var(--mat-border);
+    border-radius: var(--r-pill);
+  }
+
+  .sidebar-langs-thumb {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 2px;
+    width: calc((100% - 4px) / var(--slots, 2));
+    border-radius: var(--r-pill);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 0.5px var(--glass-border-hover);
+    transform: translateX(calc(var(--slot, 0) * 100%));
+    transition: transform var(--dur-base) var(--ease-out-ios);
+  }
+
+  .sidebar-lang {
+    position: relative;
+    min-height: 30px;
+    padding: 0 var(--sp-1);
+    background: none;
+    border: 0;
+    border-radius: var(--r-pill);
+    color: var(--ink-3);
+    font-family: inherit;
+    font-size: var(--fs-caption1);
+    font-weight: var(--fw-medium);
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: color 220ms ease;
+  }
+  .sidebar-lang[aria-pressed="true"] {
+    color: var(--accent);
+  }
+
+  .sidebar-scale {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 0 var(--sp-3);
+    color: var(--ink-3);
+    font-size: var(--fs-caption1);
+  }
+
+  .sidebar-scale-label {
+    flex: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sidebar-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: var(--surface-2);
+    border: 0.5px solid var(--mat-border);
+    border-radius: var(--r-sm);
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+  .sidebar-step:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* --------------------------------------------------------- selection ---
+     The default blue lands on gold background-clip:text and reads as broken.
+     Those elements paint their colour through the background, so the fill
+     colour has to be restated or the selection shows transparent glyphs. */
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--ink-1);
+    text-shadow: none;
+  }
+  .verse-text::selection,
+  .verse-of-moment-text::selection,
+  .saved-item-text::selection {
+    background: var(--selection-verse);
+    -webkit-text-fill-color: var(--ramp-verse-fallback);
+  }
+  .verse-section-content::selection,
+  .verse-of-moment-translation::selection {
+    background: var(--accent-soft);
+    -webkit-text-fill-color: var(--ramp-trans-fallback);
+  }
+
+  /* ------------------------------------------------------------ focus ----
+     border-radius: inherit, so the ring follows a pill or an --r-xl card
+     instead of squaring off at --r-sm. */
+  .pressable:focus-visible,
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: inherit;
+    box-shadow: 0 0 0 5px var(--accent-soft);
+  }
+
+  /* -------------------------------------------------------- scrollbars ---*/
+  html {
+    scrollbar-color: color-mix(in srgb, var(--ink-4) 60%, transparent) transparent;
+    scrollbar-width: thin;
+  }
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--ink-4) 55%, transparent);
+    background-clip: content-box;
+    border: 3px solid transparent;
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ink-3);
+  }
+
+  /* ----------------------------------------------------- light appearance
+     The blooms are sized in percentages, so on a 2560px window the phone's
+     soft wash becomes a 1300px smear, and the card border — a white hairline
+     — disappears entirely against a pale ground. Both are width problems, so
+     both are fixed at width and the mobile light theme is untouched. */
+  [data-theme="light"] {
+    --bloom-1: rgba(226, 120, 196, 0.4);
+    --bloom-1-at: 34% 40% at 16% 10%;
+    --bloom-2: rgba(150, 90, 230, 0.3);
+    --bloom-2-at: 30% 36% at 48% 46%;
+    --bloom-3: rgba(160, 150, 245, 0.28);
+    --bloom-3-at: 36% 40% at 86% 80%;
+
+    /* A card at 56% white is a tint on a phone and a muddy panel at 700px
+       wide. Opaque enough to read as paper, still translucent enough that the
+       ground's colour comes through it. */
+    --glass: rgba(255, 255, 255, 0.72);
+    --glass-hover: rgba(255, 255, 255, 0.86);
+    --mat-chrome: rgba(250, 250, 252, 0.82);
+
+    --glass-border: rgba(38, 16, 54, 0.1);
+    --glass-border-hover: rgba(161, 29, 51, 0.3);
+    --el-2: 0 3px 12px rgba(38, 16, 54, 0.09), 0 1px 3px rgba(38, 16, 54, 0.06);
+    --el-3: 0 18px 44px rgba(38, 16, 54, 0.14), 0 3px 8px rgba(38, 16, 54, 0.07);
+  }
+
+  /* ------------------------------------------------------------ dialog ---
+     One material for the command palette and the shortcuts sheet. */
+  .desk-dialog {
+    width: min(640px, 92vw);
+    max-height: 70vh;
+    margin: 12vh auto auto;
+    padding: 0;
+    background: var(--mat-chrome);
+    -webkit-backdrop-filter: var(--mat-blur);
+    backdrop-filter: var(--mat-blur);
+    border: 0.5px solid var(--mat-border);
+    border-radius: var(--r-xl);
+    box-shadow: var(--spec), var(--el-3);
+    color: var(--ink-1);
+    overflow: hidden;
+  }
+  .desk-dialog::backdrop {
+    background: var(--scrim-dialog);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+  }
+
+  .palette-field {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-4) var(--sp-5);
+    border-bottom: 0.5px solid var(--mat-border);
+    color: var(--ink-3);
+  }
+
+  .palette-input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: 0;
+    outline: none;
+    color: var(--ink-1);
+    font-family: inherit;
+    font-size: var(--fs-body);
+  }
+  .palette-input::placeholder {
+    color: var(--ink-4);
+  }
+  /* The dialog is the focused thing; a ring around the field inside it is a
+     second, smaller box saying the same. */
+  .palette-input:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  /* Same for a search field: the wrapper takes the focus state
+     (.nav-search:focus-within / .search-field:focus-within), so the bare input
+     inside it must not draw a second ring. At a 3px offset with a 5px halo
+     around a 19px-tall input, the glow is larger than the control it marks. */
+  .search-input:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .palette-list {
+    max-height: calc(70vh - 64px);
+    overflow-y: auto;
+    padding: var(--sp-2);
+    margin: 0;
+    list-style: none;
+  }
+
+  .palette-group {
+    padding: var(--sp-3) var(--sp-3) var(--sp-1);
+    color: var(--ink-4);
+    font-size: var(--fs-caption2);
+    font-weight: var(--fw-semibold);
+    letter-spacing: var(--tr-caps);
+    text-transform: uppercase;
+  }
+
+  .palette-option {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-md);
+    color: var(--ink-1);
+    cursor: pointer;
+  }
+
+  .palette-option[data-active="true"] {
+    background: var(--accent-soft);
+  }
+
+  .palette-option-ref {
+    flex: 0 0 auto;
+    min-width: 3.5rem;
+    color: var(--accent);
+    font-size: var(--fs-caption1);
+    font-weight: var(--fw-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .palette-option-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--fs-subhead);
+  }
+
+  .palette-empty {
+    padding: var(--sp-6) var(--sp-5);
+    color: var(--ink-3);
+    font-size: var(--fs-subhead);
+    text-align: center;
+  }
+
+  /* ------------------------------------------------- shortcuts sheet -----*/
+  .shortcuts-sheet {
+    padding: var(--sp-6);
+    max-height: 78vh;
+    overflow-y: auto;
+  }
+  .shortcuts-title {
+    margin: 0 0 var(--sp-4);
+    font-size: var(--fs-title3);
+    font-weight: var(--fw-bold);
+    letter-spacing: var(--tr-title);
+  }
+  .shortcuts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-2) var(--sp-6);
+  }
+  .shortcuts-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    padding: var(--sp-1) 0;
+    font-size: var(--fs-subhead);
+    color: var(--ink-2);
+  }
+}
+
+/* --------------------------------------------------------- pointer only --
+   Hover fills, hover-revealed actions and tooltips need a real cursor as well
+   as the width, so they sit in their own block. */
+@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
+  .search-result:hover,
+  .search-reference:hover,
+  .saved-item-link:hover,
+  .search-recent:hover,
+  .settings-row:hover,
+  .settings-index-link:hover,
+  .sidebar-search:hover,
+  .palette-option:hover {
+    background-color: var(--glass-hover);
+    border-color: var(--glass-border-hover);
+  }
+
+  .verse-rail-item:hover {
+    background-color: var(--glass-hover);
+    color: var(--ink-1);
+  }
+
+  .sidebar-lang[aria-pressed="false"]:hover {
+    color: var(--ink-1);
+  }
+
+  .pager-btn:hover:not(:disabled),
+  .nav-back-button:hover,
+  .sidebar-step:hover {
+    background-color: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  /* -2px, not -4px: at 180ms under a cursor that is an affordance; the larger
+     lift is the web card cliché DESIGN_PLAN already rejected. */
+  .chapter-card.pressable:hover,
+  .verse-of-moment:hover {
+    transform: translateY(-2px);
+  }
+  .chapter-card,
+  .verse-of-moment {
+    transition:
+      transform var(--dur-base) var(--spring-gentle),
+      background-color var(--dur-fast) var(--ease-out-ios),
+      border-color var(--dur-fast) var(--ease-out-ios),
+      box-shadow var(--dur-fast) var(--ease-out-ios);
+  }
+
+  /* A 3% squash under a cursor is a thumb gesture. */
+  .pressable:active {
+    transform: scale(0.99);
+  }
+
+  /* Tooltips, so an icon-only control names itself and its shortcut without a
+     native title= delay. Pseudo-element, so the accessible name is still the
+     aria-label and nothing is announced twice. */
+  [data-tip] {
+    position: relative;
+  }
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    z-index: 200;
+    transform: translateX(-50%);
+    padding: var(--sp-1) var(--sp-2);
+    background: var(--surface-3);
+    border: 0.5px solid var(--mat-border);
+    border-radius: var(--r-sm);
+    box-shadow: var(--el-2);
+    color: var(--ink-1);
+    font-size: var(--fs-caption1);
+    font-weight: var(--fw-medium);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-fast) var(--ease-out-ios) 400ms;
+  }
+  [data-tip]:hover::after,
+  [data-tip]:focus-visible::after {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------- 1280px --
+   The tier with room for a two-pane reader: a sticky verse index beside the
+   reading column, which retires the floating pager entirely. */
+@media (min-width: 1280px) {
+  :root {
+    --gutter: var(--sp-8);
+    --pad-card: var(--sp-8);
+    --gap-verse: var(--sp-12);
+    --w-content: 76rem;
+    --sidebar-w: 18rem;
+
+    /* Only the gloss band spends the extra width: --measure-script,
+       --measure-read and --measure-prose are unchanged, so the sloka, the
+       translation and the commentary keep the measure they were tuned at. */
+    --measure-wide: 46rem;
+    /* The gloss sidebar's own track, beside the card rather than inside it.
+       It steps up at 1600 (below): the rail, the panel and two gaps together
+       take ~600px, so a 20rem panel at 1280 would leave a 352px reading card. */
+    --gloss-w: 15rem;
+
+    --fs-verse: calc(2.125rem * var(--reading-scale));
+    --lh-indic: 1.52;
+    --lh-verse: 1.48;
+  }
+
+  .chapter-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-5);
+  }
+
+  .saved-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* --------------------------------------------- verse-of-the-moment -----
+     At 76rem with a four-line clamp the card is a letterbox. Two columns:
+     the sloka reads left, the translation sits beside it. */
+  .verse-of-moment {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    column-gap: var(--sp-8);
+    align-items: center;
+    padding: var(--sp-8);
+    min-height: 280px;
+  }
+  .verse-of-moment-head {
+    grid-column: 1 / -1;
+  }
+  .verse-of-moment-text {
+    text-align: left;
+    margin-bottom: 0;
+  }
+  .verse-of-moment-translation {
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+    margin-top: 0;
+  }
+  .verse-of-moment-placeholder {
+    min-height: 280px;
+  }
+
+  /* ------------------------------------------------------- two-pane -----*/
+  :root {
+    /* Under the bar with one gutter of air, and no more: the rail is chrome,
+       so it should meet the bar rather than float a screenful below it. */
+    --rail-top: calc(var(--nav-total) + var(--sp-4));
+  }
+
+  .verse-viewer-container {
+    display: grid;
+    /* 14rem for the rail's five-column keypad; --measure-wide for the reading
+       card, which the gloss band needs — at the old 46rem its two columns were
+       326px and the median gloss row wrapped every time. minmax(0, …) lets the
+       card give the width back at 1280 rather than needing a third breakpoint. */
+    grid-template-columns: 14rem minmax(0, calc(var(--measure-wide) + var(--sp-6) + var(--gloss-w)));
+    gap: var(--sp-10);
+    /* Anchored to the sidebar, not centred in the space left over by it: the
+       rail is chrome for the reading column and reads as detached when it
+       floats a hundred pixels off the sidebar it sits beside. */
+    justify-content: start;
+    /* Both edges, not just the leading one: .app-main carries no inline
+       padding, so without the trailing value the reading card sits flush
+       against the window edge once the tracks fill the width. */
+    padding-inline: var(--sp-4);
+    max-width: none;
+  }
+
+  /* No rail is rendered until the chapter arrives, so the loading line would
+     otherwise be placed in the 12rem rail track and squeezed to its width. */
+  .verse-viewer-loading {
+    grid-column: 1 / -1;
+  }
+
+  /* The index is a keypad, not a list: the whole chapter — 78 verses at the
+     longest — fits the sticky box, so the rail has nothing to scroll and never
+     moves under the pointer. */
+  /* The rail is a header card over a scrolling column of verse cards. The
+     column, not the rail, is the scroller: the header has to stay put, and a
+     78-card list has to be reachable. */
+  .verse-rail {
+    position: sticky;
+    /* Exactly where the rail already sits at scroll 0 — the bar, the main
+       column's inset and the container's own gutter. A sticky top any higher
+       than its natural offset means the rail falls that far before it catches,
+       which is the whole chapter list jumping on the first scroll away from
+       the top. Matching them makes it stick from the first pixel. */
+    top: var(--rail-top);
+    align-self: start;
+    /* The same box as the reading card beside it, or the taller of the two
+       stretches the grid row and the page scrolls on a verse that fits. */
+    max-height: var(--reader-h);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* ---- header: the chapter, and the two steps either side of it ---- */
+  .verse-rail-head {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 56px;
+    padding: var(--sp-2);
+    background: var(--glass);
+    -webkit-backdrop-filter: var(--mat-blur-thin);
+    backdrop-filter: var(--mat-blur-thin);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-md);
+    box-shadow: inset 0 1px 0 var(--spec-top);
+    view-transition-name: rail-head;
+  }
+
+  .verse-rail-head-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    text-align: center;
+  }
+
+  .verse-rail-eyebrow {
+    color: var(--ink-4);
+    font-size: var(--fs-caption2);
+    font-weight: var(--fw-semibold);
+    letter-spacing: var(--tr-caps);
+    text-transform: uppercase;
+  }
+
+  .verse-rail-name {
+    max-width: 100%;
+    color: var(--ink-2);
+    font-size: var(--fs-caption1);
+    font-weight: var(--fw-medium);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* The same round glass as the nav's back item. A bare chevron beside the
+     browser's own back button is ambiguous, so the tooltip names where it
+     goes rather than what it does. */
+  .verse-rail-step {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: var(--mat-chrome);
+    -webkit-backdrop-filter: var(--mat-blur-thin);
+    backdrop-filter: var(--mat-blur-thin);
+    border: 0.5px solid var(--mat-border);
+    border-radius: 50%;
+    box-shadow: inset 0 1px 0 var(--spec-top);
+    color: var(--accent);
+    cursor: pointer;
+  }
+
+  /* Kept mounted at either end of the book: unmounting reflows the header and
+     jumps the rail-head snapshot on the one navigation that is already moving. */
+  .verse-rail-step:disabled {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  /* ---- the verse cards ---- */
+  .verse-rail-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    padding-right: 2px;
+    view-transition-name: rail-body;
+  }
+  .verse-rail-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .verse-rail-item {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-md);
+    color: var(--ink-2);
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-fast) var(--ease-out-ios),
+      border-color var(--dur-fast) var(--ease-out-ios);
+  }
+
+  /* The label leads at caption size and the number carries the weight, so the
+     column scans as a run of numbers rather than a run of the word "Verse".
+     DOM order is the reading order — "Verse 70", not "70 Verse". */
+  .verse-rail-item-label {
+    color: var(--ink-4);
+    font-size: var(--fs-caption2);
+    letter-spacing: var(--tr-caps);
+    text-transform: uppercase;
+  }
+
+  .verse-rail-item-n {
+    margin-left: auto;
+    font-size: var(--fs-subhead);
+    font-weight: var(--fw-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .verse-rail-item[aria-current="true"] {
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
+    color: var(--accent);
+  }
+  .verse-rail-item[aria-current="true"] .verse-rail-item-label {
+    color: var(--accent);
+    opacity: 0.75;
+  }
+
+  /* The 1280 focus ring's 3px offset and 5px glow bleed into the neighbouring
+     card of a 4px-gap column. */
+  .verse-rail-item:focus-visible {
+    outline-offset: 1px;
+    box-shadow: none;
+  }
+
+  /* The rail is the pager now — so nothing has to be reserved for it, and the
+     verse card is a full screenful rather than one 56px short of it. */
+  .verse-viewer-container .verse-pager {
+    display: none;
+  }
+  /* One verse is mounted and there is no pager to clear, so the card is the
+     window: from its own top — under the bar and the two gutters above it — to
+     one gutter off the foot. Anything reserved below it is dead scroll. */
+  :root {
+    --reader-h: calc(100dvh - var(--nav-total) - var(--sp-6) - var(--gutter) - var(--sp-6));
+  }
+  .app-main[data-reader="true"] {
+    padding-bottom: 0;
+  }
+  .verse-viewer-container {
+    padding-bottom: var(--sp-6);
+  }
+
+  /* The verse is a row: the reading card, and the glosses beside it. The
+     aside is taken out of flow and pinned to the row's full height, so it is
+     always exactly as tall as the card — a grid track would instead let a long
+     gloss list stretch the row and push the next verse down. */
+  .verse-row {
+    position: relative;
+    padding-right: calc(var(--gloss-w) + var(--sp-6));
+  }
+  .verse-row:not(:has(.verse-glosses-aside)) {
+    padding-right: 0;
+  }
+
+  .verse-glosses-aside {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: var(--gloss-w);
+    display: flex;
+    flex-direction: column;
+    padding: var(--sp-5);
+    background: var(--well);
+    border: 1px solid var(--well-border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+  }
+
+  .verse-glosses-aside .verse-pane-label {
+    flex: 0 0 auto;
+  }
+
+  /* More words than the card is tall: the list scrolls inside the panel rather
+     than the panel growing past the verse it belongs to. */
+  .verse-glosses-aside .verse-glosses {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  /* One column: the panel is 240px, and two of them would be four words wide. */
+  .verse-glosses li {
+    /* A hanging indent, so a wrapped gloss tucks under itself and the terms
+       keep one hard left edge. Flush left, not centred: the term is the scan
+       target, and centring gives every one of them a different x. */
+    padding-left: var(--sp-4);
+    text-indent: calc(-1 * var(--sp-4));
+  }
+  .verse-glosses li + li {
+    margin-top: var(--sp-2);
+  }
+
+  /* The scripture's own colour, taken as the solid --ramp-verse-fallback
+     rather than the gradient: background-clip on sixteen short runs is sixteen
+     clipped paints and, in the light appearance, reads as muddy brown streaks.
+     The fallback is a flat #f0cd7a on dark and #6b4a12 on light, both of which
+     clear 7:1 on the well, and both of which are recognisably the sloka's. */
+  .verse-gloss-term {
+    color: var(--ramp-verse-fallback);
+    font-weight: var(--fw-semibold);
+  }
+  /* --ink-3, not --ink-4: the separator is punctuation, but at --ink-4 it is
+     2.65:1 on the light panel, which is not legible so much as implied. */
+  .verse-gloss-sep {
+    color: var(--ink-3);
+  }
+
+  /* The card is wider than the measure its prose is capped at, so the leftover
+     is symmetric padding rather than a lopsided dead edge inside the well. */
+  .verse-section-content {
+    margin-inline: auto;
+  }
+
+  .verse-pane-label {
+    margin: 0 0 var(--sp-3);
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px solid var(--separator);
+    color: var(--accent);
+    font-size: var(--fs-footnote);
+    font-weight: var(--fw-semibold);
+  }
+}
+
+/* The whole-viewport blur crossfade is a phone transition: at 2560px it is an
+   expensive full-screen filter, and it blinks the chrome, which never changed.
+
+   Naming .app-main was the wrong way to scope it. A named element is captured
+   at its full size, not the viewport's — the reading column is tens of
+   thousands of pixels tall — and its group then animates between the old and
+   new geometry, which is what read as the page scrolling on a chapter change.
+   Name the chrome instead and freeze it: the root snapshot stays
+   viewport-sized, and what is left to cross-fade is exactly the content. */
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .app-sidebar {
+    view-transition-name: sidebar;
+  }
+  .app-nav {
+    view-transition-name: nav;
+  }
+  ::view-transition-group(sidebar),
+  ::view-transition-group(nav),
+  ::view-transition-old(sidebar),
+  ::view-transition-new(sidebar),
+  ::view-transition-old(nav),
+  ::view-transition-new(nav) {
+    animation: none;
+  }
+
+  /* Opacity only, and in place: no blur, no geometry. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--dur-fast);
+    animation-timing-function: var(--ease-out-ios);
+    mix-blend-mode: normal;
+  }
+  ::view-transition-old(root) {
+    animation-name: desk-fade-out;
+  }
+  ::view-transition-new(root) {
+    animation-name: desk-fade-in;
+  }
+}
+
+/* At a short window chapter 18's sixteen rows do not fit the sticky box, so the
+   keypad tightens rather than the rail becoming a scroller. Below roughly a
+   660px viewport it does scroll, which is the honest fallback. */
+@media (min-width: 1280px) and (max-height: 820px) {
+  .verse-rail-head {
+    min-height: 48px;
+  }
+  .verse-rail-item {
+    padding: var(--sp-1) var(--sp-3);
+  }
+}
+
+/* The chapter slide. Cross-chapter navigation already runs a view transition
+   and same-chapter navigation deliberately does not (see setRouteAnimated), so
+   naming the keypad is enough to make it slide exactly when the chapter
+   changes and never when the verse does. Twelve pixels, not a page: on a
+   224px column a full-width slide reads as a twitch, not a pager. The name
+   goes on the grid and the header, never on .verse-rail itself — a named
+   element is lifted into the snapshot layer, which would kill its sticky. */
+@media (min-width: 1280px) and (prefers-reduced-motion: no-preference) {
+  /* Frozen, like the chrome above: the keypad's height changes with the
+     chapter, and a group animating between the two sizes is a stretch, not a
+     slide. The old/new pair below does all the moving. */
+  ::view-transition-group(rail-body),
+  ::view-transition-group(rail-head) {
+    animation: none;
+  }
+  ::view-transition-old(rail-body),
+  ::view-transition-new(rail-body),
+  ::view-transition-old(rail-head),
+  ::view-transition-new(rail-head) {
+    animation-duration: var(--dur-fast);
+    animation-timing-function: var(--ease-out-ios);
+    mix-blend-mode: normal;
+  }
+
+  [data-rail-dir="next"]::view-transition-old(rail-body),
+  [data-rail-dir="next"]::view-transition-old(rail-head) {
+    animation-name: rail-out-left;
+  }
+  [data-rail-dir="next"]::view-transition-new(rail-body),
+  [data-rail-dir="next"]::view-transition-new(rail-head) {
+    animation-name: rail-in-right;
+  }
+  [data-rail-dir="prev"]::view-transition-old(rail-body),
+  [data-rail-dir="prev"]::view-transition-old(rail-head) {
+    animation-name: rail-out-right;
+  }
+  [data-rail-dir="prev"]::view-transition-new(rail-body),
+  [data-rail-dir="prev"]::view-transition-new(rail-head) {
+    animation-name: rail-in-left;
+  }
+}
+
+/* Pointer affordances for the rail. Kept out of the 900px hover block: none of
+   these selectors exists below 1280. */
+@media (min-width: 1280px) and (hover: hover) and (pointer: fine) {
+  .verse-rail-item:hover {
+    background: var(--glass-hover);
+    border-color: var(--glass-border-hover);
+    color: var(--ink-1);
+  }
+  .verse-rail-step:hover:not(:disabled) {
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
+  }
+}
+
+/* Room for the full-width gloss panel without starving the reading card. */
+@media (min-width: 1600px) {
+  :root {
+    --gloss-w: 20rem;
+  }
+}

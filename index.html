@@ -48,5 +48,10 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- The >=900px tiers. media= means a phone still fetches this, but at low
+         priority and NOT render-blocking — it is ~40% of the stylesheet that a
+         phone can never apply. It sits after the module script so Vite emits its
+         <link> after the entry's own index.css link and the cascade order holds. -->
+    <link rel="stylesheet" href="/src/desktop.css" media="(min-width: 900px)" />
   </body>
 </html>

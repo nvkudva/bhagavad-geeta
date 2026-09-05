@@ -1,6 +1,7 @@
 import { copyFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
+import { transform } from "esbuild";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
@@ -14,6 +15,23 @@ const spaFallback = (): Plugin => ({
   closeBundle() {
     const index = resolve(__dirname, "dist/index.html");
     if (existsSync(index)) copyFileSync(index, resolve(__dirname, "dist/404.html"));
+  },
+});
+
+// A stylesheet reached only through a <link> in index.html (src/desktop.css) is
+// emitted as a copied asset, not as a bundled CSS chunk, so Vite's own cssMinify
+// never touches it. Without this it ships at ~2x the size of index.css for the
+// same amount of CSS, which would make the >=900px split look like a regression.
+const minifyLinkedCss = (): Plugin => ({
+  name: "minify-linked-css",
+  apply: "build",
+  async generateBundle(_options, bundle) {
+    for (const file of Object.values(bundle)) {
+      if (file.type !== "asset" || !file.fileName.endsWith(".css")) continue;
+      const source = typeof file.source === "string" ? file.source : Buffer.from(file.source).toString("utf8");
+      if (!source.includes("\n")) continue; // already minified by the CSS pipeline
+      file.source = (await transform(source, { loader: "css", minify: true })).code;
+    }
   },
 });
 
@@ -38,6 +56,7 @@ export default defineConfig({
   plugins: [
     react(),
     spaFallback(),
+    minifyLinkedCss(),
     VitePWA({
       registerType: "autoUpdate",
       // Without this the manifest and service worker only exist in a build, so
@@ -81,14 +100,7 @@ export default defineConfig({
         // every verse.text is Sanskrit. Kannada, Telugu, the latin-ext files that carry
         // the IAST diacritics, and the three alternative reading faces are all
         // runtime-cached the first time a reader actually asks for them.
-        globIgnores: [
-          "**/fonts/noto-sans-kannada.woff2",
-          "**/fonts/noto-sans-telugu.woff2",
-          "**/fonts/*-latin-ext.woff2",
-          "**/fonts/source-serif-4-*.woff2",
-          "**/fonts/newsreader-*.woff2",
-          "**/fonts/faustina-*.woff2",
-        ],
+        globIgnores: ["**/fonts/noto-sans-kannada.woff2", "**/fonts/noto-sans-telugu.woff2", "**/fonts/*-latin-ext.woff2", "**/fonts/source-serif-4-*.woff2", "**/fonts/newsreader-*.woff2", "**/fonts/faustina-*.woff2"],
         navigateFallback: "index.html",
         // Never serve index.html for a missing JSON: the loader would die in JSON.parse.
         navigateFallbackDenylist: [/^\/data\//],
