@@ -1,0 +1,258 @@
+[
+  {
+    "id": "4.26",
+    "srcChars": 333,
+    "finish": "stop",
+    "prompt_tokens": 927,
+    "completion_tokens": 1388,
+    "total_tokens": 2315,
+    "prompt_tokens_details": {
+      "cached_tokens": 896
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 915
+    },
+    "prompt_cache_hit_tokens": 896,
+    "prompt_cache_miss_tokens": 31
+  },
+  {
+    "id": "18.26",
+    "srcChars": 843,
+    "finish": "stop",
+    "prompt_tokens": 1119,
+    "completion_tokens": 5287,
+    "total_tokens": 6406,
+    "prompt_tokens_details": {
+      "cached_tokens": 1024
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 4141
+    },
+    "prompt_cache_hit_tokens": 1024,
+    "prompt_cache_miss_tokens": 95
+  },
+  {
+    "id": "6.27",
+    "srcChars": 486,
+    "finish": "stop",
+    "prompt_tokens": 967,
+    "completion_tokens": 5931,
+    "total_tokens": 6898,
+    "prompt_tokens_details": {
+      "cached_tokens": 896
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 5276
+    },
+    "prompt_cache_hit_tokens": 896,
+    "prompt_cache_miss_tokens": 71
+  },
+  {
+    "id": "10.22",
+    "srcChars": 592,
+    "finish": "stop",
+    "prompt_tokens": 949,
+    "completion_tokens": 8544,
+    "total_tokens": 9493,
+    "prompt_tokens_details": {
+      "cached_tokens": 896
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 7800
+    },
+    "prompt_cache_hit_tokens": 896,
+    "prompt_cache_miss_tokens": 53
+  },
+  {
+    "id": "16.20",
+    "srcChars": 1002,
+    "finish": "stop",
+    "prompt_tokens": 1029,
+    "completion_tokens": 11416,
+    "total_tokens": 12445,
+    "prompt_tokens_details": {
+      "cached_tokens": 1024
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 10135
+    },
+    "prompt_cache_hit_tokens": 1024,
+    "prompt_cache_miss_tokens": 5
+  },
+  {
+    "id": "11.40",
+    "srcChars": 726,
+    "finish": "stop",
+    "prompt_tokens": 1136,
+    "completion_tokens": 15565,
+    "total_tokens": 16701,
+    "prompt_tokens_details": {
+      "cached_tokens": 1024
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 14492
+    },
+    "prompt_cache_hit_tokens": 1024,
+    "prompt_cache_miss_tokens": 112
+  },
+  {
+    "id": "1.26",
+    "srcChars": 726,
+    "finish": "stop",
+    "prompt_tokens": 999,
+    "completion_tokens": 7019,
+    "total_tokens": 8018,
+    "prompt_tokens_details": {
+      "cached_tokens": 896
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 6043
+    },
+    "prompt_cache_hit_tokens": 896,
+    "prompt_cache_miss_tokens": 103
+  },
+  {
+    "id": "18.50",
+    "srcChars": 1242,
+    "finish": "stop",
+    "prompt_tokens": 1120,
+    "completion_tokens": 17331,
+    "total_tokens": 18451,
+    "prompt_tokens_details": {
+      "cached_tokens": 1024
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 15739
+    },
+    "prompt_cache_hit_tokens": 1024,
+    "prompt_cache_miss_tokens": 96
+  },
+  {
+    "id": "6.44",
+    "srcChars": 2857,
+    "finish": "stop",
+    "prompt_tokens": 1500,
+    "completion_tokens": 25259,
+    "total_tokens": 26759,
+    "prompt_tokens_details": {
+      "cached_tokens": 1408
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 21767
+    },
+    "prompt_cache_hit_tokens": 1408,
+    "prompt_cache_miss_tokens": 92
+  },
+  {
+    "id": "7.27",
+    "srcChars": 1659,
+    "finish": "stop",
+    "prompt_tokens": 1182,
+    "completion_tokens": 29835,
+    "total_tokens": 31017,
+    "prompt_tokens_details": {
+      "cached_tokens": 1152
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 27494
+    },
+    "prompt_cache_hit_tokens": 1152,
+    "prompt_cache_miss_tokens": 30
+  },
+  {
+    "id": "1.38",
+    "srcChars": 726,
+    "finish": "stop",
+    "prompt_tokens": 1004,
+    "completion_tokens": 20753,
+    "total_tokens": 21757,
+    "prompt_tokens_details": {
+      "cached_tokens": 896
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 19710
+    },
+    "prompt_cache_hit_tokens": 896,
+    "prompt_cache_miss_tokens": 108
+  },
+  {
+    "id": "1.14",
+    "srcChars": 1885,
+    "finish": "stop",
+    "prompt_tokens": 1280,
+    "completion_tokens": 19190,
+    "total_tokens": 20470,
+    "prompt_tokens_details": {
+      "cached_tokens": 1152
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 16746
+    },
+    "prompt_cache_hit_tokens": 1152,
+    "prompt_cache_miss_tokens": 128
+  },
+  {
+    "id": "1.2",
+    "srcChars": 1885,
+    "finish": "stop",
+    "prompt_tokens": 1325,
+    "completion_tokens": 24543,
+    "total_tokens": 25868,
+    "prompt_tokens_details": {
+      "cached_tokens": 1280
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 22004
+    },
+    "prompt_cache_hit_tokens": 1280,
+    "prompt_cache_miss_tokens": 45
+  },
+  {
+    "id": "10.41",
+    "srcChars": 364,
+    "finish": "stop",
+    "prompt_tokens": 970,
+    "completion_tokens": 16768,
+    "total_tokens": 17738,
+    "prompt_tokens_details": {
+      "cached_tokens": 896
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 16250
+    },
+    "prompt_cache_hit_tokens": 896,
+    "prompt_cache_miss_tokens": 74
+  },
+  {
+    "id": "4.17",
+    "srcChars": 707,
+    "finish": "stop",
+    "prompt_tokens": 1019,
+    "completion_tokens": 16528,
+    "total_tokens": 17547,
+    "prompt_tokens_details": {
+      "cached_tokens": 896
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 15706
+    },
+    "prompt_cache_hit_tokens": 896,
+    "prompt_cache_miss_tokens": 123
+  },
+  {
+    "id": "5.8",
+    "srcChars": 1099,
+    "finish": "stop",
+    "prompt_tokens": 1236,
+    "completion_tokens": 23796,
+    "total_tokens": 25032,
+    "prompt_tokens_details": {
+      "cached_tokens": 1152
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 22157
+    },
+    "prompt_cache_hit_tokens": 1152,
+    "prompt_cache_miss_tokens": 84
+  }
+]

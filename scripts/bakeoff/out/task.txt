@@ -1,0 +1,106 @@
+===== SYSTEM PROMPT =====
+You translate classical Hindu scriptural commentary into Kannada and Telugu.
+
+For each verse you are given the Sanskrit śloka, its English translation, the
+already-published Kannada and Telugu translations of that same verse, and the
+English commentary. Translate ONLY the commentary, into both languages.
+
+Register and vocabulary
+- Match the register of the published translation supplied for that verse: it is
+  the voice this commentary sits directly beneath in the app.
+- Sanskrit technical vocabulary (dharma, ātman, guṇa, prakṛti, mokṣa, yajña,
+  jñāna, bhakti…) stays Sanskrit, written in the target script — do not
+  substitute a colloquial equivalent, and do not translate it into English.
+- A Sanskrit term must be rendered as the SAME word in both languages, differing
+  only in script. Kannada and Telugu letters correspond one-to-one (Telugu
+  codepoint = Kannada codepoint − 0x80); a shared term that does not map exactly
+  between your two outputs is an error.
+- Proper nouns (Kṛṣṇa, Arjuna, Sañjaya, Duryodhana…) follow the same rule.
+- Keep the commentator's voice: Śaṅkara and Rāmānuja write dense Vedāntic
+  exposition; Sivananda writes plain devotional prose for a general reader.
+
+Form
+- Preserve paragraph structure exactly: same number of paragraphs, same order,
+  separated by a single newline.
+- No English words in the output except where the English commentary itself
+  quotes a term it is defining.
+- No Devanagari. Kannada output uses only Kannada script; Telugu output uses
+  only Telugu script.
+- Translate the whole commentary. Do not summarise, abridge, or add explanation
+  that is not in the source.
+
+===== VERSE 7.27 =====
+Verse 7.27 — commentary by Swami Sivananda
+
+SANSKRIT
+इच्छाद्वेषसमुत्थेन द्वन्द्वमोहेन भारत।
+सर्वभूतानि संमोहं सर्गे यान्ति परन्तप।।7.27।।
+
+ENGLISH TRANSLATION
+O scion of the Bharata dynasty, O destroyer of foes, due to the delusion of duality arising from likes and dislikes, all creatures become bewildered upon their birth.
+
+PUBLISHED KANNADA TRANSLATION (match this register)
+ಶತ್ರುಗಳನ್ನು ತಪಿಸುವ ಭರತವಂಶದವನೇ, ಇಚ್ಛೆ ಮತ್ತು ದ್ವೇಷಗಳಿಂದ ಹುಟ್ಟುವ ದ್ವಂದ್ವದ ಮೋಹದಿಂದಾಗಿ ಎಲ್ಲ ಜೀವಿಗಳೂ ಹುಟ್ಟಿನಿಂದಲೇ ಗೊಂದಲಕ್ಕೆ ಸಿಲುಕುತ್ತವೆ.
+
+PUBLISHED TELUGU TRANSLATION (match this register)
+పరంతపా! అర్జునా! రాగద్వేషాల నుండి జనించే ద్వంద్వాల మోహం వలన పుట్టుకతోనే అన్ని జీవులూ భ్రాంతిని పొందుతున్నాయి.
+
+ENGLISH COMMENTARY TO TRANSLATE
+Where there is pleasure there is Raga or attachment where there is pain there is Dvesha or aversion. There is the instinct in man to preserve his body. Man wishes to attain those objects which help the preservation of the body. He wishes to get rid of those objects which give pain to the body and the mind.
+
+On account of delusion caused by the pairs of opposites, desire and aversion spring up and man cannot get the knowledge of the things as they are, even of this external universe of senseexperience and it needs no saying that in a man whose intellect is overwhelmed by desire and aversion there cannot arise the transcendental knowledge of the innermost Self.
+
+Raga (attraction) and Dvesha (repulsion), pleasure and pain, heat and cold, happiness and misery, joy and sorrow, success and failure, censure and priase, honour and dishonour are the Dvandvas or the pairs of opposites. Desire and aversion (or attraction and repulsion) induce delusion in all beings and serve as obstacles to the dawn of the knowledge of the Self.He whose intellect is obscured by the delusion caused by the pairs of opposites is not able to realise I am the Self.
+
+Therefore he does not adore Me as the Self.He who is a victim of RagaDvesha loses the power of discrimination. He wishes that pleasant objects should last for ever and that disagreeable or unpleasant objects should disappear immediately. How could this be Objects that are conditioned in time, space and causation will perish. That which is agreeable and pleasant now will become disagreeable and unpleasant after some time. The mind is ever fluctuating. It demands variety and gets disgusted with monotony.
+
+Return JSON only: {"kannada": "...", "telugu": "..."}
+
+===== VERSE 1.2 =====
+Verse 1.2 — commentary by Sri Ramanuja
+
+SANSKRIT
+सञ्जय उवाच
+दृष्ट्वा तु पाण्डवानीकं व्यूढं दुर्योधनस्तदा।
+आचार्यमुपसङ्गम्य राजा वचनमब्रवीत्।।1.2।।
+
+ENGLISH TRANSLATION
+Sanjaya said: But then, seeing the army of the Pandavas in battle array, King Duryodhana approached the teacher, Drona, and spoke.
+
+PUBLISHED KANNADA TRANSLATION (match this register)
+ಸಂಜಯನು ಹೇಳಿದನು. ಪಾಂಡವರ ಸೇನೆಯು ವ್ಯೂಹವಾಗಿ ನಿಂತಿರುವುದನ್ನು ಕಂಡು ರಾಜನಾದ ದುರ್ಯೋಧನನು ಆಚಾರ್ಯನಾದ ದ್ರೋಣನ ಬಳಿಗೆ ಹೋಗಿ ಈ ಮಾತನ್ನು ಹೇಳಿದನು.
+
+PUBLISHED TELUGU TRANSLATION (match this register)
+సంజయుడు పలికెను: అపుడు రాజైన దుర్యోధనుడు వ్యూహరచనతో సిద్ధమైన పాండవసేనను చూసి, ద్రోణాచార్యునివద్దకు వెళ్ళి ఇట్లనెను.
+
+ENGLISH COMMENTARY TO TRANSLATE
+Dhrtarastra said - Sanjaya said Duryodhana, after viewing the forces of Pandavas protected by Bhima, and his own forces protected by Bhisma conveyed his views thus to Drona, his teacher, about the adequacy of Bhima's forces for conquering the Kaurava forces and the inadequacy of his own forces for victory against the Pandava forces. He was grief-stricken within. Observing his (Duryodhana's) despondecny, Bhisma, in order to cheer him, roared like a lion, and then blowing his conch, made his side sound their conchs and kettle-drums, which made an uproar as a sign of victory.
+
+Then, having heard that great tumult, Arjuna and Sri Krsna the Lord of all lords, who was acting as the charioteer of Arjuna, sitting in their great chariot which was powerful enough to conquer the three worlds; blew their divine conchs Srimad Pancajanya and Devadatta. Then, both Yudhisthira and Bhima blew their respective conchs separately. That tumult rent asunder the hearts of your sons, led by Duryodhana. The sons of Dhrtarastra then thought, 'Our cause is almost lost now itself.' So said Sanjaya to Dhrtarastra who was longing for their victory.
+
+Sanjaya said to Dhrtarastra: Then, seeing the Kauravas, who were ready for battle, Arjuna, who had Hanuman, noted for his exploit of burning Lanka, as the emblem on his flag on his chariot, directed his charioteer Sri Krsna, the Supreme Lord-who is overcome by parental love for those who take shelter in Him who is the treasure-house of knowledge, power, lordship, energy, potency and splendour, whose sportive delight brings about the origin, sustentation and dissolution of the entire cosmos at His will, who is the Lord of the senses, who controls in all ways the senses inner and outer of all, superior and inferior - by saying, 'Station my chariot in an appropriate place in order that I may see exactly my enemies who are eager for battle.'
+
+Return JSON only: {"kannada": "...", "telugu": "..."}
+
+===== VERSE 5.8 =====
+Verse 5.8 — commentary by Sri Shankaracharya
+
+SANSKRIT
+नैव किंचित्करोमीति युक्तो मन्येत तत्त्ववित्।
+पश्यन् श्रृणवन्स्पृशञ्जिघ्रन्नश्नन्गच्छन्स्वपन् श्वसन्।।5.8।।
+
+ENGLISH TRANSLATION
+Remaining absorbed in the Self, the knower of Reality should think, 'I certainly do not do anything', even while seeing, hearing, touching, smelling, eating, moving, sleeping, breathing, speaking, releasing, holding, opening, and closing the eyes—remembering that the organs function in relation to the objects of the organs.
+
+PUBLISHED KANNADA TRANSLATION (match this register)
+ತತ್ತ್ವವನ್ನು ತಿಳಿದ ಯೋಗಿಯು ನೋಡುತ್ತಾ, ಕೇಳುತ್ತಾ, ಮುಟ್ಟುತ್ತಾ, ಮೂಸುತ್ತಾ, ಉಣ್ಣುತ್ತಾ, ನಡೆಯುತ್ತಾ, ಮಲಗುತ್ತಾ, ಉಸಿರಾಡುತ್ತಾ ಇದ್ದರೂ ನಾನು ಏನನ್ನೂ ಮಾಡುತ್ತಿಲ್ಲ ಎಂದೇ ಭಾವಿಸುತ್ತಾನೆ.
+
+PUBLISHED TELUGU TRANSLATION (match this register)
+పరమసత్యాన్ని ఎరిగిన యోగయుక్తుడు చూస్తున్నప్పుడు, వింటున్నప్పుడు, స్పృసిస్తున్నప్పుడు, వాసన చూస్తున్నప్పుడు, తింటున్నప్పుడు, పడుకుంటున్నఫ్ఫుడు, ఊపిరి పీలుస్తున్నప్పుడు
+
+ENGLISH COMMENTARY TO TRANSLATE
+Yuktah, remaining absorbed in the Self; tattva-vit, the knower of Reality-knower of the real nature of Truth, of the Self, i.e., the seer of the supreme Reality; manyeta, should think; 'na karomi eva, I certainly do not do; kincit, anything.' Having realized the Truth, when or how should he think? This is being answered; Api, even; pasyan, while seeing; srnvan, hearing; sprsan, touching; jighran, smelling; asnan, eating; gacchan, moving; svapan, sleeping; svasan, breathing; pralapan, speaking; visrjan, releasing; grhnan, holding; unmisan, opening; nimisan, closing the eyes.
+
+All these are to be connected with the above manyeta (should think). For the man who has known the Truth thus, who finds nothing but inaction in action-in all the movements of the body and organs-, and who has full realization, there is competence only for giving up all actions because of his realization of the nonexistence of actions. Indeed, one who proceeds to drink water in a mirage thinking that water is there, surely does not go there itself for drinking water even after knowing that no water exists there!
+
+Return JSON only: {"kannada": "...", "telugu": "..."}
