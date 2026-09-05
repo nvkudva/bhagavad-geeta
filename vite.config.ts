@@ -59,6 +59,10 @@ export default defineConfig({
     minifyLinkedCss(),
     VitePWA({
       registerType: "autoUpdate",
+      // registerSW.js is injected as a plain <script>, which Lighthouse measures as
+      // 150 ms of render-blocking for 403 bytes — for a script that must not run
+      // before paint anyway. Inlined, it costs no round trip.
+      injectRegister: "inline",
       // Without this the manifest and service worker only exist in a build, so
       // "Add to Home Screen" on a phone pointed at the dev server installs nothing.
       devOptions: { enabled: true, type: "module" },

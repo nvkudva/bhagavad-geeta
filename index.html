@@ -15,10 +15,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Geeta" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <!-- Self-hosted. The Devanagari face is always needed (verse.text is Sanskrit for
-         every verse); Kannada and Telugu are pulled by unicode-range on demand. -->
+    <!-- Self-hosted. Only the Latin reading face is preloaded: the LCP element is the
+         Latin h1 in the app bar, so Literata is on the LCP path and Noto Sans
+         Devanagari is not. Preloading the 121 KB Devanagari face put 42% of the page
+         weight ahead of the CSS and JS that the LCP text is actually waiting on.
+         It still has font-display:swap and is still precached, so the first verse
+         paints in the fallback face and swaps, instead of every screen waiting. -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/literata-latin.woff2" crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/noto-sans-devanagari.woff2" crossorigin />
     <meta name="description" content="Geeta — the Bhagavad Gita in Sanskrit, Kannada and Telugu — a quiet, offline-capable reading app." />
     <title>Geeta</title>
     <script>
