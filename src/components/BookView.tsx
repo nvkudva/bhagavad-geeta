@@ -99,6 +99,10 @@ const BookView: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse
   const [pages, setPages] = useState(1);
   const [drag, setDrag] = useState(0);
   const [announce, setAnnounce] = useState("");
+  /** The verses that start on the spread, for the recto's running head. */
+  const [range, setRange] = useState<[number, number] | null>(null);
+  /** Which way the leaf is falling, for the length of one turn. */
+  const [turning, setTurning] = useState<"next" | "prev" | null>(null);
   /** The verse the spread is anchored to. A page number means nothing across a
    *  different window, scale or language, so it is never stored. */
   const anchor = useRef(verse);
@@ -180,16 +184,18 @@ const BookView: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse
     if (!flow) return;
     const left = flow.getBoundingClientRect().left;
     let found = 0;
+    const spread: number[] = [];
     for (const v of verses) {
       const el = document.getElementById(anchorId(chapter, v.verse_number));
       if (!el) continue;
       const col = Math.floor((el.getBoundingClientRect().left - left) / step);
       if (col >= page && col < page + perSpread) {
-        found = v.verse_number;
-        break;
+        if (!found) found = v.verse_number;
+        spread.push(v.verse_number);
       }
     }
     if (found) anchor.current = found;
+    setRange(spread.length ? [spread[0], spread[spread.length - 1]] : null);
     syncBookUrl(chapter, anchor.current);
 
     const first = page + 1;
@@ -198,10 +204,22 @@ const BookView: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse
     return () => clearTimeout(id);
   }, [page, pages, chapter, verses]);
 
+  const turnTimer = useRef(0);
   const turn = useCallback((delta: number) => {
     const { perSpread, pages: total } = geom.current;
     const last = Math.max(0, (Math.ceil(total / perSpread) - 1) * perSpread);
-    setPage((p) => Math.min(Math.max(0, p + delta * perSpread), last));
+    setPage((p) => {
+      const next = Math.min(Math.max(0, p + delta * perSpread), last);
+      if (next !== p) {
+        setTurning(delta > 0 ? "next" : "prev");
+        window.clearTimeout(turnTimer.current);
+        // Cleared rather than listened for: transitionend does not fire when a
+        // second turn interrupts the first, and a stuck leaf is worse than an
+        // early one.
+        turnTimer.current = window.setTimeout(() => setTurning(null), 460);
+      }
+      return next;
+    });
   }, []);
 
   // J/K, Space, PageUp/Down and gg/G all arrive through the shell's key layer.
@@ -328,10 +346,10 @@ const BookView: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse
 
   return (
     <div className="book" style={{ "--book-page": page, "--book-drag": `${drag}px` } as React.CSSProperties}>
-      <div className="book-spread">
+      <div className="book-spread" data-opener={page === 0 ? "true" : undefined}>
         <button type="button" className="book-turn book-turn-prev" onClick={() => turn(-1)} disabled={page === 0} aria-label="Previous page" aria-keyshortcuts="K PageUp" />
 
-        <div className="book-viewport" ref={viewportRef} onScroll={onScroll}>
+        <div className="book-viewport" ref={viewportRef} onScroll={onScroll} data-turning={turning ?? undefined}>
           <div className="book-flow" ref={flowRef} tabIndex={0} role="region" aria-label={`Chapter ${chapter}, ${name.text}, book view`}>
             <header className="book-opener">
               <p className="book-opener-number">Chapter {chapter}</p>
@@ -358,13 +376,13 @@ const BookView: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse
           {chapter} · {name.text}
         </p>
         <p className="book-head book-head-recto" aria-hidden>
-          Verse {anchor.current}
+          {range ? (range[0] === range[1] ? range[0] : `${range[0]}–${range[1]}`) : ""}
         </p>
         <p className="book-folio book-folio-verso" aria-hidden>
           {page + 1}
         </p>
         <p className="book-folio book-folio-recto" aria-hidden>
-          {lastOnSpread} / {pages}
+          {perSpread > 1 ? lastOnSpread : ""}
         </p>
         <div className="book-progress" aria-hidden>
           <span style={{ transform: `scaleX(${progress})` }} />

@@ -303,13 +303,19 @@
        One page per spread here; 1280 widens the same flow to two. All of it
        is derived from existing tokens — a nested :root is not a token block
        to the size checker, so a colour literal here would fail the build. */
-    --book-gutter: var(--sp-16);
+    /* The spine is the widest space on the spread and the inner margin is
+       wider than the outer, as in print. The gutter is both inner margins
+       meeting, so it is defined from the margin rather than guessed. */
+    --book-margin-in: var(--sp-12);
+    --book-gutter: calc(2 * var(--book-margin-in));
     /* One page per spread here; 1280 splits the same box in two. A count, not
        a width: a width is only a minimum to the fragmenter, so the laid-out
        column would never be the one the arithmetic assumed. */
     --book-pages-per-spread: 1;
     --book-page-w: 34rem;
-    --book-margin-out: var(--sp-10);
+    /* Wide enough to hold the turn zones, which lie over the margin and must
+       never cover a character of the measure. */
+    --book-margin-out: var(--sp-16);
     --book-margin-y: var(--sp-10);
     --book-page-h: calc(100dvh - var(--nav-total) - 4 * var(--sp-8));
     --book-turn-zone: 4rem;
@@ -318,11 +324,20 @@
     /* The book sets smaller than the card reader: a card shows one verse and
        can afford 17px, a page of continuous text reads better at 15. Still
        multiplied by --reading-scale, so the size control still works. */
-    --book-fs-verse: calc(1.0625rem * var(--reading-scale));
+    --book-fs-verse: calc(1.375rem * var(--reading-scale));
     --book-fs-translit: calc(0.75rem * var(--reading-scale));
     --book-fs-trans: calc(0.9375rem * var(--reading-scale));
     --book-fs-comment: calc(0.8125rem * var(--reading-scale));
     --book-fs-gloss: calc(0.75rem * var(--reading-scale));
+
+    /* One baseline for the whole page. Leading in ems tracks the size and
+       every element lands somewhere different; on a 6px unit the column feet
+       can line up. Indic needs the taller pair — the vowel signs sit above
+       and below the line, and 24px on 15px clips them. */
+    --book-lh: calc(24px * var(--reading-scale));
+    --book-lh-indic: calc(30px * var(--reading-scale));
+    --book-lh-verse: calc(36px * var(--reading-scale));
+    --book-lh-small: calc(18px * var(--reading-scale));
 
     /* Measure by role. One width cannot serve centred Devanagari padas, a
        translation and a page of commentary at the same time. */
@@ -979,8 +994,11 @@
      viewport; a page turn is one transform on that flow. Off-spread columns
      are clipped rather than hidden, so find-in-page, Select All and a screen
      reader's cursor all still traverse the chapter (docs/BOOK_VIEW_SPEC.md). */
+  /* The one screen with no material: the aurora is painted out so the page is
+     paper on a desk rather than glass over a gradient. */
   .app-main[data-book="true"] {
-    padding: var(--sp-8) 0;
+    padding: var(--sp-8) var(--sp-10) var(--sp-10);
+    background: var(--paper);
   }
 
   .book-spread {
@@ -996,10 +1014,29 @@
     box-shadow: var(--el-3);
   }
 
+  /* The binding: two pages of one sheet, shadowed where they fold. Drawn only
+     where there are two pages to fold between. */
+  .book-spread::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: var(--book-gutter);
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--book-ink) 9%, transparent) 46%, color-mix(in srgb, var(--book-ink) 13%, transparent) 50%, color-mix(in srgb, var(--book-ink) 9%, transparent) 54%, transparent);
+    pointer-events: none;
+  }
+
   .book-viewport {
+    position: relative;
     flex: 1;
     height: var(--book-page-h);
     overflow: hidden;
+    /* The leaf is a real sheet lifting off the spine: the depth is what makes
+       the turn read as paper rather than as a carousel. */
+    perspective: 2400px;
+    perspective-origin: center center;
     /* A drag suspends the transition; the turn itself is the only animation. */
     touch-action: pan-y;
   }
@@ -1022,16 +1059,20 @@
   .book-opener {
     break-inside: avoid;
     break-after: column;
-    padding-block: var(--sp-12) var(--sp-8);
+    /* Sunk from the head the way a title page is, rather than starting at the
+       top of the measure with two thirds of the leaf empty below it. */
+    padding-block: calc(var(--book-page-h) * 0.2) var(--sp-8);
     text-align: center;
   }
 
+  /* The numeral is the title page's largest mark, as it is in a printed
+     edition; the word "chapter" is not worth the same ink. */
   .book-opener-number {
-    margin: 0 0 var(--sp-4);
+    margin: 0 0 var(--sp-6);
     color: var(--book-ink-4);
-    font-size: var(--fs-caption1);
-    letter-spacing: var(--tr-caps);
-    text-transform: uppercase;
+    font-family: var(--font-read);
+    font-size: var(--fs-title1);
+    line-height: 1;
   }
 
   .book-opener-name {
@@ -1050,10 +1091,11 @@
   }
 
   .book-opener-summary {
-    margin: 0;
+    max-width: 24rem;
+    margin: 0 auto;
     color: var(--book-ink-2);
     font-size: var(--book-fs-trans);
-    line-height: var(--lh-read);
+    line-height: var(--book-lh);
     text-align: start;
   }
 
@@ -1071,7 +1113,7 @@
     margin: 0;
     text-align: center;
     font-size: var(--book-fs-verse);
-    line-height: var(--lh-verse);
+    line-height: var(--book-lh-verse);
     color: var(--book-ink);
     white-space: pre-line;
   }
@@ -1113,9 +1155,25 @@
     hyphens: auto;
   }
 
+  /* Attribute selectors, as elsewhere: :lang(kn) would also catch a tagged
+     romanisation. */
+  .book-prose[lang="kn"],
+  .book-prose[lang="te"],
+  .book-scripture[lang="kn"],
+  .book-scripture[lang="te"],
+  .book-scripture[lang="sa"] {
+    line-height: var(--book-lh-indic);
+  }
+
+  .book-scripture[lang="sa"],
+  .book-scripture[lang="kn"],
+  .book-scripture[lang="te"] {
+    line-height: var(--book-lh-verse);
+  }
+
   .book-trans {
     font-size: var(--book-fs-trans);
-    line-height: var(--lh-read);
+    line-height: var(--book-lh);
     color: var(--book-ink);
   }
 
@@ -1124,18 +1182,22 @@
     margin-top: 0;
     text-indent: var(--sp-6);
     font-size: var(--book-fs-comment);
-    line-height: var(--lh-body);
+    line-height: var(--book-lh);
     color: var(--book-ink-2);
   }
 
   .book-attrib {
+    display: block;
+    margin-top: var(--sp-1);
+    text-indent: 0;
+    text-align: end;
     color: var(--book-ink-4);
     font-size: var(--fs-caption1);
   }
 
   .book-words {
     font-size: var(--book-fs-gloss);
-    line-height: var(--lh-body);
+    line-height: var(--book-lh-small);
     color: var(--book-ink-3);
   }
 
@@ -1161,7 +1223,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width: var(--book-turn-zone);
+    width: var(--book-margin-out);
     padding: 0;
     background: none;
     border: 0;
@@ -1199,11 +1261,11 @@
   }
 
   .book-head-verso {
-    inset-inline-start: calc(var(--book-margin-out) + var(--book-turn-zone));
+    inset-inline-start: var(--book-margin-out);
   }
 
   .book-head-recto {
-    inset-inline-end: calc(var(--book-margin-out) + var(--book-turn-zone));
+    inset-inline-end: var(--book-margin-out);
   }
 
   .book-folio {
@@ -1211,27 +1273,39 @@
   }
 
   .book-folio-verso {
-    inset-inline-start: calc(var(--book-margin-out) + var(--book-turn-zone));
+    inset-inline-start: var(--book-margin-out);
   }
 
   .book-folio-recto {
-    inset-inline-end: calc(var(--book-margin-out) + var(--book-turn-zone));
+    inset-inline-end: var(--book-margin-out);
+  }
+
+  /* A rule at the foot, not a meter: 1px, no radius, no accent. */
+  @supports (height: round(down, 100px, 6px)) {
+    :root {
+      --book-page-h: round(down, calc(100dvh - var(--nav-total) - 4 * var(--sp-8)), calc(6px * var(--reading-scale)));
+    }
+  }
+
+  /* A title page carries neither head nor folio. */
+  .book-spread[data-opener="true"] .book-head-verso,
+  .book-spread[data-opener="true"] .book-folio-verso {
+    display: none;
   }
 
   .book-progress {
     position: absolute;
     inset-inline: var(--book-margin-out);
-    bottom: 0;
-    height: 2px;
-    background: var(--book-rule);
-    border-radius: var(--r-pill);
+    bottom: var(--sp-4);
+    height: 1px;
+    background: color-mix(in srgb, var(--book-ink-4) 22%, transparent);
     overflow: hidden;
   }
 
   .book-progress > span {
     display: block;
     height: 100%;
-    background: var(--book-ink-4);
+    background: color-mix(in srgb, var(--book-ink-4) 60%, transparent);
     transform-origin: left center;
   }
 
@@ -1681,11 +1755,70 @@
    Name the chrome instead and freeze it: the root snapshot stays
    viewport-sized, and what is left to cross-fade is exactly the content. */
 @media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
-  /* One composited transform. A 3D curl would repaint every glyph on both
-     pages each frame and needs a second copy of the text; a translate under a
-     spine shadow is what actually reads as paper. */
+  /* The turn. The flow slides one spread, and for the length of that slide the
+     sheet lifts off the spine and settles back — the depth is a rotation about
+     the binding edge on the viewport, so the text itself is still one
+     composited translate and no glyph is re-rasterised mid-turn. A true curl
+     would need a second copy of the page and a repaint every frame. */
   .book-flow {
     transition: transform var(--dur-book-turn) var(--spring-gentle);
+  }
+
+  .book-viewport[data-turning] {
+    animation: book-leaf var(--dur-book-turn) var(--spring-gentle);
+  }
+
+  /* Nothing below is in the reduced-motion build: this whole block is inside
+     @media (prefers-reduced-motion: no-preference), so a turn there is a cut. */
+
+  .book-viewport[data-turning="prev"] {
+    animation-name: book-leaf-back;
+  }
+
+  /* The shadow that crosses the page as it falls: brighter where the sheet
+     lifts, dark in the fold it leaves behind. */
+  .book-viewport[data-turning]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    animation: book-sweep var(--dur-book-turn) linear;
+    pointer-events: none;
+  }
+
+  @keyframes book-leaf {
+    0% {
+      transform: rotateY(0deg);
+    }
+    45% {
+      transform: rotateY(-1.6deg);
+    }
+    100% {
+      transform: rotateY(0deg);
+    }
+  }
+
+  @keyframes book-leaf-back {
+    0% {
+      transform: rotateY(0deg);
+    }
+    45% {
+      transform: rotateY(1.6deg);
+    }
+    100% {
+      transform: rotateY(0deg);
+    }
+  }
+
+  @keyframes book-sweep {
+    0% {
+      background: linear-gradient(90deg, color-mix(in srgb, var(--book-ink) 16%, transparent), transparent 22%);
+    }
+    50% {
+      background: linear-gradient(90deg, transparent 30%, color-mix(in srgb, var(--book-ink) 10%, transparent) 52%, transparent 74%);
+    }
+    100% {
+      background: linear-gradient(90deg, transparent 78%, color-mix(in srgb, var(--book-ink) 16%, transparent));
+    }
   }
 
   .book-turn {
