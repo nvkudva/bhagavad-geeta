@@ -83,7 +83,21 @@
   font-weight: 400;
   font-display: swap;
   src: url("/fonts/noto-sans-devanagari.woff2") format("woff2");
-  unicode-range: U+0901-U+0903, U+0905-U+090B, U+090F-U+0910, U+0913, U+0915-U+0928, U+092A-U+0930, U+0932, U+0935-U+0939, U+093C-U+0943, U+0947-U+0948, U+094B-U+094D, U+0964, U+200C-U+200D, U+25CC;
+  unicode-range:
+    U+0901- U+0903,
+    U+0905- U+090B,
+    U+090F- U+0910,
+    U+0913,
+    U+0915- U+0928,
+    U+092A- U+0930,
+    U+0932,
+    U+0935- U+0939,
+    U+093C- U+0943,
+    U+0947- U+0948,
+    U+094B- U+094D,
+    U+0964,
+    U+200C- U+200D,
+    U+25CC;
 }
 @font-face {
   font-family: "Noto Sans Devanagari";
@@ -91,7 +105,21 @@
   font-weight: 600;
   font-display: swap;
   src: url("/fonts/noto-sans-devanagari-600.woff2") format("woff2");
-  unicode-range: U+0901-U+0903, U+0905-U+090B, U+090F-U+0910, U+0913, U+0915-U+0928, U+092A-U+0930, U+0932, U+0935-U+0939, U+093C-U+0943, U+0947-U+0948, U+094B-U+094D, U+0964, U+200C-U+200D, U+25CC;
+  unicode-range:
+    U+0901- U+0903,
+    U+0905- U+090B,
+    U+090F- U+0910,
+    U+0913,
+    U+0915- U+0928,
+    U+092A- U+0930,
+    U+0932,
+    U+0935- U+0939,
+    U+093C- U+0943,
+    U+0947- U+0948,
+    U+094B- U+094D,
+    U+0964,
+    U+200C- U+200D,
+    U+25CC;
 }
 @font-face {
   font-family: "Noto Sans Kannada";
@@ -99,7 +127,21 @@
   font-weight: 400;
   font-display: swap;
   src: url("/fonts/noto-sans-kannada.woff2") format("woff2");
-  unicode-range: U+0964, U+0C81-U+0C83, U+0C85-U+0C8B, U+0C8E-U+0C90, U+0C92-U+0CA8, U+0CAA-U+0CB0, U+0CB2-U+0CB3, U+0CB5-U+0CB9, U+0CBD-U+0CC3, U+0CC6-U+0CC8, U+0CCA-U+0CCD, U+0CE6-U+0CEF, U+200C-U+200D, U+25CC;
+  unicode-range:
+    U+0964,
+    U+0C81- U+0C83,
+    U+0C85- U+0C8B,
+    U+0C8E- U+0C90,
+    U+0C92- U+0CA8,
+    U+0CAA- U+0CB0,
+    U+0CB2- U+0CB3,
+    U+0CB5- U+0CB9,
+    U+0CBD- U+0CC3,
+    U+0CC6- U+0CC8,
+    U+0CCA- U+0CCD,
+    U+0CE6- U+0CEF,
+    U+200C- U+200D,
+    U+25CC;
 }
 @font-face {
   font-family: "Noto Sans Kannada";
@@ -107,7 +149,21 @@
   font-weight: 600;
   font-display: swap;
   src: url("/fonts/noto-sans-kannada-600.woff2") format("woff2");
-  unicode-range: U+0964, U+0C81-U+0C83, U+0C85-U+0C8B, U+0C8E-U+0C90, U+0C92-U+0CA8, U+0CAA-U+0CB0, U+0CB2-U+0CB3, U+0CB5-U+0CB9, U+0CBD-U+0CC3, U+0CC6-U+0CC8, U+0CCA-U+0CCD, U+0CE6-U+0CEF, U+200C-U+200D, U+25CC;
+  unicode-range:
+    U+0964,
+    U+0C81- U+0C83,
+    U+0C85- U+0C8B,
+    U+0C8E- U+0C90,
+    U+0C92- U+0CA8,
+    U+0CAA- U+0CB0,
+    U+0CB2- U+0CB3,
+    U+0CB5- U+0CB9,
+    U+0CBD- U+0CC3,
+    U+0CC6- U+0CC8,
+    U+0CCA- U+0CCD,
+    U+0CE6- U+0CEF,
+    U+200C- U+200D,
+    U+25CC;
 }
 @font-face {
   font-family: "Noto Sans Telugu";
@@ -115,7 +171,21 @@
   font-weight: 400;
   font-display: swap;
   src: url("/fonts/noto-sans-telugu.woff2") format("woff2");
-  unicode-range: U+0964, U+0C01-U+0C03, U+0C05-U+0C0B, U+0C0E-U+0C10, U+0C12-U+0C28, U+0C2A-U+0C33, U+0C35-U+0C39, U+0C3D-U+0C44, U+0C46-U+0C48, U+0C4A-U+0C4D, U+0C60, U+0C66-U+0C6F, U+200C-U+200D, U+25CC;
+  unicode-range:
+    U+0964,
+    U+0C01- U+0C03,
+    U+0C05- U+0C0B,
+    U+0C0E- U+0C10,
+    U+0C12- U+0C28,
+    U+0C2A- U+0C33,
+    U+0C35- U+0C39,
+    U+0C3D- U+0C44,
+    U+0C46- U+0C48,
+    U+0C4A- U+0C4D,
+    U+0C60,
+    U+0C66- U+0C6F,
+    U+200C- U+200D,
+    U+25CC;
 }
 @font-face {
   font-family: "Noto Sans Telugu";
@@ -123,9 +193,22 @@
   font-weight: 600;
   font-display: swap;
   src: url("/fonts/noto-sans-telugu-600.woff2") format("woff2");
-  unicode-range: U+0964, U+0C01-U+0C03, U+0C05-U+0C0B, U+0C0E-U+0C10, U+0C12-U+0C28, U+0C2A-U+0C33, U+0C35-U+0C39, U+0C3D-U+0C44, U+0C46-U+0C48, U+0C4A-U+0C4D, U+0C60, U+0C66-U+0C6F, U+200C-U+200D, U+25CC;
+  unicode-range:
+    U+0964,
+    U+0C01- U+0C03,
+    U+0C05- U+0C0B,
+    U+0C0E- U+0C10,
+    U+0C12- U+0C28,
+    U+0C2A- U+0C33,
+    U+0C35- U+0C39,
+    U+0C3D- U+0C44,
+    U+0C46- U+0C48,
+    U+0C4A- U+0C4D,
+    U+0C60,
+    U+0C66- U+0C6F,
+    U+200C- U+200D,
+    U+25CC;
 }
-
 
 /* ------------------------------------------------------------------ tokens
    DESIGN_PLAN §2.3 — dark-first. A near-black ground, one maroon accent, and
@@ -941,7 +1024,27 @@ body::before {
   }
 }
 
+/* border-radius: inherit, so the ring follows a pill or an --r-xl card
+   instead of squaring off at --r-sm. */
 .pressable:focus-visible,
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: inherit;
+  box-shadow: 0 0 0 5px var(--accent-soft);
+}
+
+/* The wrapper takes the focus state (.nav-search:focus-within /
+   .search-field:focus-within, and the palette dialog itself), so the bare
+   input inside must not draw a second ring. */
+.search-input:focus-visible,
+.palette-input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -1227,7 +1330,6 @@ body::before {
   text-decoration: underline;
 }
 
-
 /* Sentence case, as iOS has set grouped headers since the flat era; uppercase
    tracking is a pre-iOS 7 mannerism. */
 .settings-group-label {
@@ -1454,6 +1556,32 @@ body::before {
   font-size: var(--fs-gloss);
   line-height: var(--lh-read);
   color: var(--ink-2);
+}
+
+/* A hanging indent, so a wrapped gloss tucks under itself and the terms keep
+   one hard left edge. Flush left, not centred: the term is the scan target,
+   and centring gives every one of them a different x. */
+.verse-glosses li {
+  padding-left: var(--sp-4);
+  text-indent: calc(-1 * var(--sp-4));
+}
+.verse-glosses li + li {
+  margin-top: var(--sp-2);
+}
+
+/* The scripture's own colour, taken as the solid --ramp-verse-fallback rather
+   than the gradient: background-clip on sixteen short runs is sixteen clipped
+   paints and, in the light appearance, reads as muddy brown streaks. The
+   fallback is a flat #f0cd7a on dark and #6b4a12 on light, both of which clear
+   7:1 on the well, and both of which are recognisably the sloka's. */
+.verse-gloss-term {
+  color: var(--ramp-verse-fallback);
+  font-weight: var(--fw-semibold);
+}
+/* --ink-3, not --ink-4: the separator is punctuation, but at --ink-4 it is
+   2.65:1 on the light panel, which is not legible so much as implied. */
+.verse-gloss-sep {
+  color: var(--ink-3);
 }
 
 .home-container {
@@ -2173,6 +2301,9 @@ body::before {
   border: 0;
   color: var(--ink-2);
   cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out-ios),
+    color var(--dur-fast) var(--ease-out-ios);
 }
 
 /* ------------------------------------------------------------ recent searches */
@@ -2232,9 +2363,12 @@ body::before {
 
 .search-status,
 .search-hint {
-  margin: var(--sp-4) var(--sp-1) var(--sp-2);
+  margin: var(--sp-4) 0 var(--sp-2);
   color: var(--ink-3);
   font-size: var(--fs-footnote);
+  /* The status quotes the query back, and an unbroken 60-character one is
+     wider than the screen: without this the whole page scrolls sideways. */
+  overflow-wrap: anywhere;
 }
 
 .search-hint {

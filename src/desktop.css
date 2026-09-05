@@ -757,19 +757,6 @@
     -webkit-text-fill-color: var(--ramp-trans-fallback);
   }
 
-  /* ------------------------------------------------------------ focus ----
-     border-radius: inherit, so the ring follows a pill or an --r-xl card
-     instead of squaring off at --r-sm. */
-  .pressable:focus-visible,
-  a:focus-visible,
-  button:focus-visible,
-  input:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
-    border-radius: inherit;
-    box-shadow: 0 0 0 5px var(--accent-soft);
-  }
-
   /* -------------------------------------------------------- scrollbars ---*/
   html {
     scrollbar-color: color-mix(in srgb, var(--ink-4) 60%, transparent) transparent;
@@ -978,7 +965,9 @@
     border-color: var(--glass-border-hover);
   }
 
-  .verse-rail-item:hover {
+  .verse-rail-item:hover,
+  .search-clear:hover,
+  .palette-pill[aria-checked="false"]:hover {
     background-color: var(--glass-hover);
     color: var(--ink-1);
   }
@@ -989,6 +978,7 @@
 
   .pager-btn:hover:not(:disabled),
   .nav-back-button:hover,
+  .nav-action-button:hover,
   .sidebar-step:hover {
     background-color: var(--accent-soft);
     color: var(--accent);
@@ -1362,33 +1352,6 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-  }
-
-  /* One column: the panel is 240px, and two of them would be four words wide. */
-  .verse-glosses li {
-    /* A hanging indent, so a wrapped gloss tucks under itself and the terms
-       keep one hard left edge. Flush left, not centred: the term is the scan
-       target, and centring gives every one of them a different x. */
-    padding-left: var(--sp-4);
-    text-indent: calc(-1 * var(--sp-4));
-  }
-  .verse-glosses li + li {
-    margin-top: var(--sp-2);
-  }
-
-  /* The scripture's own colour, taken as the solid --ramp-verse-fallback
-     rather than the gradient: background-clip on sixteen short runs is sixteen
-     clipped paints and, in the light appearance, reads as muddy brown streaks.
-     The fallback is a flat #f0cd7a on dark and #6b4a12 on light, both of which
-     clear 7:1 on the well, and both of which are recognisably the sloka's. */
-  .verse-gloss-term {
-    color: var(--ramp-verse-fallback);
-    font-weight: var(--fw-semibold);
-  }
-  /* --ink-3, not --ink-4: the separator is punctuation, but at --ink-4 it is
-     2.65:1 on the light panel, which is not legible so much as implied. */
-  .verse-gloss-sep {
-    color: var(--ink-3);
   }
 
   /* The card is wider than the measure its prose is capped at, so the leftover
