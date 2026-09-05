@@ -626,8 +626,12 @@
     cursor: pointer;
     transition: color 220ms ease;
   }
+  /* Label colour, not accent: the tinted thumb underneath already carries the
+     accent, and accent-on-accent-soft only clears 4.5:1 in six of the eight
+     palette/appearance pairs — parijata dark reaches 3.91 and saffron light
+     4.41 at this size. */
   .sidebar-lang[aria-pressed="true"] {
-    color: var(--accent);
+    color: var(--ink-1);
   }
 
   .sidebar-scale {
