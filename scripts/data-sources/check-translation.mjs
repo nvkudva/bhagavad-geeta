@@ -58,11 +58,16 @@ const CITATION =
   /\b(?:[CcSs]f|Tr|Br|Ast|Pr|Ch|Cp|B|S|A|G\d|V\.S\.A|Comm|Ibid|ib)\b\.?|(?<![A-Za-z])[IVXLC]{1,7}(?![A-Za-z])\.?/g;
 const stripCitations = (t) => t.replace(CITATION, ' ');
 
+// Preserved scripture quotations are not impurity — they are the source's own
+// Devanagari, kept deliberately. Excluded from the ratio for the same reason
+// citations are.
+const DEVA_RUN = /[\u0900-\u097f][\u0900-\u097f\s\u0964\u0965]*/g;
+
 // Purity over letters only: digits, spaces and shared punctuation are not
 // evidence either way, so counting them would inflate every score.
 function purity(text, block) {
   let hit = 0, total = 0;
-  for (const ch of stripCitations(text)) {
+  for (const ch of stripCitations(text).replace(DEVA_RUN, ' ')) {
     const cp = ch.codePointAt(0);
     if (/[\s\d\p{P}\p{S}]/u.test(ch)) continue;
     total++;
@@ -77,8 +82,15 @@ function purity(text, block) {
 const untranslated = (t) =>
   [...new Set((stripCitations(t).match(/\b[a-z]{3,}\b/g) ?? []))];
 
-const devanagari = (t) =>
-  [...t].filter((c) => inBlock(c.codePointAt(0), DEVA)).join('');
+// Devanagari runs, normalised for comparison. Eight verses quote scripture in
+// script inside English prose and the runs are meant to survive translation
+// verbatim, so the test is not "is there Devanagari" — it is "are these the
+// same runs the source had". That catches a lost quotation, which is what
+// actually happens, as well as a leaked one.
+const devaRuns = (t) =>
+  (t.match(/[\u0900-\u097f][\u0900-\u097f\s\u0964\u0965]*/g) ?? [])
+    .map((r) => r.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
 
 // Three or more consecutive Latin words: an untranslated clause, as opposed to
 // an inline abbreviation or a numeral the model quite properly passed through.
@@ -231,7 +243,8 @@ const src = new Map(
 const defects = {
   'missing from staging file': [],
   'script purity below 98%': [],
-  'devanagari leaked through': [],
+  'devanagari quotation lost from source': [],
+  'devanagari not present in the source': [],
   'untranslated latin run (3+ words)': [],
   'untranslated english word': [],
   'paragraph count differs from english': [],
@@ -263,8 +276,18 @@ for (const [id, v] of src) {
     if (p < 0.98) flag('script purity below 98%', id,
                        `${lang} ${(p * 100).toFixed(1)}%`);
 
-    const dv = devanagari(t);
-    if (dv) flag('devanagari leaked through', id, `${lang} "${dv.slice(0, 40)}"`);
+    const want = devaRuns(en);
+    const got = devaRuns(t);
+    for (const run of want) {
+      if (!got.includes(run))
+        flag('devanagari quotation lost from source', id,
+             `${lang} "${run.slice(0, 40)}"`);
+    }
+    for (const run of got) {
+      if (!want.includes(run))
+        flag('devanagari not present in the source', id,
+             `${lang} "${run.slice(0, 40)}"`);
+    }
 
     for (const run of latinRuns(t))
       flag('untranslated latin run (3+ words)', id, `${lang} "${run.slice(0, 60)}"`);

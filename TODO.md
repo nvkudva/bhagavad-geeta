@@ -96,13 +96,15 @@ marked SUPERSEDED were written against the earlier warm-paper direction.
 ## Commentary translation — Kannada first, in this order
 
 Drafts for both languages are in `scripts/data-sources/commentary-{kannada,telugu}-mt.json`
-[M 2026-09-05], IndicTrans2, 675/700 clean for Kannada alone. Nothing is merged.
-Telugu is held until Kannada has been through this list once.
+[M 2026-09-05], IndicTrans2. After the mechanical passes below, Kannada scans
+700/700 clean and both languages together 694/700, the residue being the
+cross-script list. Nothing is merged. Telugu is held until Kannada has been
+through this list once.
 
-- [ ] Restore the Devanagari scripture quotations the model dropped in 13.21, 13.31, 15.6, 15.7, 15.9, 15.14, 17.8, 17.15 — copy the runs verbatim from `commentary_english`. No check catches this: the Devanagari test passes because the Devanagari is gone.
-- [ ] Fix ದ್ವೇಶ to ದ್ವೇಷ across all 11 occurrences in 8 verses; the gloss beside each one is already correct. Mechanical.
-- [ ] Re-translate the ~25 Kannada fragments where a word came through in English glued to a citation marker (`heaven.-Tr`, `self.-Tr`, `support.-V.S.A`); strip the marker first, then splice the result back.
-- [ ] Check the 5 cross-script divergences by hand — ವಾರ್ಷ್ಣೇಯ/వర్ష్ణేయ, ಧ್ರುವನಾ/ద్రువనా at 9.32 and 10.23, ಆಸ್ತಿಭತಿಪ್ರಿಯ/ఆస్థిభతిప్రియ, ಸ್ವಾಸನ್/స్వసన్ — and decide which script has it right.
+- [x] Restore the Devanagari scripture quotations the model dropped in 13.21, 13.31, 15.6, 15.7, 15.9, 15.14, 17.8, 17.15 — copy the runs verbatim from `commentary_english`. No check catches this: the Devanagari test passes because the Devanagari is gone.
+- [x] Fix ದ್ವೇಶ to ದ್ವೇಷ across all 11 occurrences in 8 verses; the gloss beside each one is already correct. Mechanical.
+- [x] Re-translate the ~25 Kannada fragments where a word came through in English glued to a citation marker (`heaven.-Tr`, `self.-Tr`, `support.-V.S.A`); strip the marker first, then splice the result back.
+- [ ] Check the 6 cross-script divergences by hand — ವಾರ್ಷ್ಣೇಯ/వర్ష్ణేయ, ಧ್ರುವನಾ/ద్రువనా at 9.32 and 10.23, ಆಸ್ತಿಭತಿಪ್ರಿಯ/ఆస్థిభతిప్రియ, ಸ್ವಾಸನ್/స్వసన్, ಭ್ರಮಧ್ಯ/భ్రుమధ్య. All six are proper nouns or compounds where Kannada carries the aspiration and vowel length and Telugu drops them, so they block Telugu, not Kannada.
 - [ ] Hold back the 70 bhāṣya verses (Śaṅkara 22, Rāmānuja 48) and regenerate them with a frontier model via path 2 of the translator skill. IndicTrans2 flattens the register; this is not a settings problem.
 - [ ] Have a Kannada reader review a stratified sample of 20 Sivananda verses — short and long, early and late chapters. The automated scan proves script and structure, not that the prose reads.
 - [ ] Merge Kannada only: `merge-language.mjs --field commentary_kannada --script kannada --machine-flag --dry` first, then for real.

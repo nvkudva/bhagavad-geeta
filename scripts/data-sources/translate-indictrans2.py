@@ -85,31 +85,74 @@ ABBREV = {
 }
 
 # A sentence boundary is terminal punctuation, optional closing quotes, then
-# whitespace, then something that can open a sentence — or, in 974 places in
-# this corpus, no whitespace at all ("...called Kurukshetra.Sanjaya is one
-# who..."). The same upstream mirror that replaced commas with `?` and deleted
-# every `qu` digraph also ate those spaces. Left unsplit they hand the model a
-# token it passes through untranslated, which is where the stray Latin words in
-# an otherwise clean run come from. The second alternative wants two lowercase
-# letters before the stop and a capital-plus-lowercase after, which excludes
-# initials and acronyms.
+# whitespace, then something that can open a sentence — or, in roughly a
+# thousand places in this corpus, no whitespace at all. The upstream mirror that
+# replaced commas with `?` and deleted every `qu` digraph also ate those spaces.
+# Left unsplit they hand the model one unknown token spanning two sentences,
+# which it passes through untranslated: that is where every stray Latin word in
+# an otherwise clean run comes from.
+#
+# The no-space alternative wants a word or numeral ending on the left, and on
+# the right either a capitalised word or a list numeral. The shapes it has to
+# cover, all of them real here:
+#
+#     Kurukshetra.Sanjaya is one who…      ordinary word, capitalised word
+#     quite indifferent.A neutral is…      following word is a single capital
+#     Aditya, etc.The inner self…          abbreviation, jammed against a capital
+#     …merged in Me.Renunciation of…       word ends capital-plus-lowercase
+#     given in verse 13.Spread the…        numeral on the left
+#     the Suryamandala, etc.6. Adhiyajna   numbered list item on the right
+#
+# and the shapes it must not touch, also real:
+#
+#     Cf.XVIII.17    B. S. 1.1.11-19.-Tr    cf. Br. 4.4.22
+#
+# Citations survive because an acronym is excluded on the right (a capital must
+# be followed by a lowercase letter or a space) and because a numeral on the
+# right must be followed by ". ", which "1.1.11" never is.
 BOUNDARY = re.compile(
     r'(?<=[.!?])(?P<q>["\'’”)\]]*)\s+(?=[A-Z“"\'(\[‘])'
-    r'|(?<=[a-z]{2}[.!?])(?P<z>)(?=[A-Z][a-z])'
+    r'|(?<=[A-Za-z0-9][a-z0-9][.!?])(?P<z>)(?=[A-Z](?:[a-z]|\s)|[0-9]{1,2}\.\s)'
+)
+
+# Titles are the only abbreviations that legitimately sit against a capitalised
+# word with no space. Every other abbreviation in this corpus that does so —
+# etc., viz. — is a lost boundary, and guarding it would keep "etc.The" whole.
+TITLES = {"dr", "mr", "mrs", "ms", "st", "sri", "srimad", "prof", "rev", "sm"}
+
+
+# Runs that must survive translation byte for byte.
+#
+#   * Devanagari. Eight verses quote the Chhandogya, Katha and Brihadaranyaka
+#     Upanishads, the Manu Smriti and the कारण/करण pair in script, inside
+#     English prose. Handed to the model they come back as ordinary prose in
+#     the target language and the citation is simply gone — and no check
+#     notices, because a "no Devanagari in the output" test passes precisely
+#     when the Devanagari has disappeared.
+#   * Editorial markers. "-Tr" and "-V.S.A" close a translator's note and
+#     attach to the previous word with no space, so "heaven.-Tr" reaches the
+#     tokenizer as one unknown token and passes straight through untranslated.
+PROTECTED = re.compile(
+    r"([\u0900-\u097f][\u0900-\u097f\s\u0964\u0965]*"
+    r"|-\s?(?:Tr|Ed|V\.S\.A|A\.G|M\.N)\b\.?)"
 )
 
 
-def _is_abbrev(left):
+def _is_abbrev(left, spaced):
     m = re.search(r"([A-Za-z.]+)\.$", left)
-    return bool(m) and m.group(1).lower().rstrip(".") in ABBREV
+    if not m:
+        return False
+    word = m.group(1).lower().rstrip(".")
+    return word in (ABBREV if spaced else TITLES)
 
 
 def split_sentences(para):
     """Split one paragraph into sentences, honouring the abbreviation list."""
     out, last = [], 0
     for m in BOUNDARY.finditer(para):
-        end = m.end("q") if m.group("q") is not None else m.end("z")
-        if _is_abbrev(para[last:end]):
+        spaced = m.group("q") is not None
+        end = m.end("q") if spaced else m.end("z")
+        if _is_abbrev(para[last:end], spaced):
             continue
         if para[last:end].strip():
             out.append(para[last:end].strip())
@@ -276,17 +319,37 @@ def main():
     # paragraphs can be rebuilt exactly. A sentence too long for the model's
     # positions becomes several pieces, rejoined with a space.
     budget_tokens = min(args.max_length - 16, 200)
-    units, index, separators = [], [], {}
+    units, index, separators, verbatim, affix = [], [], {}, {}, {}
     for vid, src in todo:
         paras, seps = split_paragraphs(src)
         separators[vid] = seps
         for pi, para in enumerate(paras):
             for si, sent in enumerate(para):
-                for ki, piece in enumerate(hard_split(sent, tlen, budget_tokens)):
-                    index.append((vid, pi, si, ki))
-                    units.append(piece)
+                # Alternating segments: even indices are translatable, odd ones
+                # are protected runs that pass through untouched. Segments
+                # rejoin with no separator, so the original spacing survives.
+                for gi, seg in enumerate(PROTECTED.split(sent)):
+                    if gi % 2:
+                        key = (vid, pi, si, gi, 0)
+                        verbatim[key] = seg
+                        index.append(key)
+                        units.append(None)
+                    elif seg.strip():
+                        # Keep the whitespace either side of the segment: it is
+                        # what separates the translated text from the protected
+                        # run next to it once they are rejoined.
+                        body = seg.strip()
+                        cut = len(seg) - len(seg.lstrip())
+                        affix[(vid, pi, si, gi)] = (
+                            seg[:cut], seg[cut + len(body):])
+                        for ki, piece in enumerate(
+                                hard_split(body, tlen, budget_tokens)):
+                            index.append((vid, pi, si, gi, ki))
+                            units.append(piece)
 
-    print(f"{len(todo)} verses, {len(units)} sentence pieces -> "
+    kept = sum(1 for u in units if u is None)
+    print(f"{len(todo)} verses, {len(units) - kept} sentence pieces "
+          f"({kept} protected runs passed through) -> "
           f"{TAGS[args.lang]} on {device} ({dtype})")
     # torch_dtype, not dtype: transformers 4.46.3 predates the rename, and this
     # script pins that version because newer ones break IndicTrans2's cache path.
@@ -302,9 +365,13 @@ def main():
     # Length-sorted batching: padding is to the longest member of each batch, so
     # grouping similar lengths together is the single largest throughput win.
     # Original order is restored via the saved positions.
-    lengths = [tlen(u) for u in units]
-    order = sorted(range(len(units)), key=lambda i: lengths[i])
+    lengths = [tlen(u) if u is not None else 0 for u in units]
+    todo_idx = [i for i, u in enumerate(units) if u is not None]
+    order = sorted(todo_idx, key=lambda i: lengths[i])
     translated = [None] * len(units)
+    for i, key in enumerate(index):          # protected runs need no model
+        if units[i] is None:
+            translated[i] = verbatim[key]
 
     t0, seen, flushed = time.time(), 0, 0
     for idxs in batches(order, lengths, args.budget, args.max_batch):
@@ -335,12 +402,12 @@ def main():
         # the work since the last flush.
         if seen - flushed >= 2000:
             flushed = seen
-            partial = assemble(index, translated, todo, separators)
+            partial = assemble(index, translated, todo, separators, affix)
             out_path.parent.mkdir(parents=True, exist_ok=True)
             out_path.write_text(json.dumps({**done, **partial}, ensure_ascii=False, indent=2))
 
     print()
-    result = {**done, **assemble(index, translated, todo, separators)}
+    result = {**done, **assemble(index, translated, todo, separators, affix)}
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2))
 
@@ -350,7 +417,7 @@ def main():
     except ValueError:
         shown = out_path  # an out-of-tree path, e.g. a scratch file
     print(f"{len(result)} verses written to {shown} in {elapsed / 60:.1f}m "
-          f"({len(units) / elapsed:.2f} pieces/s)")
+          f"({len(order) / elapsed:.2f} pieces/s)")
     print("\nNext: verify, then merge —")
     print(f"  node scripts/data-sources/coverage.mjs --field {args.target_field}")
     print(f"  node scripts/data-sources/merge-language.mjs --input {args.out} \\")
@@ -358,7 +425,7 @@ def main():
     print(f'    --source "machine-assisted — IndicTrans2 {args.model.split("/")[-1]}" --dry')
 
 
-def assemble(index, translated, todo, separators):
+def assemble(index, translated, todo, separators, affix):
     """Rebuild verse text from translated pieces, preserving paragraphs.
 
     A verse is only emitted once every one of its pieces is present, so a
@@ -367,8 +434,9 @@ def assemble(index, translated, todo, separators):
     because `white-space: pre-line` renders a blank line as a blank line.
     """
     by_verse = {}
-    for (vid, pi, si, ki), text in zip(index, translated):
-        by_verse.setdefault(vid, {}).setdefault(pi, {}).setdefault(si, {})[ki] = text
+    for (vid, pi, si, gi, ki), text in zip(index, translated):
+        (by_verse.setdefault(vid, {}).setdefault(pi, {})
+                 .setdefault(si, {}).setdefault(gi, {}))[ki] = text
 
     out = {}
     for vid, _src in todo:
@@ -376,11 +444,20 @@ def assemble(index, translated, todo, separators):
         if not paras:
             continue
         if any(t is None
-               for p in paras.values() for s in p.values() for t in s.values()):
+               for p in paras.values() for s in p.values()
+               for g in s.values() for t in g.values()):
             continue
         rendered = [
-            " ".join(" ".join(paras[pi][si][ki] for ki in sorted(paras[pi][si]))
-                     for si in sorted(paras[pi]))
+            " ".join(
+                # Segments of one sentence rejoin with nothing between them —
+                # the protected run keeps the spacing it had in the source.
+                    "".join(
+                    affix.get((vid, pi, si, gi), ("", ""))[0]
+                    + " ".join(paras[pi][si][gi][ki]
+                               for ki in sorted(paras[pi][si][gi]))
+                    + affix.get((vid, pi, si, gi), ("", ""))[1]
+                    for gi in sorted(paras[pi][si]))
+                for si in sorted(paras[pi]))
             for pi in sorted(paras)
         ]
         seps = separators.get(vid, [])
