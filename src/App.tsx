@@ -11,7 +11,7 @@ import { Sidebar, TabBar } from "./components/TabBar";
 import { VerseOfMoment } from "./components/VerseOfMoment";
 import { VerseViewer } from "./components/VerseViewer";
 import { toggleBookmark } from "./lib/bookmarks";
-import { getChapterMeta, getChapters, loadChapter, peekChapter } from "./lib/gita";
+import { chapterName, getChapterMeta, getChapters, loadChapter, peekChapter } from "./lib/gita";
 import type { Language, Verse } from "./lib/gita.types";
 import type { KeyActions } from "./lib/keys";
 import { installKeys } from "./lib/keys";
@@ -38,7 +38,7 @@ const Home: React.FC<{ language: Language; wide: boolean }> = ({ language, wide 
           took the large title with it. The heading returns inside the column. */}
       {wide && <h1 className="screen-title">{APP_NAME[language]}</h1>}
       <VerseOfMoment language={language} />
-      <ChapterList chapters={chapters} onSelectChapter={(id) => navigate({ name: "verse", chapter: id, verse: 1 })} />
+      <ChapterList chapters={chapters} language={language} onSelectChapter={(id) => navigate({ name: "verse", chapter: id, verse: 1 })} />
     </div>
   );
 };
@@ -376,7 +376,7 @@ const AppShell: React.FC = () => {
         // iOS-style contextual leading item: absent on Home, and on a chapter it
         // is labelled with where it goes back to.
         back={inReader ? { label: "Home", onClick: () => navigate({ name: "home" }) } : undefined}
-        title={inReader ? (getChapterMeta(route.chapter)?.name ?? APP_NAME[language]) : APP_NAME[language]}
+        title={inReader ? (chapterName(route.chapter, language) ?? APP_NAME[language]) : APP_NAME[language]}
         // Only Home takes a large title. The reader's masthead was removed on
         // purpose, so its chapter name stays in the compact bar.
         largeTitle={inReader ? undefined : APP_NAME[language]}

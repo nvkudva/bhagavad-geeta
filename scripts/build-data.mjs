@@ -31,7 +31,19 @@ const VERSE_KEYS = [
   "context_telugu",
 ];
 
-const CHAPTER_KEYS = ["id", "name", "name_meaning", "verses_count", "summary"];
+const CHAPTER_KEYS = [
+  "id",
+  "name",
+  "name_kannada",
+  "name_telugu",
+  "name_meaning",
+  "name_meaning_kannada",
+  "name_meaning_telugu",
+  "verses_count",
+  "summary",
+  "summary_kannada",
+  "summary_telugu",
+];
 
 const pick = (obj, keys) => {
   const out = {};

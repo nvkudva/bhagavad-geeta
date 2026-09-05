@@ -1,7 +1,7 @@
 import { Clock, Search, X } from "lucide-react";
 import type React from "react";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { getChapterMeta } from "../lib/gita";
+import { chapterName } from "../lib/gita";
 import type { Language } from "../lib/gita.types";
 import { clearSearchHistory, rememberSearch, useSearchHistory } from "../lib/history";
 import { Link, navigate } from "../lib/router";
@@ -24,11 +24,11 @@ const Highlighted: React.FC<{ hit: SearchHit }> = ({ hit }) => {
   );
 };
 
-const Result: React.FC<{ hit: SearchHit; onOpen: () => void }> = ({ hit, onOpen }) => (
+const Result: React.FC<{ hit: SearchHit; language: Language; onOpen: () => void }> = ({ hit, language, onOpen }) => (
   <Link to={{ name: "verse", chapter: hit.chapter, verse: hit.verse }} className="search-result pressable" onClick={onOpen}>
     <span className="search-result-ref">
       {hit.chapter}.{hit.verse}
-      <span className="search-result-chapter">{getChapterMeta(hit.chapter)?.name}</span>
+      <span className="search-result-chapter">{chapterName(hit.chapter, language)}</span>
     </span>
     <span className="search-result-snippet" lang={hit.snippetLang}>
       <Highlighted hit={hit} />
@@ -134,7 +134,7 @@ export const SearchScreen: React.FC<{ query: string; language: Language }> = ({ 
       {reference && (
         <Link to={{ name: "verse", chapter: reference.chapter, verse: reference.verse }} className="search-reference pressable">
           Go to verse {reference.chapter}.{reference.verse}
-          <span className="search-result-chapter">{getChapterMeta(reference.chapter)?.name}</span>
+          <span className="search-result-chapter">{chapterName(reference.chapter, language)}</span>
         </Link>
       )}
 
@@ -147,7 +147,7 @@ export const SearchScreen: React.FC<{ query: string; language: Language }> = ({ 
           </p>
           <div className="search-results">
             {hits.map((hit) => (
-              <Result key={`${hit.chapter}.${hit.verse}`} hit={hit} onOpen={remember} />
+              <Result key={`${hit.chapter}.${hit.verse}`} hit={hit} language={language} onOpen={remember} />
             ))}
           </div>
         </>

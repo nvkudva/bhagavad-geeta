@@ -4,125 +4,233 @@
     "name": "Arjuna Visada Yoga",
     "name_meaning": "The Yoga of Arjuna's Dejection",
     "verses_count": 47,
-    "summary": "Arjuna requests Krishna to move his chariot between the two armies. His mind is overwhelmed with grief and he decides not to fight."
+    "summary": "Arjuna requests Krishna to move his chariot between the two armies. His mind is overwhelmed with grief and he decides not to fight.",
+    "name_kannada": "ಅರ್ಜುನವಿಷಾದ ಯೋಗ",
+    "name_telugu": "అర్జునవిషాద యోగము",
+    "name_meaning_kannada": "ಅರ್ಜುನನ ವಿಷಾದದ ಯೋಗ",
+    "name_meaning_telugu": "అర్జునుని విషాదపు యోగం",
+    "summary_kannada": "ಎರಡು ಸೈನ್ಯಗಳ ನಡುವೆ ರಥವನ್ನು ನಿಲ್ಲಿಸಲು ಅರ್ಜುನನು ಕೃಷ್ಣನನ್ನು ಕೇಳುತ್ತಾನೆ. ದುಃಖದಿಂದ ಮನಸ್ಸು ತುಂಬಿ ಯುದ್ಧ ಮಾಡದಿರಲು ನಿರ್ಧರಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "రెండు సైన్యాల మధ్య రథాన్ని నిలపమని అర్జునుడు కృష్ణుడిని కోరుతాడు. దుఃఖంతో మనసు నిండి యుద్ధం చేయకూడదని నిర్ణయించుకుంటాడు."
   },
   {
     "id": 2,
     "name": "Sankhya Yoga",
     "name_meaning": "The Yoga of Analysis",
     "verses_count": 72,
-    "summary": "Krishna teaches Arjuna about the immortal nature of the soul and introduces the path of self-realization through actions without attachment."
+    "summary": "Krishna teaches Arjuna about the immortal nature of the soul and introduces the path of self-realization through actions without attachment.",
+    "name_kannada": "ಸಾಂಖ್ಯ ಯೋಗ",
+    "name_telugu": "సాంఖ్య యోగము",
+    "name_meaning_kannada": "ವಿಶ್ಲೇಷಣೆಯ ಯೋಗ",
+    "name_meaning_telugu": "విశ్లేషణ యోగం",
+    "summary_kannada": "ಆತ್ಮದ ಅಮರತ್ವವನ್ನು ಕೃಷ್ಣನು ಅರ್ಜುನನಿಗೆ ಬೋಧಿಸುತ್ತಾನೆ; ಫಲದ ಆಸೆಯಿಲ್ಲದ ಕರ್ಮದ ಮೂಲಕ ಆತ್ಮಸಾಕ್ಷಾತ್ಕಾರದ ದಾರಿಯನ್ನು ತೋರಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "ఆత్మ నాశనం లేనిదని కృష్ణుడు అర్జునుడికి బోధిస్తాడు; ఫలాపేక్ష లేని కర్మ ద్వారా ఆత్మసాక్షాత్కారానికి మార్గాన్ని చూపుతాడు."
   },
   {
     "id": 3,
     "name": "Karma Yoga",
     "name_meaning": "The Yoga of Action",
     "verses_count": 43,
-    "summary": "Krishna explains the performance of duties in modern life and how taking action without expecting rewards purifies the mind."
+    "summary": "Krishna explains the performance of duties in modern life and how taking action without expecting rewards purifies the mind.",
+    "name_kannada": "ಕರ್ಮ ಯೋಗ",
+    "name_telugu": "కర్మ యోగము",
+    "name_meaning_kannada": "ಕರ್ಮದ ಯೋಗ",
+    "name_meaning_telugu": "కర్మ యోగం",
+    "summary_kannada": "ಕರ್ತವ್ಯವನ್ನು ಹೇಗೆ ನಿರ್ವಹಿಸಬೇಕು, ಫಲದ ನಿರೀಕ್ಷೆಯಿಲ್ಲದ ಕರ್ಮವು ಮನಸ್ಸನ್ನು ಹೇಗೆ ಶುದ್ಧಗೊಳಿಸುತ್ತದೆ ಎಂಬುದನ್ನು ಕೃಷ್ಣನು ವಿವರಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "కర్తవ్యాన్ని ఎలా నిర్వర్తించాలి, ఫలాపేక్ష లేని కర్మ మనసును ఎలా శుద్ధి చేస్తుంది అనేది కృష్ణుడు వివరిస్తాడు."
   },
   {
     "id": 4,
     "name": "Jnana Karma Sanyasa Yoga",
     "name_meaning": "The Yoga of Knowledge",
     "verses_count": 42,
-    "summary": "Krishna reveals his divine appearances and teaches that true knowledge brings immense peace and removes ignorance."
+    "summary": "Krishna reveals his divine appearances and teaches that true knowledge brings immense peace and removes ignorance.",
+    "name_kannada": "ಜ್ಞಾನಕರ್ಮಸನ್ಯಾಸ ಯೋಗ",
+    "name_telugu": "జ్ఞాన యోగము",
+    "name_meaning_kannada": "ಜ್ಞಾನದ ಯೋಗ",
+    "name_meaning_telugu": "జ్ఞాన యోగం",
+    "summary_kannada": "ತನ್ನ ದಿವ್ಯ ಅವತಾರಗಳನ್ನು ಕೃಷ್ಣನು ತಿಳಿಸುತ್ತಾನೆ; ನಿಜವಾದ ಜ್ಞಾನವು ಅಜ್ಞಾನವನ್ನು ಕಳೆದು ಆಳವಾದ ಶಾಂತಿಯನ್ನು ತರುತ್ತದೆ ಎಂದು ಬೋಧಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "తన దివ్య అవతారాలను కృష్ణుడు తెలియజేస్తాడు; నిజమైన జ్ఞానం అజ్ఞానాన్ని తొలగించి గొప్ప శాంతిని కలిగిస్తుందని బోధిస్తాడు."
   },
   {
     "id": 5,
     "name": "Karma Sanyasa Yoga",
     "name_meaning": "The Yoga of Renunciation",
     "verses_count": 29,
-    "summary": "Krishna compares the path of knowledge and the path of action, emphasizing that both lead to the same spiritual goal."
+    "summary": "Krishna compares the path of knowledge and the path of action, emphasizing that both lead to the same spiritual goal.",
+    "name_kannada": "ಕರ್ಮಸನ್ಯಾಸ ಯೋಗ",
+    "name_telugu": "కర్మసన్యాస యోగము",
+    "name_meaning_kannada": "ಸನ್ಯಾಸದ ಯೋಗ",
+    "name_meaning_telugu": "సన్యాస యోగం",
+    "summary_kannada": "ಜ್ಞಾನಮಾರ್ಗ ಮತ್ತು ಕರ್ಮಮಾರ್ಗಗಳನ್ನು ಹೋಲಿಸಿ, ಎರಡೂ ಒಂದೇ ಆಧ್ಯಾತ್ಮಿಕ ಗುರಿಯನ್ನು ತಲುಪಿಸುತ್ತವೆ ಎಂದು ಕೃಷ್ಣನು ಹೇಳುತ್ತಾನೆ.",
+    "summary_telugu": "జ్ఞానమార్గాన్ని, కర్మమార్గాన్ని పోల్చి, రెండూ ఒకే ఆధ్యాత్మిక గమ్యాన్ని చేరుస్తాయని కృష్ణుడు చెబుతాడు."
   },
   {
     "id": 6,
     "name": "Dhyana Yoga",
     "name_meaning": "The Yoga of Meditation",
     "verses_count": 47,
-    "summary": "Krishna details the practice of meditation, control of the restless mind, and the ultimate achievement of deep spiritual union."
+    "summary": "Krishna details the practice of meditation, control of the restless mind, and the ultimate achievement of deep spiritual union.",
+    "name_kannada": "ಧ್ಯಾನ ಯೋಗ",
+    "name_telugu": "ఆత్మసంయమ యోగము",
+    "name_meaning_kannada": "ಧ್ಯಾನದ ಯೋಗ",
+    "name_meaning_telugu": "ధ్యాన యోగం",
+    "summary_kannada": "ಧ್ಯಾನದ ಅಭ್ಯಾಸ, ಚಂಚಲ ಮನಸ್ಸಿನ ನಿಗ್ರಹ ಮತ್ತು ಆಳವಾದ ಯೋಗಸ್ಥಿತಿಯನ್ನು ಕೃಷ್ಣನು ವಿವರಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "ధ్యాన సాధన, చంచల మనసు నిగ్రహం, లోతైన యోగస్థితి గురించి కృష్ణుడు వివరిస్తాడు."
   },
   {
     "id": 7,
     "name": "Jnana Vijnana Yoga",
     "name_meaning": "The Yoga of Knowledge and Wisdom",
     "verses_count": 30,
-    "summary": "Krishna describes his absolute reality, the material and spiritual energies, and how living beings are part of his divine nature."
+    "summary": "Krishna describes his absolute reality, the material and spiritual energies, and how living beings are part of his divine nature.",
+    "name_kannada": "ಜ್ಞಾನವಿಜ್ಞಾನ ಯೋಗ",
+    "name_telugu": "జ్ఞానవిజ్ఞాన యోగము",
+    "name_meaning_kannada": "ಜ್ಞಾನ ಮತ್ತು ವಿಜ್ಞಾನದ ಯೋಗ",
+    "name_meaning_telugu": "జ్ఞాన విజ్ఞానాల యోగం",
+    "summary_kannada": "ತನ್ನ ಪರಮ ಸ್ವರೂಪವನ್ನು, ಪ್ರಕೃತಿ ಮತ್ತು ಆತ್ಮಶಕ್ತಿಗಳನ್ನು, ಜೀವಿಗಳು ತನ್ನ ದಿವ್ಯ ಸ್ವಭಾವದ ಭಾಗವೆಂಬುದನ್ನು ಕೃಷ್ಣನು ವಿವರಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "తన పరమ స్వరూపాన్ని, ప్రకృతి ఆత్మ శక్తులను, జీవులు తన దివ్య స్వభావంలో భాగమేనని కృష్ణుడు వివరిస్తాడు."
   },
   {
     "id": 8,
     "name": "Aksara Brahma Yoga",
     "name_meaning": "The Yoga of the Imperishable",
     "verses_count": 28,
-    "summary": "Krishna explains the cosmos, the journey of the soul after death, and the method of remembering the Supreme at the time of leaving the body."
+    "summary": "Krishna explains the cosmos, the journey of the soul after death, and the method of remembering the Supreme at the time of leaving the body.",
+    "name_kannada": "ಅಕ್ಷರಬ್ರಹ್ಮ ಯೋಗ",
+    "name_telugu": "అక్షరపరబ్రహ్మ యోగము",
+    "name_meaning_kannada": "ಅಕ್ಷರ ಬ್ರಹ್ಮದ ಯೋಗ",
+    "name_meaning_telugu": "అక్షర బ్రహ్మ యోగం",
+    "summary_kannada": "ಸೃಷ್ಟಿಯ ಸ್ವರೂಪ, ಮರಣದ ನಂತರ ಆತ್ಮದ ಪಯಣ ಮತ್ತು ದೇಹ ಬಿಡುವ ಕ್ಷಣದಲ್ಲಿ ಪರಮಾತ್ಮನನ್ನು ಸ್ಮರಿಸುವ ಬಗೆಯನ್ನು ಕೃಷ್ಣನು ವಿವರಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "సృష్టి స్వరూపాన్ని, మరణానంతరం ఆత్మ ప్రయాణాన్ని, దేహం విడిచే క్షణంలో పరమాత్మను స్మరించే విధానాన్ని కృష్ణుడు వివరిస్తాడు."
   },
   {
     "id": 9,
     "name": "Raja Vidya Raja Guhya Yoga",
     "name_meaning": "The Yoga of the Sovereign Science",
     "verses_count": 34,
-    "summary": "Krishna reveals the sovereign, most profound and secret knowledge about the universe and how true devotion brings ultimate salvation."
+    "summary": "Krishna reveals the sovereign, most profound and secret knowledge about the universe and how true devotion brings ultimate salvation.",
+    "name_kannada": "ರಾಜವಿದ್ಯಾರಾಜಗುಹ್ಯ ಯೋಗ",
+    "name_telugu": "రాజవిద్యారాజగుహ్య యోగము",
+    "name_meaning_kannada": "ರಾಜವಿದ್ಯೆಯ ಯೋಗ",
+    "name_meaning_telugu": "రాజవిద్య యోగం",
+    "summary_kannada": "ವಿಶ್ವದ ಬಗೆಗಿನ ಅತ್ಯಂತ ಗಹನವಾದ ಗುಟ್ಟಿನ ಜ್ಞಾನವನ್ನು, ನಿಜವಾದ ಭಕ್ತಿಯು ಮೋಕ್ಷವನ್ನು ಹೇಗೆ ತರುತ್ತದೆ ಎಂಬುದನ್ನು ಕೃಷ್ಣನು ಹೇಳುತ್ತಾನೆ.",
+    "summary_telugu": "విశ్వం గురించిన అత్యంత గహనమైన రహస్య జ్ఞానాన్ని, నిజమైన భక్తి మోక్షాన్ని ఎలా కలిగిస్తుందో కృష్ణుడు తెలియజేస్తాడు."
   },
   {
     "id": 10,
     "name": "Vibhuti Yoga",
     "name_meaning": "The Yoga of Divine Manifestations",
     "verses_count": 42,
-    "summary": "Krishna describes his endless divine manifestations, showing how he is the essence of all beautiful, glorious, and powerful things."
+    "summary": "Krishna describes his endless divine manifestations, showing how he is the essence of all beautiful, glorious, and powerful things.",
+    "name_kannada": "ವಿಭೂತಿ ಯೋಗ",
+    "name_telugu": "విభూతి యోగము",
+    "name_meaning_kannada": "ದೈವೀ ವಿಭೂತಿಗಳ ಯೋಗ",
+    "name_meaning_telugu": "దైవ విభూతుల యోగం",
+    "summary_kannada": "ತನ್ನ ಅಸಂಖ್ಯ ದಿವ್ಯ ವಿಭೂತಿಗಳನ್ನು ಕೃಷ್ಣನು ವಿವರಿಸಿ, ಸುಂದರವಾದ, ಮಹತ್ತಾದ, ಬಲಿಷ್ಠವಾದ ಎಲ್ಲದರ ಸಾರ ತಾನೇ ಎಂದು ತೋರಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "తన అసంఖ్యాక దివ్య విభూతులను వివరిస్తూ, అందమైన, గొప్ప, బలమైన అన్నిటి సారం తానేనని కృష్ణుడు చూపుతాడు."
   },
   {
     "id": 11,
     "name": "Visvarupa Darsana Yoga",
     "name_meaning": "The Yoga of the Vision of the Universal Form",
     "verses_count": 55,
-    "summary": "Krishna grants Arjuna divine vision and reveals his spectacular, terrifying, and awe-inspiring universal form."
+    "summary": "Krishna grants Arjuna divine vision and reveals his spectacular, terrifying, and awe-inspiring universal form.",
+    "name_kannada": "ವಿಶ್ವರೂಪದರ್ಶನ ಯೋಗ",
+    "name_telugu": "విశ్వరూపసందర్శన యోగము",
+    "name_meaning_kannada": "ವಿಶ್ವರೂಪ ದರ್ಶನದ ಯೋಗ",
+    "name_meaning_telugu": "విశ్వరూప దర్శన యోగం",
+    "summary_kannada": "ಅರ್ಜುನನಿಗೆ ದಿವ್ಯದೃಷ್ಟಿಯನ್ನು ಕೊಟ್ಟು, ಬೆರಗುಗೊಳಿಸುವ, ಭಯಂಕರವಾದ ತನ್ನ ವಿಶ್ವರೂಪವನ್ನು ಕೃಷ್ಣನು ತೋರಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "అర్జునుడికి దివ్యదృష్టిని ఇచ్చి, ఆశ్చర్యకరమైన, భయంకరమైన తన విశ్వరూపాన్ని కృష్ణుడు చూపుతాడు."
   },
   {
     "id": 12,
     "name": "Bhakti Yoga",
     "name_meaning": "The Yoga of Devotion",
     "verses_count": 20,
-    "summary": "Krishna explains the path of loving devotion, the qualities of a true devotee, and how it is the highest and easiest path to God."
+    "summary": "Krishna explains the path of loving devotion, the qualities of a true devotee, and how it is the highest and easiest path to God.",
+    "name_kannada": "ಭಕ್ತಿ ಯೋಗ",
+    "name_telugu": "భక్తి యోగము",
+    "name_meaning_kannada": "ಭಕ್ತಿಯ ಯೋಗ",
+    "name_meaning_telugu": "భక్తి యోగం",
+    "summary_kannada": "ಪ್ರೀತಿಯ ಭಕ್ತಿಯ ದಾರಿಯನ್ನು, ನಿಜವಾದ ಭಕ್ತನ ಲಕ್ಷಣಗಳನ್ನು, ಅದೇ ಅತ್ಯಂತ ಸುಲಭವಾದ ಶ್ರೇಷ್ಠ ಮಾರ್ಗವೆಂಬುದನ್ನು ಕೃಷ್ಣನು ವಿವರಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "ప్రేమపూర్వక భక్తి మార్గాన్ని, నిజమైన భక్తుని లక్షణాలను, అదే అత్యంత సులభమైన శ్రేష్ఠ మార్గమని కృష్ణుడు వివరిస్తాడు."
   },
   {
     "id": 13,
     "name": "Ksetra Ksetrajna Vibhaga Yoga",
     "name_meaning": "The Yoga of the Field and its Knower",
     "verses_count": 35,
-    "summary": "Krishna distinguishes between the physical body (the field) and the soul (the knower), revealing the nature of true knowledge."
+    "summary": "Krishna distinguishes between the physical body (the field) and the soul (the knower), revealing the nature of true knowledge.",
+    "name_kannada": "ಕ್ಷೇತ್ರಕ್ಷೇತ್ರಜ್ಞವಿಭಾಗ ಯೋಗ",
+    "name_telugu": "క్షేత్రక్షేత్రజ్ఞవిభాగ యోగము",
+    "name_meaning_kannada": "ಕ್ಷೇತ್ರ ಮತ್ತು ಕ್ಷೇತ್ರಜ್ಞನ ಯೋಗ",
+    "name_meaning_telugu": "క్షేత్ర క్షేత్రజ్ఞుల యోగం",
+    "summary_kannada": "ದೇಹವೆಂಬ ಕ್ಷೇತ್ರ ಮತ್ತು ಅದನ್ನು ಅರಿಯುವ ಆತ್ಮ — ಇವೆರಡರ ಭೇದವನ್ನು ತೋರಿಸಿ ನಿಜವಾದ ಜ್ಞಾನದ ಸ್ವರೂಪವನ್ನು ಕೃಷ್ಣನು ತಿಳಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "దేహమనే క్షేత్రానికి, దానిని ఎరిగిన ఆత్మకు ఉన్న భేదాన్ని చూపుతూ నిజమైన జ్ఞాన స్వరూపాన్ని కృష్ణుడు తెలియజేస్తాడు."
   },
   {
     "id": 14,
     "name": "Gunatraya Vibhaga Yoga",
     "name_meaning": "The Yoga of the Three Modes of Material Nature",
     "verses_count": 27,
-    "summary": "Krishna explains the three qualities of nature (goodness, passion, and ignorance) and how to transcend them."
+    "summary": "Krishna explains the three qualities of nature (goodness, passion, and ignorance) and how to transcend them.",
+    "name_kannada": "ಗುಣತ್ರಯವಿಭಾಗ ಯೋಗ",
+    "name_telugu": "గుణత్రయవిభాగ యోగము",
+    "name_meaning_kannada": "ಪ್ರಕೃತಿಯ ಮೂರು ಗುಣಗಳ ಯೋಗ",
+    "name_meaning_telugu": "ప్రకృతి త్రిగుణాల యోగం",
+    "summary_kannada": "ಪ್ರಕೃತಿಯ ಮೂರು ಗುಣಗಳನ್ನು — ಸತ್ತ್ವ, ರಜಸ್ಸು, ತಮಸ್ಸು — ಮತ್ತು ಅವುಗಳನ್ನು ಮೀರುವ ಬಗೆಯನ್ನು ಕೃಷ್ಣನು ವಿವರಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "ప్రకృతి మూడు గుణాలను — సత్త్వం, రజస్సు, తమస్సు — వాటిని దాటే విధానాన్ని కృష్ణుడు వివరిస్తాడు."
   },
   {
     "id": 15,
     "name": "Purusottama Yoga",
     "name_meaning": "The Yoga of the Supreme Divine Personality",
     "verses_count": 20,
-    "summary": "Krishna uses the analogy of an upside-down banyan tree to explain the material world and reveals his identity as the Supreme Being."
+    "summary": "Krishna uses the analogy of an upside-down banyan tree to explain the material world and reveals his identity as the Supreme Being.",
+    "name_kannada": "ಪುರುಷೋತ್ತಮ ಯೋಗ",
+    "name_telugu": "పురుషోత్తమప్రాప్తి యోగము",
+    "name_meaning_kannada": "ಪುರುಷೋತ್ತಮನ ಯೋಗ",
+    "name_meaning_telugu": "పురుషోత్తముని యోగం",
+    "summary_kannada": "ತಲೆಕೆಳಗಾದ ಅಶ್ವತ್ಥ ಮರದ ಹೋಲಿಕೆಯಿಂದ ಸಂಸಾರವನ್ನು ವಿವರಿಸಿ, ತಾನೇ ಪುರುಷೋತ್ತಮನೆಂದು ಕೃಷ್ಣನು ತಿಳಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "తలకిందులైన అశ్వత్థ వృక్షం ఉపమానంతో సంసారాన్ని వివరిస్తూ, తానే పురుషోత్తముడని కృష్ణుడు తెలియజేస్తాడు."
   },
   {
     "id": 16,
     "name": "Daivasura Sampad Vibhaga Yoga",
     "name_meaning": "The Yoga of Divine and Demoniac Natures",
     "verses_count": 24,
-    "summary": "Krishna details the divine qualities that lead to liberation and the demoniac qualities that bind the soul to suffering."
+    "summary": "Krishna details the divine qualities that lead to liberation and the demoniac qualities that bind the soul to suffering.",
+    "name_kannada": "ದೈವಾಸುರಸಂಪದ್ವಿಭಾಗ ಯೋಗ",
+    "name_telugu": "దైవాసురసంపద్విభాగ యోగము",
+    "name_meaning_kannada": "ದೈವೀ ಮತ್ತು ಆಸುರೀ ಸ್ವಭಾವಗಳ ಯೋಗ",
+    "name_meaning_telugu": "దైవ ఆసుర స్వభావాల యోగం",
+    "summary_kannada": "ಮೋಕ್ಷಕ್ಕೆ ಒಯ್ಯುವ ದೈವೀ ಗುಣಗಳನ್ನು, ದುಃಖಕ್ಕೆ ಕಟ್ಟಿಹಾಕುವ ಆಸುರೀ ಗುಣಗಳನ್ನು ಕೃಷ್ಣನು ವಿವರಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "మోక్షానికి తీసుకువెళ్ళే దైవీ గుణాలను, దుఃఖానికి కట్టిపడేసే ఆసురీ గుణాలను కృష్ణుడు వివరిస్తాడు."
   },
   {
     "id": 17,
     "name": "Sraddhatraya Vibhaga Yoga",
     "name_meaning": "The Yoga of the Threefold Faith",
     "verses_count": 28,
-    "summary": "Krishna categorizes faith, food, sacrifices, austerities, and charity into the three modes of material nature."
+    "summary": "Krishna categorizes faith, food, sacrifices, austerities, and charity into the three modes of material nature.",
+    "name_kannada": "ಶ್ರದ್ಧಾತ್ರಯವಿಭಾಗ ಯೋಗ",
+    "name_telugu": "శ్రద్ధాత్రయవిభాగ యోగము",
+    "name_meaning_kannada": "ಮೂರು ಬಗೆಯ ಶ್ರದ್ಧೆಯ ಯೋಗ",
+    "name_meaning_telugu": "మూడు రకాల శ్రద్ధల యోగం",
+    "summary_kannada": "ಶ್ರದ್ಧೆ, ಆಹಾರ, ಯಜ್ಞ, ತಪಸ್ಸು ಮತ್ತು ದಾನವನ್ನು ಪ್ರಕೃತಿಯ ಮೂರು ಗುಣಗಳ ಪ್ರಕಾರ ಕೃಷ್ಣನು ವಿಂಗಡಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "శ్రద్ధ, ఆహారం, యజ్ఞం, తపస్సు, దానం — వీటిని ప్రకృతి మూడు గుణాల ప్రకారం కృష్ణుడు విభజిస్తాడు."
   },
   {
     "id": 18,
     "name": "Moksa Sanyasa Yoga",
     "name_meaning": "The Yoga of Liberation by Renunciation",
     "verses_count": 78,
-    "summary": "Krishna summarizes all previous teachings, explaining the final path of liberation through surrender and renunciation of the fruits of action."
+    "summary": "Krishna summarizes all previous teachings, explaining the final path of liberation through surrender and renunciation of the fruits of action.",
+    "name_kannada": "ಮೋಕ್ಷಸನ್ಯಾಸ ಯೋಗ",
+    "name_telugu": "మోక్షసన్యాస యోగము",
+    "name_meaning_kannada": "ಸನ್ಯಾಸದಿಂದ ಮೋಕ್ಷದ ಯೋಗ",
+    "name_meaning_telugu": "సన్యాసం ద్వారా మోక్ష యోగం",
+    "summary_kannada": "ಹಿಂದಿನ ಎಲ್ಲ ಬೋಧನೆಗಳನ್ನು ಒಟ್ಟುಗೂಡಿಸಿ, ಶರಣಾಗತಿ ಮತ್ತು ಕರ್ಮಫಲತ್ಯಾಗದ ಮೂಲಕ ಮೋಕ್ಷದ ಕೊನೆಯ ದಾರಿಯನ್ನು ಕೃಷ್ಣನು ತೋರಿಸುತ್ತಾನೆ.",
+    "summary_telugu": "గత బోధనలన్నిటినీ కూర్చి, శరణాగతి ద్వారా, కర్మఫల త్యాగం ద్వారా మోక్షానికి చివరి మార్గాన్ని కృష్ణుడు చూపుతాడు."
   }
 ]

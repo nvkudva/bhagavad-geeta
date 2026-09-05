@@ -1,7 +1,7 @@
 import { Bookmark, Book, CornerDownLeft, Search, Settings2, SunMoon } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getChapterMeta, getChapters } from "../lib/gita";
+import { chapterName, chapterText, getChapters } from "../lib/gita";
 import { navigate } from "../lib/router";
 import type { Route } from "../lib/router";
 import { loadIndex, parseReference, peekIndex, search } from "../lib/search";
@@ -29,7 +29,7 @@ export const CommandPalette: React.FC<{ onClose: () => void }> = ({ onClose }) =
   const [query, setQuery] = useState("");
   const [rows, setRows] = useState(peekIndex);
   const [cursor, setCursor] = useState(0);
-  const { toggleTheme } = useSettings();
+  const { language, toggleTheme } = useSettings();
 
   // showModal, not the `open` attribute: only the former gives the top layer,
   // the ::backdrop and the focus trap. Mounted only while open, so there is no
@@ -62,7 +62,7 @@ export const CommandPalette: React.FC<{ onClose: () => void }> = ({ onClose }) =
         id: `ref-${reference.chapter}.${reference.verse}`,
         group: "Go to",
         ref: `${reference.chapter}.${reference.verse}`,
-        label: getChapterMeta(reference.chapter)?.name ?? "Verse",
+        label: chapterName(reference.chapter, language) ?? "Verse",
         run: go({ name: "verse", chapter: reference.chapter, verse: reference.verse }),
       });
     }
@@ -70,12 +70,19 @@ export const CommandPalette: React.FC<{ onClose: () => void }> = ({ onClose }) =
     if (trimmed.length >= 2) {
       const q = trimmed.toLowerCase();
       for (const chapter of chapters) {
-        if (!`${chapter.id} ${chapter.name} ${chapter.name_meaning}`.toLowerCase().includes(q)) continue;
+        // Matched against every script the chapter has a name in, so a reader
+        // typing "Sankhya" finds it while reading in Kannada, and one typing
+        // ಸಾಂಖ್ಯ finds it while reading in English.
+        const haystack = [chapter.id, chapter.name, chapter.name_meaning, chapter.name_kannada, chapter.name_telugu, chapter.name_meaning_kannada, chapter.name_meaning_telugu].join(" ").toLowerCase();
+        if (!haystack.includes(q)) continue;
+        const name = chapterText(chapter, "name", language);
+        const meaning = chapterText(chapter, "name_meaning", language);
         out.push({
           id: `ch-${chapter.id}`,
           group: "Chapters",
           ref: `${chapter.id}`,
-          label: `${chapter.name} — ${chapter.name_meaning}`,
+          label: `${name.text} — ${meaning.text}`,
+          lang: name.lang === meaning.lang ? name.lang : undefined,
           run: go({ name: "verse", chapter: chapter.id, verse: 1 }),
         });
         if (out.length > 12) break;
@@ -114,7 +121,7 @@ export const CommandPalette: React.FC<{ onClose: () => void }> = ({ onClose }) =
     }
 
     return out;
-  }, [query, rows, toggleTheme]);
+  }, [query, rows, language, toggleTheme]);
 
   // Keep the highlighted row in view as the cursor walks past the fold.
   useEffect(() => {

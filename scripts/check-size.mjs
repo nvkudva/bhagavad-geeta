@@ -40,8 +40,15 @@ const KB = 1024;
 //                 splitting it would cost a chunk request on every wide load.
 //   CSS +3.0 KB — the 900px and 1280px blocks, the pointer-only hover/tooltip
 //                 block, and the light-appearance overrides each of those needs.
+// Raised from 76/12 KB when the chapter list learned Kannada and Telugu:
+//   JS  +4.0 KB — chapters.json carries the name, the name's meaning and the
+//                 summary in three languages now, and it is imported into the
+//                 shell rather than fetched, because the chapter grid IS the
+//                 home screen and must paint with it. Splitting the two Indic
+//                 sets into a lazy chunk would trade 4 KB for a fetch on the
+//                 first screen, which is the wrong way round.
 // Headroom left is deliberate and small: P1 must stay near these numbers.
-const BUDGETS = { js: 76 * KB, css: 12 * KB };
+const BUDGETS = { js: 81 * KB, css: 12 * KB };
 
 const gz = (p) => gzipSync(readFileSync(p), { level: 9 }).length;
 const files = readdirSync(assets);

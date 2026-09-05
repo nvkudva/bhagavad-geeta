@@ -92,3 +92,8 @@ marked SUPERSEDED were written against the earlier warm-paper direction.
 - [ ] transliteration field is a ṛi/ṣh/ch hybrid, not IAST — decide: rename the field or convert all 701
 - [ ] 220 `?` in commentary_english sit before a capital — comma or real question is undecidable, left alone
 - [ ] combined-verse groups (1.32-34, 1.38-39, 2.42-43, 5.8-9, 5.27-28, 10.12-13) repeat one English blob, unmarked
+
+## Language — still open
+
+- [ ] Localise the rest of the UI chrome. The chapter cards, the reader's chapter title, search and saved rows now follow the reader's language, but "Verse N", "Previous chapter", the verse rail, the tab labels and the Settings screen are still English in every language.
+- [ ] context_kannada is 4/701 and context_telugu 22/701, so a Kannada or Telugu reader gets English commentary on nearly every verse. It is labelled as such; sourcing it is a separate problem from the translations.

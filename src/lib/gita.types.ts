@@ -23,8 +23,16 @@ export interface Verse {
 
 export interface ChapterMeta {
   id: number;
+  /** The Sanskrit chapter name, romanised. The Indic forms are the same name in
+   *  their own script — the traditional title, not a translation of the Latin. */
   name: string;
+  name_kannada?: string;
+  name_telugu?: string;
   name_meaning: string;
+  name_meaning_kannada?: string;
+  name_meaning_telugu?: string;
   verses_count: number;
   summary: string;
+  summary_kannada?: string;
+  summary_telugu?: string;
 }

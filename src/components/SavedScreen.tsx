@@ -2,7 +2,7 @@ import { Bookmark, Trash2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { removeBookmark, useBookmarks } from "../lib/bookmarks";
-import { getChapterMeta } from "../lib/gita";
+import { chapterName } from "../lib/gita";
 import type { Language } from "../lib/gita.types";
 import { Link } from "../lib/router";
 import { loadIndex, peekIndex } from "../lib/search";
@@ -65,7 +65,7 @@ export const SavedScreen: React.FC<{ language: Language }> = ({ language }) => {
               <Link to={{ name: "verse", chapter: bookmark.chapter, verse: bookmark.verse }} className="saved-item-link pressable">
                 <span className="search-result-ref">
                   {bookmark.chapter}.{bookmark.verse}
-                  <span className="search-result-chapter">{getChapterMeta(bookmark.chapter)?.name}</span>
+                  <span className="search-result-chapter">{chapterName(bookmark.chapter, language)}</span>
                 </span>
                 {scripture && (
                   <span className="saved-item-text" lang={scripture.lang}>
