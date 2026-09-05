@@ -15,12 +15,23 @@ export interface Verse {
    *  were composed instead and so cannot carry the Wikisource credit. */
   translation_telugu_machine?: boolean; // 3/701
   context_english?: string; // 701/701 — word-by-word glosses
-  commentary_english?: string; // 701/701 — Sivananda 631 / Ramanuja 48 / Shankaracharya 22.
-  // Coverage counts are generated per build into public/data/v1/manifest.json; these
-  // comments are a convenience and the manifest is the source of truth.
-  commentary_author?: string;
   context_kannada?: string; // 4/701 — the one real remaining coverage gap
   context_telugu?: string; // 22/701
+  /* Not in chapter-NN.json. Commentary is 29% of the corpus and is never on screen
+     at first paint, so it ships as commentary-NN.json and loadReader() merges it in
+     before the reader renders. Only the reader route ever asks for it: the home
+     screen's verse card would otherwise pay 30 KB for an essay it does not show.
+     Coverage is generated per build into public/data/v1/manifest.json; these
+     comments are a convenience and the manifest is the source of truth. */
+  commentary_english?: string; // 700/701 — Sivananda 631 / Ramanuja 48 / Shankaracharya 22
+  commentary_author?: string; // 701/701
+}
+
+/** One row of commentary-NN.json. */
+export interface CommentaryRow {
+  verse_number: number;
+  commentary_english?: string;
+  commentary_author?: string;
 }
 
 export interface ChapterMeta {

@@ -90,13 +90,20 @@ export default defineConfig({
           // centre 80% safe zone.
           { src: "pwa-maskable-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
+        // Without a wide and a narrow screenshot Chrome on Android shows the minimal
+        // install prompt instead of the richer install UI. Deliberately outside the
+        // precache (globIgnores below) — they are install-time art, not app assets.
+        screenshots: [
+          { src: "screenshots/wide.jpg", sizes: "1280x800", type: "image/jpeg", form_factor: "wide", label: "The reader on a desktop window, with the verse rail and word meanings" },
+          { src: "screenshots/narrow.jpg", sizes: "390x844", type: "image/jpeg", form_factor: "narrow", label: "A verse on a phone, with its translation and commentary" },
+        ],
       },
       workbox: {
         // data/v1/chapters.json is NOT here: src/lib/gita.ts statically imports
         // src/data/chapters.json, so the same 20 KB is already inside the JS shell and
         // nothing ever fetches the emitted copy. It is still emitted, just not
         // downloaded twice on every install.
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest,woff2}", "data/v1/manifest.json", "data/v1/chapter-01.json"],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest,woff2}", "data/v1/manifest.json", "data/v1/chapter-01.json", "data/v1/commentary-01.json"],
         // Precaching every face pulls all of fonts/ on first visit, which undoes the
         // per-script @font-face loading. Only the two the first paint actually needs
         // stay precached: literata-latin (the default reading face — the UI takes the

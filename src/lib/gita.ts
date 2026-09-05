@@ -1,7 +1,7 @@
 import chaptersData from "../data/chapters.json";
-import type { ChapterId, ChapterMeta, Language, Verse } from "./gita.types";
+import type { ChapterId, ChapterMeta, CommentaryRow, Language, Verse } from "./gita.types";
 
-export type { ChapterId, ChapterMeta, Language, Verse } from "./gita.types";
+export type { ChapterId, ChapterMeta, CommentaryRow, Language, Verse } from "./gita.types";
 
 const chapters: readonly ChapterMeta[] = chaptersData as ChapterMeta[];
 const chapterById = new Map<ChapterId, ChapterMeta>(chapters.map((c) => [c.id, c]));
@@ -11,7 +11,12 @@ const memo = new Map<ChapterId, readonly Verse[]>();
  *  and as the resolved resource `use()` needs to see the same object every render. */
 const inflight = new Map<ChapterId, Promise<readonly Verse[]>>();
 
+/** Chapters whose commentary has been merged into `memo`. */
+const withCommentary = new Set<ChapterId>();
+const commentaryInflight = new Map<ChapterId, Promise<readonly CommentaryRow[]>>();
+
 const dataUrl = (id: ChapterId): string => `${import.meta.env.BASE_URL}data/v1/chapter-${String(id).padStart(2, "0")}.json`;
+const commentaryUrl = (id: ChapterId): string => `${import.meta.env.BASE_URL}data/v1/commentary-${String(id).padStart(2, "0")}.json`;
 
 /** Sync. Bundled (5 KB). Safe to call during render. */
 export function getChapters(): readonly ChapterMeta[] {
@@ -74,9 +79,54 @@ export function loadChapter(id: ChapterId): Promise<readonly Verse[]> {
   return request;
 }
 
-/** Fire-and-forget warm-up. Never rejects, never blocks. Idempotent. */
+function loadCommentaryRows(id: ChapterId): Promise<readonly CommentaryRow[]> {
+  const existing = commentaryInflight.get(id);
+  if (existing) return existing;
+
+  const request = fetch(commentaryUrl(id))
+    .then((res) => (res.ok ? (res.json() as Promise<CommentaryRow[]>) : []))
+    .catch(() => {
+      commentaryInflight.delete(id);
+      // Commentary is a supplement, not the scripture. A reader who cannot reach it
+      // should still get the chapter, so this resolves empty rather than rejecting.
+      return [] as CommentaryRow[];
+    });
+
+  commentaryInflight.set(id, request);
+  return request;
+}
+
+/** True once `peekChapter(id)` would return verses that carry their commentary. */
+export function isReaderResident(id: ChapterId): boolean {
+  return withCommentary.has(id);
+}
+
+/** The reader's load: the chapter and its commentary in parallel, merged before
+ *  either is shown. Merging up front is what keeps CLS at 0 and stops the
+ *  commentary/word-meanings tab from flipping its default under the reader once
+ *  a late fetch lands. New verse objects, not a mutation, so React.memo on a
+ *  VerseBlock sees the identity change. */
+export function loadReader(id: ChapterId): Promise<readonly Verse[]> {
+  if (withCommentary.has(id)) return Promise.resolve(memo.get(id) ?? []);
+
+  return Promise.all([loadChapter(id), loadCommentaryRows(id)]).then(([verses, rows]) => {
+    // A concurrent loadReader for the same id may have merged already.
+    if (withCommentary.has(id)) return memo.get(id) ?? verses;
+    const byVerse = new Map(rows.map((r) => [r.verse_number, r]));
+    const merged = verses.map((v) => {
+      const row = byVerse.get(v.verse_number);
+      return row ? { ...v, commentary_english: row.commentary_english, commentary_author: row.commentary_author } : v;
+    });
+    memo.set(id, merged);
+    withCommentary.add(id);
+    return merged as readonly Verse[];
+  });
+}
+
+/** Fire-and-forget warm-up of everything the reader needs. Never rejects, never
+ *  blocks. Idempotent. */
 export function prefetchChapter(id: ChapterId): void {
-  if (!chapterById.has(id) || inflight.has(id)) return;
-  void loadChapter(id).catch(() => undefined);
+  if (!chapterById.has(id) || withCommentary.has(id) || commentaryInflight.has(id)) return;
+  void loadReader(id).catch(() => undefined);
 }
 

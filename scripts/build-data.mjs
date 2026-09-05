@@ -25,8 +25,6 @@ const VERSE_KEYS = [
   // so per verse, which is why this one field ships and the source strings do not.
   "translation_telugu_machine",
   "context_english",
-  "commentary_english",
-  "commentary_author",
   "context_kannada",
   "context_telugu",
 ];
@@ -35,6 +33,11 @@ const VERSE_KEYS = [
 // exactly one distinct string across all 701 verses, so they travel once in the
 // manifest instead of 701 times in the chapter files. Listing them here is what keeps
 // validate() from flagging them as a dropped field.
+// Commentary is 29% of the corpus and is never on screen at first paint — the home
+// screen's verse card does not show it at all. It ships as commentary-NN.json, which
+// the reader loads in parallel with its chapter and nothing else loads at all.
+const COMMENTARY_KEYS = ["verse_number", "commentary_english", "commentary_author"];
+
 const SOURCE_KEYS = ["translation_telugu_source", "translation_kannada_source"];
 
 const CHAPTER_KEYS = [
@@ -75,7 +78,7 @@ const chapters = JSON.parse(readFileSync(join(SRC, "chapters.json"), "utf8"));
 /* A ratchet, not a repair: every rule below passes against the corpus as it stands.
    pick() silently drops any key it does not know, so before this existed, renaming a
    corpus field produced a clean build that quietly shipped nothing. */
-const KNOWN_KEYS = new Set([...VERSE_KEYS, ...SOURCE_KEYS]);
+const KNOWN_KEYS = new Set([...VERSE_KEYS, ...COMMENTARY_KEYS, ...SOURCE_KEYS]);
 const KANNADA = /[\u0C80-\u0CFF]/;
 const TELUGU = /[\u0C00-\u0C7F]/;
 const DEVANAGARI = /[\u0900-\u097F]/;
@@ -139,27 +142,44 @@ validate();
 mkdirSync(OUT, { recursive: true });
 
 const byChapter = new Map();
+const commentaryByChapter = new Map();
 for (const v of verses) {
   if (!byChapter.has(v.chapter_id)) byChapter.set(v.chapter_id, []);
   byChapter.get(v.chapter_id).push(pick(v, VERSE_KEYS));
+  if (!commentaryByChapter.has(v.chapter_id)) commentaryByChapter.set(v.chapter_id, []);
+  commentaryByChapter.get(v.chapter_id).push(pick(v, COMMENTARY_KEYS));
 }
-for (const list of byChapter.values()) list.sort((a, b) => a.verse_number - b.verse_number);
+const byVerseNumber = (a, b) => a.verse_number - b.verse_number;
+for (const list of byChapter.values()) list.sort(byVerseNumber);
+for (const list of commentaryByChapter.values()) list.sort(byVerseNumber);
 
 const manifestChapters = [];
 const expected = new Set(["manifest.json", "chapters.json"]);
 
 for (const meta of chapters) {
   const list = byChapter.get(meta.id) ?? [];
-  const file = `chapter-${String(meta.id).padStart(2, "0")}.json`;
+  const pad = String(meta.id).padStart(2, "0");
+  const file = `chapter-${pad}.json`;
   const contents = JSON.stringify(list);
   expected.add(file);
   writeStable(join(OUT, file), contents);
+
+  // Only verses that actually have commentary: 1.15 has none, and an entry of
+  // {"verse_number":15} would be a row the reader has to skip for no reason.
+  const commentaryFile = `commentary-${pad}.json`;
+  const commentaryContents = JSON.stringify((commentaryByChapter.get(meta.id) ?? []).filter((c) => c.commentary_english));
+  expected.add(commentaryFile);
+  writeStable(join(OUT, commentaryFile), commentaryContents);
+
   manifestChapters.push({
     id: meta.id,
     file,
     verses: list.length,
     bytes: Buffer.byteLength(contents),
     sha: sha256(contents),
+    commentary_file: commentaryFile,
+    commentary_bytes: Buffer.byteLength(commentaryContents),
+    commentary_sha: sha256(commentaryContents),
   });
 }
 
@@ -195,7 +215,7 @@ if (existsSync(manifestPath)) {
 // One entry per field, so the coverage numbers live in the artefact rather than in a
 // hand-written comment that goes stale the moment a merge script runs.
 const coverage = {};
-for (const k of VERSE_KEYS) coverage[k] = verses.filter((v) => v[k] !== undefined && v[k] !== null && v[k] !== "").length;
+for (const k of [...VERSE_KEYS, ...COMMENTARY_KEYS]) coverage[k] = verses.filter((v) => v[k] !== undefined && v[k] !== null && v[k] !== "").length;
 
 // The two provenance strings are constant across all 701 verses, so they ship once here.
 const sources = {};
@@ -213,6 +233,7 @@ for (const name of readdirSync(OUT)) {
 }
 
 const total = manifestChapters.reduce((n, c) => n + c.bytes, 0);
-console.log(`build-data: ${manifestChapters.length} chapters, ${verses.length} verses, ${(total / 1024).toFixed(1)} KB raw -> public/data/v1/`);
+const totalCommentary = manifestChapters.reduce((n, c) => n + c.commentary_bytes, 0);
+console.log(`build-data: ${manifestChapters.length} chapters, ${verses.length} verses, ${(total / 1024).toFixed(1)} KB raw + ${(totalCommentary / 1024).toFixed(1)} KB commentary -> public/data/v1/`);
 console.log(`build-data: coverage ${Object.entries(coverage).map(([k, n]) => `${k} ${n}`).join(", ")}`);
 console.log(`build-data: search index ${searchRows.length} rows, ${(Buffer.byteLength(searchContents) / 1024).toFixed(1)} KB raw`);

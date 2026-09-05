@@ -11,15 +11,15 @@ import { Sidebar, TabBar } from "./components/TabBar";
 import { VerseOfMoment } from "./components/VerseOfMoment";
 import { setRailDirection, VerseViewer } from "./components/VerseViewer";
 import { toggleBookmark } from "./lib/bookmarks";
-import { chapterName, getChapterMeta, getChapters, loadChapter, peekChapter, prefetchChapter } from "./lib/gita";
+import { chapterName, getChapterMeta, getChapters, isReaderResident, loadReader, peekChapter, prefetchChapter } from "./lib/gita";
 import type { Language, Verse } from "./lib/gita.types";
 import type { KeyActions } from "./lib/keys";
 import { installKeys } from "./lib/keys";
 import { useWide } from "./lib/media";
 import type { Route } from "./lib/router";
 import { Link, navigate, useRoute, useScrollRestoration } from "./lib/router";
-import type { FontKey, SectionKey } from "./lib/settings";
-import { FONT_KEYS, LANGUAGE_LABELS, LANGUAGES, SECTION_KEYS, SettingsProvider, useSettings } from "./lib/settings";
+import type { FontKey, PaletteKey, SectionKey } from "./lib/settings";
+import { FONT_KEYS, LANGUAGE_LABELS, LANGUAGES, PALETTE_KEYS, PALETTE_LABELS, SECTION_KEYS, SettingsProvider, useSettings } from "./lib/settings";
 
 const chapters = getChapters();
 const NO_VERSES: readonly Verse[] = [];
@@ -55,9 +55,9 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
   const meta = getChapterMeta(chapter);
 
   useEffect(() => {
-    if (peekChapter(chapter)) return;
+    if (isReaderResident(chapter)) return;
     let cancelled = false;
-    loadChapter(chapter)
+    loadReader(chapter)
       .then(() => {
         if (!cancelled) onChapterLoaded();
       })
@@ -99,7 +99,7 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
      above, so this resolves in a microtask in the ordinary case. */
   const crossToChapter = (id: number, at: "first" | "last"): void => {
     setRailDirection(id < chapter ? "prev" : "next");
-    loadChapter(id)
+    loadReader(id)
       .then((loaded) => {
         // A second crossing while this one was in flight owns the outcome.
         if (liveChapter.current !== chapter) return;
@@ -182,6 +182,24 @@ const SettingsSwitch: React.FC<{ on: boolean; onToggle: () => void; label: strin
   </button>
 );
 
+/* One pill per ground, each carrying its own two-stop swatch so the choice is
+   made by looking rather than by reading the name. The pills sit in the
+   Appearance group under the dark-mode switch, since a palette is a variant of
+   the appearance and not a section of its own. */
+const PaletteRow: React.FC<{ palette: PaletteKey; setPalette: (key: PaletteKey) => void }> = ({ palette, setPalette }) => (
+  <div className="settings-row settings-row-stack">
+    <span className="settings-row-label">Palette</span>
+    <div className="palette-pills" role="radiogroup" aria-label="Palette">
+      {PALETTE_KEYS.map((key) => (
+        <button key={key} type="button" className="palette-pill pressable" role="radio" aria-checked={palette === key} onClick={() => setPalette(key)}>
+          <span className="palette-swatch" data-palette-swatch={key} aria-hidden />
+          {PALETTE_LABELS[key]}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
 const SETTINGS_SECTIONS: readonly { id: string; label: string }[] = [
   { id: "language", label: "Language" },
   { id: "appearance", label: "Appearance" },
@@ -190,7 +208,7 @@ const SETTINGS_SECTIONS: readonly { id: string; label: string }[] = [
 ];
 
 const SettingsScreen: React.FC = () => {
-  const { theme, toggleTheme, language, setLanguage, sections, toggleSection, font, setFont } = useSettings();
+  const { theme, toggleTheme, palette, setPalette, language, setLanguage, sections, toggleSection, font, setFont } = useSettings();
   const wide = useWide();
   const [current, setCurrent] = useState(SETTINGS_SECTIONS[0].id);
 
@@ -249,6 +267,7 @@ const SettingsScreen: React.FC = () => {
           {/* Two mutually exclusive rows for a binary is a radio group doing a
             switch's job; one switch says the same thing in half the height. */}
           <SettingsSwitch on={theme === "dark"} onToggle={toggleTheme} label="Dark mode" />
+          <PaletteRow palette={palette} setPalette={setPalette} />
         </SettingsSection>
 
         <SettingsSection id="reading-face" header="Reading face" footer="Applies to English only. Kannada and Telugu keep Noto Sans." radio>
@@ -342,7 +361,7 @@ const AppShell: React.FC = () => {
     const next = current.chapter + delta;
     if (next < FIRST_CHAPTER || next > LAST_CHAPTER) return;
     setRailDirection(delta < 0 ? "prev" : "next");
-    void loadChapter(next)
+    void loadReader(next)
       .then((loaded) => {
         const live = routeRef.current;
         if (live.name !== "verse" || live.chapter !== current.chapter) return;
