@@ -3006,6 +3006,15 @@ body::before {
     box-shadow: none;
   }
 
+  /* Same for a search field: the wrapper takes the focus state
+     (.nav-search:focus-within / .search-field:focus-within), so the bare input
+     inside it must not draw a second ring. At a 3px offset with a 5px halo
+     around a 19px-tall input, the glow is larger than the control it marks. */
+  .search-input:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
   .palette-list {
     max-height: calc(70vh - 64px);
     overflow-y: auto;
