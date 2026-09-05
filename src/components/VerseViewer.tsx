@@ -60,18 +60,6 @@ const COMMENTARY_LABEL: Record<Language, string> = { en: "Commentary", kn: "\u0c
 const WORD_MEANINGS_LABEL = "Word meanings";
 const SECTION_LANG: Record<Language, string> = { en: "en", kn: "kn", te: "te" };
 
-/* Commentary arrives as one string with blank lines between paragraphs; a
-   single <p> would collapse them into a wall. */
-const Prose: React.FC<{ text: string; lang: string }> = ({ text, lang }) => (
-  <>
-    {text.split(/\n{2,}/).map((para, i) => (
-      <p key={i} className="verse-section-content" lang={lang}>
-        {para}
-      </p>
-    ))}
-  </>
-);
-
 const verseDomId = (chapter: number, verse: number): string => `c${chapter}v${verse}`;
 
 /** Which way the rail should slide. Written before the navigation, because the
@@ -201,7 +189,9 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
           <h3 className="verse-pane-label" lang={SECTION_LANG[language]}>
             {COMMENTARY_LABEL[language]}
           </h3>
-          <Prose text={commentary.text} lang={commentary.lang} />
+          <p className="verse-section-content" lang={commentary.lang}>
+            {commentary.text}
+          </p>
           {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
         </div>
       ) : panes ? null : (
@@ -225,7 +215,9 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
             ) : (
               commentary && (
                 <>
-                  <Prose text={commentary.text} lang={commentary.lang} />
+                  <p className="verse-section-content" lang={commentary.lang}>
+            {commentary.text}
+          </p>
                   {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
                 </>
               )

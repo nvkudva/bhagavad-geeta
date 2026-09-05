@@ -1736,14 +1736,12 @@ body::before {
   text-align: left;
 }
 
-/* Long commentary ships as several paragraphs; they need air between them. */
-.verse-section-content + .verse-section-content {
-  margin-top: var(--sp-3);
-}
-
 /* The commentary and the word glosses are reference prose, not the verse: they
    stay plain ink, or the whole card turns into an effect. */
 .commentary .verse-section-content {
+  /* The blank lines the corpus carries between paragraphs are the paragraphing:
+     one text node, honoured rather than collapsed. */
+  white-space: pre-line;
   background-image: none;
   /* Not just the image: background-clip:text suppresses the normal text fill in
      Blink even with no gradient behind it, so the clip has to go back too. */
