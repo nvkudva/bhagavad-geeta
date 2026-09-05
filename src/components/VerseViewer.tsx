@@ -29,6 +29,13 @@ interface VerseViewerProps {
  *  Latin prose would be painted in an Indic face at Indic line-height. */
 type Tagged = { text: string; lang: "sa" | "kn" | "te" | "en"; fellBack: boolean };
 
+/* Every line of scripture closes with its own number between double dandas —
+   "।।2.13।।" in Devanagari, "|| ೧೩ ||" in the Kannada and Telugu settings of the
+   same text. The heading above the verse already says which verse this is, so
+   in the reading view the colophon is noise. It stays in the corpus: search and
+   the word-gloss import both key off it. */
+const stripVerseNumber = (text: string): string => text.replace(/\s*(?:।।|॥|\|\|)[\s.\d\u0966-\u096f\u0c66-\u0c6f\u0ce6-\u0cef]+(?:।।|॥|\|\|)\s*$/u, "");
+
 const pick = (language: Language, english: string | undefined, kannada: string | undefined, telugu: string | undefined, englishLang: "sa" | "en"): Tagged | null => {
   if (language === "kn" && kannada) return { text: kannada, lang: "kn", fellBack: false };
   if (language === "te" && telugu) return { text: telugu, lang: "te", fellBack: false };
@@ -176,7 +183,7 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
           <p className="verse-text" lang={scripture.lang}>
             {/* The corpus separates pada with blank lines; under pre-wrap those
                 render as a gap mid-verse. Collapse to a single line break. */}
-            {scripture.text.replace(/\n\s*\n/g, "\n").trim()}
+            {stripVerseNumber(scripture.text.replace(/\n\s*\n/g, "\n").trim())}
           </p>
         </div>
       )}
