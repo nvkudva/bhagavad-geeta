@@ -119,8 +119,10 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
   const scripture = pick(language, verse.text, verse.text_kannada, verse.text_telugu, "sa") as Tagged;
   const translation = pick(language, verse.translation_english, verse.translation_kannada, verse.translation_telugu, "en") as Tagged;
   const commentary = sections.commentary ? pick(language, verse.commentary_english, verse.context_kannada, verse.context_telugu, "en") : null;
-  // Word-by-word glosses are English only; there is no Kannada or Telugu set.
-  const wordMeanings = sections.words && language === "en" ? verse.context_english : undefined;
+  // There is no Kannada or Telugu gloss set, and the panel is worth more in
+  // English than it is missing: the list is tagged `lang="en"` and shown in
+  // every reading language.
+  const wordMeanings = sections.words ? verse.context_english : undefined;
   const [tab, setTab] = useState<"words" | "commentary">(commentary ? "commentary" : "words");
   const translationSource = language === "te" && verse.translation_telugu_machine ? TELUGU_COMPOSED : TRANSLATION_SOURCE[language];
   /* "term—gloss; term—gloss" from the source. Split at the FIRST em dash only:
@@ -414,14 +416,16 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
     // flush against the bar and eat the gutter above it. Always instant: a
     // smooth scroll lands late enough to read as lag.
     window.scrollTo({ top: 0, behavior: "auto" });
-    // The cut that leaves is softened by a fade rather than by animating the
-    // scroll: the destination resolves in place, so nothing travels. Any fade
-    // still running is cancelled first, so holding J is one steady dissolve
-    // rather than a stack of them beating against each other.
+    // The cut that leaves is softened by a dissolve rather than by animating the
+    // scroll: the destination resolves in place, so nothing travels. Opacity
+    // alone at 160ms read as a flicker, not a blend — the card comes in out of
+    // focus and settles, which is long enough to see and short enough to hold J
+    // through. Any dissolve still running is cancelled first, so holding J is
+    // one steady blend rather than a stack of them beating against each other.
     const column = columnRef.current;
     if (column && !reducedMotion()) {
       for (const running of column.getAnimations()) running.cancel();
-      column.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: "cubic-bezier(0.25, 0.1, 0.25, 1)" });
+      column.animate([{ opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)" }], { duration: 260, easing: "cubic-bezier(0.25, 0.1, 0.25, 1)" });
     }
   }, [wide, chapter, count, targetVerse, targetNonce]);
 
