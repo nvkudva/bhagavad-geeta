@@ -138,7 +138,8 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
   );
 
   return (
-    <article className="verse-block" id={verseDomId(chapter, verse.verse_number)} data-verse={verse.verse_number}>
+    <article className="verse-row" id={verseDomId(chapter, verse.verse_number)} data-verse={verse.verse_number}>
+      <div className="verse-block">
       <div className="verse-viewer-title-wrapper">
         <h2 className="verse-viewer-title">Verse {verse.verse_number}</h2>
         <SaveButton chapter={chapter} verse={verse.verse_number} />
@@ -181,29 +182,17 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
           side they were 326px columns — 32 characters of commentary, which is
           below any prose floor. Page length is nearly free with a wheel and a
           sticky rail; measure is not. */}
-      {panes && (wordMeanings || commentary) ? (
-        <>
-          {glossList && (
-            <div className="verse-section-card commentary">
-              <h3 className="verse-pane-label" lang="en">
-                {WORD_MEANINGS_LABEL}
-              </h3>
-              {glossList}
-            </div>
-          )}
-          {commentary && (
-            <div className="verse-section-card commentary">
-              <h3 className="verse-pane-label" lang={SECTION_LANG[language]}>
-                {COMMENTARY_LABEL[language]}
-              </h3>
-              <p className="verse-section-content" lang={commentary.lang}>
-                {commentary.text}
-              </p>
-              {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
-            </div>
-          )}
-        </>
-      ) : (
+      {panes && commentary ? (
+        <div className="verse-section-card commentary">
+          <h3 className="verse-pane-label" lang={SECTION_LANG[language]}>
+            {COMMENTARY_LABEL[language]}
+          </h3>
+          <p className="verse-section-content" lang={commentary.lang}>
+            {commentary.text}
+          </p>
+          {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
+        </div>
+      ) : panes ? null : (
         (wordMeanings || commentary) && (
           <div className="verse-section-card commentary">
             <div className="verse-tabs" role="tablist">
@@ -233,6 +222,19 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
             )}
           </div>
         )
+      )}
+      </div>
+
+      {/* Beside the card, not in it: the glosses are a lookup column the eye
+          leaves the verse for and comes back from, and inside the card they
+          pushed the next verse a screenful down. */}
+      {panes && glossList && (
+        <aside className="verse-glosses-aside" aria-label={`Word meanings for verse ${verse.verse_number}`}>
+          <h3 className="verse-pane-label" lang="en">
+            {WORD_MEANINGS_LABEL}
+          </h3>
+          {glossList}
+        </aside>
       )}
     </article>
   );
@@ -464,7 +466,7 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
       { rootMargin: "-40% 0px -55% 0px", threshold: 0 },
     );
 
-    for (const block of column.querySelectorAll(".verse-block")) observer.observe(block);
+    for (const block of column.querySelectorAll(".verse-row")) observer.observe(block);
     return () => observer.disconnect();
   }, [wide, chapter, count]);
 

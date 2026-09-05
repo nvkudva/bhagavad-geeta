@@ -2317,9 +2317,9 @@ body::before {
 
     --fs-verse: calc(1.8125rem * var(--reading-scale)); /* 29px — the sloka is the point */
     --fs-translit: calc(1.0625rem * var(--reading-scale)); /* 17px */
-    --fs-trans: calc(1.375rem * var(--reading-scale)); /* 22px — primary reading size */
-    --fs-comment: calc(1.25rem * var(--reading-scale)); /* 20px */
-    --fs-gloss: calc(1.125rem * var(--reading-scale)); /* 18px */
+    --fs-trans: calc(1.25rem * var(--reading-scale)); /* 20px — primary reading size */
+    --fs-comment: calc(1.125rem * var(--reading-scale)); /* 18px */
+    --fs-gloss: calc(0.9375rem * var(--reading-scale)); /* 15px — a lookup column, not prose */
 
     /* The pager sits on --sp-6 here, not on the home indicator. */
     --reader-h: calc(100dvh - var(--nav-total) - var(--pager-h) - var(--sp-6) - 2 * var(--gutter));
@@ -2542,6 +2542,10 @@ body::before {
      arrive. A chapter is 78 cards at most, which is cheap next to that. */
   .verse-column .verse-block {
     min-height: 0;
+  }
+  /* The anchor is the row, not the card: the row is what carries the verse id
+     now that the glosses sit beside the card. */
+  .verse-column .verse-row {
     scroll-margin-top: calc(var(--nav-total) + var(--sp-6));
   }
 
@@ -3193,7 +3197,9 @@ body::before {
     /* Only the gloss band spends the extra width: --measure-script,
        --measure-read and --measure-prose are unchanged, so the sloka, the
        translation and the commentary keep the measure they were tuned at. */
-    --measure-wide: 54rem;
+    --measure-wide: 46rem;
+    /* The gloss sidebar's own track, beside the card rather than inside it. */
+    --gloss-w: 15rem;
 
     --fs-verse: calc(2.125rem * var(--reading-scale));
     --lh-indic: 1.52;
@@ -3249,7 +3255,7 @@ body::before {
        card, which the gloss band needs — at the old 46rem its two columns were
        326px and the median gloss row wrapped every time. minmax(0, …) lets the
        card give the width back at 1280 rather than needing a third breakpoint. */
-    grid-template-columns: 14rem minmax(0, var(--measure-wide));
+    grid-template-columns: 14rem minmax(0, calc(var(--measure-wide) + var(--sp-6) + var(--gloss-w)));
     gap: var(--sp-10);
     /* Anchored to the sidebar, not centred in the space left over by it: the
        rail is chrome for the reading column and reads as detached when it
@@ -3440,18 +3446,30 @@ body::before {
     display: none;
   }
 
-  /* The gloss band is a reference block, not a ladder. Two columns only once
-     there are enough rows to fill them; down-then-across, which preserves the
-     sloka's word order — the only lookup key the reader has. */
-  .verse-glosses {
-    column-gap: var(--sp-8);
-    column-rule: 1px solid var(--separator);
+  /* The verse is a row: the reading card, and the glosses beside it. */
+  .verse-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--gloss-w);
+    column-gap: var(--sp-6);
+    align-items: start;
   }
-  .verse-glosses:has(li:nth-child(7)) {
-    columns: 2;
+  .verse-row:not(:has(.verse-glosses-aside)) {
+    grid-template-columns: minmax(0, 1fr);
   }
+
+  /* Its own panel, sticky to the top of the card it belongs to, so a long
+     commentary does not leave the glosses stranded at the top of a tall row. */
+  .verse-glosses-aside {
+    position: sticky;
+    top: calc(var(--rail-top) + var(--sp-2));
+    padding: var(--sp-5);
+    background: var(--well);
+    border: 1px solid var(--well-border);
+    border-radius: var(--r-lg);
+  }
+
+  /* One column: the panel is 240px, and two of them would be four words wide. */
   .verse-glosses li {
-    break-inside: avoid;
     /* A hanging indent, so a wrapped gloss tucks under itself and the terms
        keep one hard left edge. Flush left, not centred: the term is the scan
        target, and centring gives every one of them a different x. */
@@ -3462,23 +3480,24 @@ body::before {
     margin-top: var(--sp-2);
   }
 
-  /* Value and weight, not hue. Gold is --ramp-verse, which is background-clip
-     text and, in the light appearance, brown (#3a2706) — sixteen muddy runs a
-     verse, and it would spend the one mark that means "this is the scripture".
-     --accent is the interactive mark, so sixteen static terms in it read as
-     sixteen links directly under an accent label. */
+  /* The scripture's own colour, taken as the solid --ramp-verse-fallback
+     rather than the gradient: background-clip on sixteen short runs is sixteen
+     clipped paints and, in the light appearance, reads as muddy brown streaks.
+     The fallback is a flat #f0cd7a on dark and #6b4a12 on light, both of which
+     clear 7:1 on the well, and both of which are recognisably the sloka's. */
   .verse-gloss-term {
-    color: var(--ink-1);
+    color: var(--ramp-verse-fallback);
     font-weight: var(--fw-semibold);
   }
+  /* --ink-3, not --ink-4: the separator is punctuation, but at --ink-4 it is
+     2.65:1 on the light panel, which is not legible so much as implied. */
   .verse-gloss-sep {
     color: var(--ink-3);
   }
 
   /* The card is wider than the measure its prose is capped at, so the leftover
      is symmetric padding rather than a lopsided dead edge inside the well. */
-  .verse-section-content,
-  .verse-glosses {
+  .verse-section-content {
     margin-inline: auto;
   }
 
