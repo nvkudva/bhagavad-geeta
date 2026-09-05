@@ -3238,7 +3238,9 @@ body::before {
 
   /* ------------------------------------------------------- two-pane -----*/
   :root {
-    --rail-top: calc(var(--nav-total) + var(--sp-6) + var(--gutter));
+    /* Under the bar with one gutter of air, and no more: the rail is chrome,
+       so it should meet the bar rather than float a screenful below it. */
+    --rail-top: calc(var(--nav-total) + var(--sp-4));
   }
 
   .verse-viewer-container {
@@ -3249,7 +3251,14 @@ body::before {
        card give the width back at 1280 rather than needing a third breakpoint. */
     grid-template-columns: 14rem minmax(0, var(--measure-wide));
     gap: var(--sp-10);
-    justify-content: center;
+    /* Anchored to the sidebar, not centred in the space left over by it: the
+       rail is chrome for the reading column and reads as detached when it
+       floats a hundred pixels off the sidebar it sits beside. */
+    justify-content: start;
+    /* Both edges, not just the leading one: .app-main carries no inline
+       padding, so without the trailing value the reading card sits flush
+       against the window edge once the tracks fill the width. */
+    padding-inline: var(--sp-4);
     max-width: none;
   }
 

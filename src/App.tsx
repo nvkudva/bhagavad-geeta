@@ -11,7 +11,7 @@ import { Sidebar, TabBar } from "./components/TabBar";
 import { VerseOfMoment } from "./components/VerseOfMoment";
 import { setRailDirection, VerseViewer } from "./components/VerseViewer";
 import { toggleBookmark } from "./lib/bookmarks";
-import { chapterName, getChapterMeta, getChapters, loadChapter, peekChapter } from "./lib/gita";
+import { chapterName, getChapterMeta, getChapters, loadChapter, peekChapter, prefetchChapter } from "./lib/gita";
 import type { Language, Verse } from "./lib/gita.types";
 import type { KeyActions } from "./lib/keys";
 import { installKeys } from "./lib/keys";
@@ -43,6 +43,11 @@ const Home: React.FC<{ language: Language }> = ({ language }) => {
 const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }) => {
   const { language } = useSettings();
   const [, onChapterLoaded] = useReducer((n: number) => n + 1, 0);
+  /** The chapter on screen, readable from a promise callback. */
+  const liveChapter = useRef(chapter);
+  useEffect(() => {
+    liveChapter.current = chapter;
+  }, [chapter]);
 
   // Sync read of the resident chapter; the effect only wakes the component once a
   // cold chapter has arrived, so nothing is set synchronously during an effect.
@@ -62,6 +67,21 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
     };
   }, [chapter]);
 
+  /* Warm the neighbours once this chapter is up. Crossing a chapter boundary
+     waits for the destination's data — otherwise the transition captures the
+     old chapter against an empty one and the real verses arrive after it, which
+     is the flicker — so the point of this is that the wait is normally zero. */
+  useEffect(() => {
+    if (verses.length === 0) return;
+    const id = requestIdleCallback?.(() => {
+      if (chapter > FIRST_CHAPTER) prefetchChapter(chapter - 1);
+      if (chapter < LAST_CHAPTER) prefetchChapter(chapter + 1);
+    });
+    return () => {
+      if (id !== undefined) cancelIdleCallback?.(id);
+    };
+  }, [chapter, verses.length]);
+
   const index = verses.findIndex((v) => v.verse_number === verse);
 
   // A deep link to a verse number this chapter does not have lands on the nearest one.
@@ -71,13 +91,23 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
     navigate({ name: "verse", chapter, verse: nearest.verse_number }, { replace: true, scroll: "preserve" });
   }, [verses, index, chapter, verse]);
 
-  // The previous chapter's last verse number, best-effort: the resident array is
-  // authoritative, metadata is the fallback, and the Reader clamps to the nearest
-  // real verse once that chapter arrives.
-  const lastVerseOf = (id: number): number => {
-    const resident = peekChapter(id);
-    if (resident && resident.length > 0) return resident[resident.length - 1].verse_number;
-    return getChapterMeta(id)?.verses_count ?? 1;
+  /* Crossing a chapter boundary waits for the destination's verses. The view
+     transition commits synchronously, so navigating first would capture the old
+     chapter against an empty reader and drop the real verses in afterwards,
+     unanimated — the flicker. Waiting also makes "the last verse" exact
+     instead of a guess from the chapter metadata. Neighbours are prefetched
+     above, so this resolves in a microtask in the ordinary case. */
+  const crossToChapter = (id: number, at: "first" | "last"): void => {
+    setRailDirection(id < chapter ? "prev" : "next");
+    loadChapter(id)
+      .then((loaded) => {
+        // A second crossing while this one was in flight owns the outcome.
+        if (liveChapter.current !== chapter) return;
+        const target = at === "last" && loaded.length > 0 ? loaded[loaded.length - 1].verse_number : 1;
+        liveChapter.current = id;
+        navigate({ name: "verse", chapter: id, verse: target }, { scroll: "preserve" });
+      })
+      .catch(() => undefined);
   };
 
   if (!meta) return <Home language={language} />;
@@ -94,10 +124,10 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
       // reader is about to perform itself.
       onGoToVerse={(next) => navigate({ name: "verse", chapter, verse: next }, { scroll: "preserve" })}
       onPrevChapter={() => {
-        if (chapter > FIRST_CHAPTER) navigate({ name: "verse", chapter: chapter - 1, verse: lastVerseOf(chapter - 1) }, { scroll: "preserve" });
+        if (chapter > FIRST_CHAPTER) crossToChapter(chapter - 1, "last");
       }}
       onNextChapter={() => {
-        if (chapter < LAST_CHAPTER) navigate({ name: "verse", chapter: chapter + 1, verse: 1 }, { scroll: "preserve" });
+        if (chapter < LAST_CHAPTER) crossToChapter(chapter + 1, "first");
       }}
       hasPrevChapter={chapter > FIRST_CHAPTER}
       hasNextChapter={chapter < LAST_CHAPTER}
@@ -306,22 +336,28 @@ const AppShell: React.FC = () => {
     navigate(to, { scroll: "preserve" });
   }, []);
 
+  /* Same contract as the rail's chapter pills: wait for the destination's
+     verses so the view transition has something real to cross-fade to, and so
+     "the last verse" is exact rather than guessed. */
   const chapterStep = useCallback((delta: number) => {
     const current = routeRef.current;
     if (current.name !== "verse") return;
     const next = current.chapter + delta;
     if (next < FIRST_CHAPTER || next > LAST_CHAPTER) return;
-    const resident = peekChapter(next);
-    const verse = delta < 0 && resident && resident.length > 0 ? resident[resident.length - 1].verse_number : 1;
     setRailDirection(delta < 0 ? "prev" : "next");
-    const to: Route = { name: "verse", chapter: next, verse };
-    routeRef.current = to;
-    /* "preserve", like the rail's own chapter steps: the reader positions
-       itself on the target verse in a layout effect, and a parent's layout
-       effect runs after the child's — so a scroll-to-top here lands on the
-       verse and is then dragged back, leaving the URL on 3.43 and the page on
-       3.1. */
-    navigate(to, { scroll: "preserve" });
+    void loadChapter(next)
+      .then((loaded) => {
+        const live = routeRef.current;
+        if (live.name !== "verse" || live.chapter !== current.chapter) return;
+        const verse = delta < 0 && loaded.length > 0 ? loaded[loaded.length - 1].verse_number : 1;
+        const to: Route = { name: "verse", chapter: next, verse };
+        routeRef.current = to;
+        /* "preserve": the reader positions itself on the target verse in a
+           layout effect, and a parent's layout effect runs after the child's,
+           so a scroll-to-top here would land on the verse and be dragged back. */
+        navigate(to, { scroll: "preserve" });
+      })
+      .catch(() => undefined);
   }, []);
 
   const actions = useCallback(
