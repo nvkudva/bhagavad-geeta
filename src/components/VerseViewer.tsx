@@ -31,10 +31,11 @@ type Tagged = { text: string; lang: "sa" | "kn" | "te" | "en"; fellBack: boolean
 
 /* Every line of scripture closes with its own number between double dandas —
    "।।2.13।।" in Devanagari, "|| ೧೩ ||" in the Kannada and Telugu settings of the
-   same text. The heading above the verse already says which verse this is, so
-   in the reading view the colophon is noise. It stays in the corpus: search and
-   the word-gloss import both key off it. */
-const stripVerseNumber = (text: string): string => text.replace(/\s*(?:।।|॥|\|\|)[\s.\d\u0966-\u096f\u0c66-\u0c6f\u0ce6-\u0cef]+(?:।।|॥|\|\|)\s*$/u, "");
+   same text. The heading above the verse already says which verse this is, so the
+   number and the pair that closes it are noise in the reading view. The opening
+   danda stays: it is the sentence's full stop, not part of the number. The corpus
+   is untouched — search and the word-gloss import both key off the number. */
+const stripVerseNumber = (text: string): string => text.replace(/(।।|॥|\|\|)[\s.\d\u0966-\u096f\u0c66-\u0c6f\u0ce6-\u0cef]+(?:।।|॥|\|\|)\s*$/u, "$1");
 
 /* A danda is a full stop, and a full stop does not start a line. The corpus
    spaces it off the last word, so on a narrow column the pada wraps and leaves
