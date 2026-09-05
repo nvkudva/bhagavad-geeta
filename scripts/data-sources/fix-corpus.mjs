@@ -88,6 +88,29 @@ const HAND = {
     to: () => "anādi-madhyāntam ananta-vīryam\nananta-bāhuṁ śhaśhi-sūrya-netram\npaśhyāmi tvāṁ dīpta-hutāśha-vaktraṁ\nsva-tejasā viśhvam idaṁ tapantam",
   },
 };
+/* Commentary that runs straight on from the translation with no bhāṣya heading
+ * for the parser to find, so it is cut by the phrase it starts at. The tail is
+ * not discarded — it is commentary, and it moves to context_telugu. */
+const BLEED = {
+  /* "…అనిపించుకాడు" then, with no space at all, a page of commentary. */
+  "2.55": { at: "ఇక్కడమనస్సు", tail: (t) => t.replace(/^ఇక్కడమనస్సు/, "ఇక్కడ మనస్సు") },
+  /* Ends on a citation of a Brahmam-garu poem, which is not the verse. */
+  "15.16": { at: "దీనికి ఉదాహరణ" },
+};
+
+/* Verses te.wikisource left absent or unfinished. Composed from the Sanskrit in
+ * the register of the verses either side of them, and flagged per-verse so the
+ * reader is told these three are not the Wikisource translation. */
+const COMPOSED = {
+  /* Absent: the page carried only a bhāṣya, which is in context_telugu. */
+  "1.13": "అప్పుడు శంఖాలు, భేరులు, పణవాలు, ఆనకాలు, గోముఖాలు ఒక్కసారిగా మోగాయి. ఆ శబ్దం మిక్కిలి భయంకరంగా ఉంది.",
+  /* Had only the first of the verse's four clauses. */
+  "2.23": "దీనిని శస్త్రాలు ఛేదించలేవు, అగ్ని దహించలేదు, నీరు తడపలేదు, గాలి ఎండించలేదు.",
+  /* Had 6 of the 11 qualities; restored in the Sanskrit's own order. */
+  "16.2":
+    "అహింస, సత్యం, కోపము లేకపోవడం, త్యాగం, శాంతి, చాడీలు చెప్పకపోవడం, ప్రాణులయందు దయ, లోభం లేకపోవడం, మృదుస్వభావం, సిగ్గు, చాపల్యం లేకపోవడం.",
+};
+
 /* Two `qu`-deleted words the mechanical table cannot reach: the residue is not
  * a clean stem, so the target is read off the sentence rather than the rule. */
 const HAND_WORDS = [
@@ -205,6 +228,26 @@ for (const v of verses) {
     bump("hand-edit");
     notes.push(`${id}: hand edit to ${h.field}`);
   }
+  const bleed = BLEED[id];
+  if (bleed && typeof v.translation_telugu === "string" && v.translation_telugu.includes(bleed.at)) {
+    const cut = v.translation_telugu.indexOf(bleed.at);
+    const kept = v.translation_telugu.slice(0, cut).trim();
+    const raw = v.translation_telugu.slice(cut).trim();
+    v.translation_telugu = /[.?!]$/.test(kept) ? kept : `${kept}.`;
+    const moved = bleed.tail ? bleed.tail(raw) : raw;
+    v.context_telugu = v.context_telugu ? `${moved} ${v.context_telugu}` : moved;
+    bump("telugu-commentary-bleed-moved");
+    notes.push(`${id}: commentary split out of translation_telugu into context_telugu`);
+  }
+
+  const composed = COMPOSED[id];
+  if (composed && v.translation_telugu !== composed) {
+    v.translation_telugu = composed;
+    v.translation_telugu_machine = true;
+    bump("telugu-composed");
+    notes.push(`${id}: translation_telugu composed (machine-assisted)`);
+  }
+
   if (typeof v.commentary_english === "string") {
     for (const [re, to] of HAND_WORDS) {
       if (re.test(v.commentary_english)) { v.commentary_english = v.commentary_english.replace(re, to); bump("hand-edit-word"); }

@@ -21,6 +21,9 @@ const VERSE_KEYS = [
   "translation_english",
   "translation_kannada",
   "translation_telugu",
+  // Three Telugu verses are composed rather than imported; the reader is told
+  // so per verse, which is why this one field ships and the source strings do not.
+  "translation_telugu_machine",
   "context_english",
   "commentary_english",
   "commentary_author",

@@ -104,9 +104,15 @@ a to-do list — investigate only if a count moves.
   10.12–13 — where the source edition translates several ślokas as one unit and
   repeats that unit under each id. Correct, but the reader is not told; marking
   it needs a schema field.
-- **1.13 has no Telugu translation.** te.wikisource carried only a bhāṣya for
-  it, which now sits in `context_telugu`. The reader gets the English with the
-  "available in English only" note. Composing a translation would be fabrication.
+- **3 Telugu verses are composed, not imported.** te.wikisource left 1.13 with
+  no translation at all (only a bhāṣya, now in `context_telugu`), 2.23 with one
+  of its four clauses, and 16.2 with 6 of its 11 qualities. All three were
+  composed from the Sanskrit in the register of the verses either side of them,
+  and carry `translation_telugu_machine: true` — the one provenance field that
+  ships, so the reader sees "యంత్రసహాయంతో అనువదించబడింది" on those three instead
+  of the Wikisource credit. 2.55 and 15.16 had commentary running straight on
+  from the translation with no bhāṣya heading for the parser to find; the tail
+  was moved to `context_telugu` rather than discarded.
 - **13.1 `translation_english`** is an editorial note — the English edition
   omits the verse that opens this recension's chapter 13. Left as it stands,
   because it is honest about itself.

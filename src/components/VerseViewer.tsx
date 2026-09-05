@@ -36,13 +36,17 @@ const pick = (language: Language, english: string | undefined, kannada: string |
   return english ? { text: english, lang: englishLang, fellBack: language !== "en" } : null;
 };
 
-/* Where each translation comes from. Stated once here rather than shipped as a
-   per-verse field: it is the same sentence for all 701 verses, and the reader
+/* Where each translation comes from. Stated here rather than shipped as a
+   per-verse string: it is the same sentence for all 701 verses, and the reader
    is entitled to know that the Kannada is not a traditional rendering. */
 const TRANSLATION_SOURCE: Partial<Record<Language, string>> = {
   kn: "ಯಂತ್ರಸಹಾಯದಿಂದ ಅನುವಾದಿಸಲಾಗಿದೆ",
   te: "తెలుగు వికీసోర్స్ · CC BY-SA 4.0",
 };
+
+/* Three Telugu verses the source left absent or unfinished were composed
+   instead, so they cannot carry the Wikisource credit. */
+const TELUGU_COMPOSED = "యంత్రసహాయంతో అనువదించబడింది";
 
 /** Shown under an English section the reader did not ask for. */
 const ONLY_IN_ENGLISH: Record<Language, string> = {
@@ -98,6 +102,7 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
   // Word-by-word glosses are English only; there is no Kannada or Telugu set.
   const wordMeanings = sections.words && language === "en" ? verse.context_english : undefined;
   const [tab, setTab] = useState<"words" | "commentary">(commentary ? "commentary" : "words");
+  const translationSource = language === "te" && verse.translation_telugu_machine ? TELUGU_COMPOSED : TRANSLATION_SOURCE[language];
   // "term—gloss; term—gloss" from the source, split to one term per line.
   const glosses = wordMeanings
     ?.split(";")
@@ -139,9 +144,9 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
               {ONLY_IN_ENGLISH[language]}
             </p>
           ) : (
-            TRANSLATION_SOURCE[language] && (
+            translationSource && (
               <p className="verse-section-note" lang={SECTION_LANG[language]}>
-                {TRANSLATION_SOURCE[language]}
+                {translationSource}
               </p>
             )
           )}

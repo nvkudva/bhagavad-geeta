@@ -9,13 +9,16 @@ export interface Verse {
   text_telugu?: string; // 701/701
   transliteration: string; // 701/701
   translation_english: string; // 701/701
-  translation_kannada?: string; // 4/701
-  translation_telugu?: string; // 4/701
-  context_english?: string; // 701/701
-  commentary_english?: string; // 701/701 — Swami Sivananda, via vedicscriptures.github.io
+  translation_kannada?: string; // 701/701 — machine-assisted; see scripts/data-sources/README.md
+  translation_telugu?: string; // 701/701 — te.wikisource CC BY-SA 4.0, except the three below
+  /** Set on the three verses te.wikisource left absent or unfinished, which
+   *  were composed instead and so cannot carry the Wikisource credit. */
+  translation_telugu_machine?: boolean; // 3/701
+  context_english?: string; // 701/701 — word-by-word glosses
+  commentary_english?: string; // 631/701 — Swami Sivananda, via vedicscriptures.github.io
   commentary_author?: string;
   context_kannada?: string; // 4/701
-  context_telugu?: string; // 4/701
+  context_telugu?: string; // 22/701
 }
 
 export interface ChapterMeta {
