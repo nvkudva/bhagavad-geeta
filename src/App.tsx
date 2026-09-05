@@ -9,7 +9,7 @@ import { SavedScreen } from "./components/SavedScreen";
 import { SEARCH_PLACEHOLDER, SearchScreen } from "./components/SearchScreen";
 import { Sidebar, TabBar } from "./components/TabBar";
 import { VerseOfMoment } from "./components/VerseOfMoment";
-import { VerseViewer } from "./components/VerseViewer";
+import { setRailDirection, VerseViewer } from "./components/VerseViewer";
 import { toggleBookmark } from "./lib/bookmarks";
 import { chapterName, getChapterMeta, getChapters, loadChapter, peekChapter } from "./lib/gita";
 import type { Language, Verse } from "./lib/gita.types";
@@ -88,6 +88,7 @@ const Reader: React.FC<{ chapter: number; verse: number }> = ({ chapter, verse }
       verses={verses}
       targetVerse={verse}
       language={language}
+      chapterName={chapterName(chapter, language)}
       // "preserve" leaves pendingScroll null so the router's restoration layout
       // effect (which runs after this child's) does not clobber the scroll the
       // reader is about to perform itself.
@@ -312,6 +313,7 @@ const AppShell: React.FC = () => {
     if (next < FIRST_CHAPTER || next > LAST_CHAPTER) return;
     const resident = peekChapter(next);
     const verse = delta < 0 && resident && resident.length > 0 ? resident[resident.length - 1].verse_number : 1;
+    setRailDirection(delta < 0 ? "prev" : "next");
     const to: Route = { name: "verse", chapter: next, verse };
     routeRef.current = to;
     navigate(to);

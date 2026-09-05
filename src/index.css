@@ -3181,6 +3181,11 @@ body::before {
     --w-content: 76rem;
     --sidebar-w: 18rem;
 
+    /* Only the gloss band spends the extra width: --measure-script,
+       --measure-read and --measure-prose are unchanged, so the sloka, the
+       translation and the commentary keep the measure they were tuned at. */
+    --measure-wide: 54rem;
+
     --fs-verse: calc(2.125rem * var(--reading-scale));
     --lh-indic: 1.52;
     --lh-verse: 1.48;
@@ -3229,7 +3234,11 @@ body::before {
 
   .verse-viewer-container {
     display: grid;
-    grid-template-columns: 12rem minmax(0, var(--measure));
+    /* 14rem for the rail's five-column keypad; --measure-wide for the reading
+       card, which the gloss band needs — at the old 46rem its two columns were
+       326px and the median gloss row wrapped every time. minmax(0, …) lets the
+       card give the width back at 1280 rather than needing a third breakpoint. */
+    grid-template-columns: 14rem minmax(0, var(--measure-wide));
     gap: var(--sp-10);
     justify-content: center;
     max-width: none;
@@ -3244,7 +3253,12 @@ body::before {
   /* The index is a keypad, not a list: the whole chapter — 78 verses at the
      longest — fits the sticky box, so the rail has nothing to scroll and never
      moves under the pointer. */
+  /* The rail is one plate of glass with a keypad of numbers on it, not 78
+     cards: at 36px a card each, chapter 18 is 3200px of track in a box that is
+     at most 768px tall, and an index you have to scroll to reach verse 40 is
+     not an index. The card treatment goes on the plate instead. */
   .verse-rail {
+    --rail-gap: 6px;
     position: sticky;
     /* Exactly where the rail already sits at scroll 0 — the bar, the main
        column's inset and the container's own gutter. A sticky top any higher
@@ -3266,16 +3280,33 @@ body::before {
     display: none;
   }
 
-  .verse-rail-grid {
-    display: grid;
-    /* Auto-fill rather than a fixed count: the grid gets as narrow as it must
-       to keep the longest chapter inside the box at short window heights. */
-    grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
-    gap: 4px;
+  /* ---- header: the chapter, and the two steps either side of it ---- */
+  .verse-rail-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 56px;
+    padding: var(--sp-2);
+    background: var(--glass);
+    -webkit-backdrop-filter: var(--mat-blur-thin);
+    backdrop-filter: var(--mat-blur-thin);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-md);
+    box-shadow: inset 0 1px 0 var(--spec-top);
+    view-transition-name: rail-head;
   }
 
-  .verse-rail-label {
-    padding: 0 var(--sp-3) var(--sp-2);
+  .verse-rail-head-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    text-align: center;
+  }
+
+  .verse-rail-eyebrow {
     color: var(--ink-4);
     font-size: var(--fs-caption2);
     font-weight: var(--fw-semibold);
@@ -3283,15 +3314,92 @@ body::before {
     text-transform: uppercase;
   }
 
-  /* Numbers on a quiet grid, not a wall of boxes: at a glance the rail reads
-     as the shape of the chapter, and the only thing wearing a ground is the
-     verse being read. */
+  .verse-rail-name {
+    max-width: 100%;
+    color: var(--ink-2);
+    font-size: var(--fs-caption1);
+    font-weight: var(--fw-medium);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* The same round glass as the nav's back item. A bare chevron beside the
+     browser's own back button is ambiguous, so the tooltip names where it
+     goes rather than what it does. */
+  .verse-rail-step {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: var(--mat-chrome);
+    -webkit-backdrop-filter: var(--mat-blur-thin);
+    backdrop-filter: var(--mat-blur-thin);
+    border: 0.5px solid var(--mat-border);
+    border-radius: 50%;
+    box-shadow: inset 0 1px 0 var(--spec-top);
+    color: var(--accent);
+    cursor: pointer;
+  }
+
+  /* Kept mounted at either end of the book: unmounting reflows the header and
+     jumps the rail-head snapshot on the one navigation that is already moving. */
+  .verse-rail-step:disabled {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  /* ---- the keypad ---- */
+  .verse-rail-grid {
+    position: relative;
+    display: grid;
+    /* Five fixed columns, not auto-fill: a column count that changes with the
+       chapter's length destroys the positional memory that makes the rail
+       scannable. Rows of five put verse 40 at the end of row 8. */
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--rail-gap);
+    padding: var(--sp-2);
+    background: var(--glass);
+    -webkit-backdrop-filter: var(--mat-blur-thin);
+    backdrop-filter: var(--mat-blur-thin);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-md);
+    box-shadow: inset 0 1px 0 var(--spec-top);
+    view-transition-name: rail-body;
+  }
+
+  /* One ground that slides between cells, rather than a fill that teleports.
+     --accent-soft alone is nearly invisible on white, so the ring is what
+     actually carries the state in the light appearance. */
+  .verse-rail-thumb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--thumb-w, 0);
+    height: var(--thumb-h, 0);
+    border-radius: var(--r-sm);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent-line);
+    transform: translate(var(--thumb-x, 0), var(--thumb-y, 0));
+    transition: transform var(--dur-fast) var(--spring-gentle);
+    pointer-events: none;
+  }
+  .verse-rail-grid[data-thumb="false"] .verse-rail-thumb {
+    opacity: 0;
+  }
+  .verse-rail-grid[data-settled="false"] .verse-rail-thumb {
+    transition: none;
+  }
+
   .verse-rail-item {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 28px;
-    padding: 0 2px;
     border-radius: var(--r-sm);
     color: var(--ink-3);
     font-family: inherit;
@@ -3301,31 +3409,22 @@ body::before {
     cursor: pointer;
   }
 
+  /* Every tenth number one step darker: a free ruler for the eye. */
+  .verse-rail-item[data-decade] {
+    color: var(--ink-2);
+  }
+
+  /* The thumb owns the ground; the row only takes the colour and the weight. */
   .verse-rail-item[aria-current="true"] {
-    background: var(--accent-soft);
     color: var(--accent);
     font-weight: var(--fw-semibold);
   }
 
-  .verse-rail-chapter {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-2);
-    min-height: 30px;
-    padding: 0 var(--sp-3);
-    background: none;
-    border: 0;
-    border-radius: var(--r-sm);
-    color: var(--ink-2);
-    font-family: inherit;
-    font-size: var(--fs-caption1);
-    font-weight: var(--fw-medium);
-    text-align: left;
-    cursor: pointer;
-  }
-  .verse-rail-chapter:disabled {
-    opacity: 0.35;
-    pointer-events: none;
+  /* The 1280 focus ring's 3px offset and 5px glow bleed into the neighbouring
+     cells of a 6px-gap keypad. */
+  .verse-rail-item:focus-visible {
+    outline-offset: 1px;
+    box-shadow: none;
   }
 
   /* The rail is the pager now. */
@@ -3333,21 +3432,48 @@ body::before {
     display: none;
   }
 
-  /* Room for both, so the tab bar inside the commentary card is a phone
-     compromise the desktop does not have to make. */
-  .verse-panes {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-5);
-    align-items: start;
+  /* The gloss band is a reference block, not a ladder. Two columns only once
+     there are enough rows to fill them; down-then-across, which preserves the
+     sloka's word order — the only lookup key the reader has. */
+  .verse-glosses {
+    column-gap: var(--sp-8);
+    column-rule: 1px solid var(--separator);
   }
-  .verse-panes .verse-section-card.commentary {
-    margin-top: 0;
+  .verse-glosses:has(li:nth-child(7)) {
+    columns: 2;
   }
-  .verse-panes .commentary .verse-section-content,
-  .verse-panes .verse-glosses {
-    max-width: none;
+  .verse-glosses li {
+    break-inside: avoid;
+    /* A hanging indent, so a wrapped gloss tucks under itself and the terms
+       keep one hard left edge. Flush left, not centred: the term is the scan
+       target, and centring gives every one of them a different x. */
+    padding-left: var(--sp-4);
+    text-indent: calc(-1 * var(--sp-4));
   }
+  .verse-glosses li + li {
+    margin-top: var(--sp-2);
+  }
+
+  /* Value and weight, not hue. Gold is --ramp-verse, which is background-clip
+     text and, in the light appearance, brown (#3a2706) — sixteen muddy runs a
+     verse, and it would spend the one mark that means "this is the scripture".
+     --accent is the interactive mark, so sixteen static terms in it read as
+     sixteen links directly under an accent label. */
+  .verse-gloss-term {
+    color: var(--ink-1);
+    font-weight: var(--fw-semibold);
+  }
+  .verse-gloss-sep {
+    color: var(--ink-3);
+  }
+
+  /* The card is wider than the measure its prose is capped at, so the leftover
+     is symmetric padding rather than a lopsided dead edge inside the well. */
+  .verse-section-content,
+  .verse-glosses {
+    margin-inline: auto;
+  }
+
   .verse-pane-label {
     margin: 0 0 var(--sp-3);
     padding-bottom: var(--sp-2);
@@ -3391,5 +3517,104 @@ body::before {
 @keyframes desk-fade-in {
   from {
     opacity: 0;
+  }
+}
+
+/* At a short window chapter 18's sixteen rows do not fit the sticky box, so the
+   keypad tightens rather than the rail becoming a scroller. Below roughly a
+   660px viewport it does scroll, which is the honest fallback. */
+@media (min-width: 1280px) and (max-height: 820px) {
+  .verse-rail {
+    --rail-gap: 3px;
+  }
+  .verse-rail-item {
+    min-height: 26px;
+  }
+  .verse-rail-head {
+    min-height: 48px;
+  }
+}
+
+/* The chapter slide. Cross-chapter navigation already runs a view transition
+   and same-chapter navigation deliberately does not (see setRouteAnimated), so
+   naming the keypad is enough to make it slide exactly when the chapter
+   changes and never when the verse does. Twelve pixels, not a page: on a
+   224px column a full-width slide reads as a twitch, not a pager. The name
+   goes on the grid and the header, never on .verse-rail itself — a named
+   element is lifted into the snapshot layer, which would kill its sticky. */
+@media (min-width: 1280px) and (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(rail-body),
+  ::view-transition-group(rail-head) {
+    animation-duration: var(--dur-fast);
+  }
+  ::view-transition-old(rail-body),
+  ::view-transition-new(rail-body),
+  ::view-transition-old(rail-head),
+  ::view-transition-new(rail-head) {
+    animation-duration: var(--dur-fast);
+    animation-timing-function: var(--ease-out-ios);
+    mix-blend-mode: normal;
+  }
+
+  [data-rail-dir="next"]::view-transition-old(rail-body),
+  [data-rail-dir="next"]::view-transition-old(rail-head) {
+    animation-name: rail-out-left;
+  }
+  [data-rail-dir="next"]::view-transition-new(rail-body),
+  [data-rail-dir="next"]::view-transition-new(rail-head) {
+    animation-name: rail-in-right;
+  }
+  [data-rail-dir="prev"]::view-transition-old(rail-body),
+  [data-rail-dir="prev"]::view-transition-old(rail-head) {
+    animation-name: rail-out-right;
+  }
+  [data-rail-dir="prev"]::view-transition-new(rail-body),
+  [data-rail-dir="prev"]::view-transition-new(rail-head) {
+    animation-name: rail-in-left;
+  }
+}
+
+@keyframes rail-out-left {
+  to {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+@keyframes rail-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+@keyframes rail-out-right {
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+@keyframes rail-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+
+/* The thumb still moves under reduced motion — it just arrives. */
+@media (min-width: 1280px) and (prefers-reduced-motion: reduce) {
+  .verse-rail-thumb {
+    transition: none;
+  }
+}
+
+/* Pointer affordances for the rail. Kept out of the 900px hover block: none of
+   these selectors exists below 1280. */
+@media (min-width: 1280px) and (hover: hover) and (pointer: fine) {
+  .verse-rail-item:hover {
+    background: var(--glass-hover);
+    color: var(--ink-1);
+  }
+  .verse-rail-step:hover:not(:disabled) {
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
   }
 }

@@ -15,6 +15,8 @@ interface VerseViewerProps {
   /** The verse the URL points at: "render chapter n, paged to verse m". */
   targetVerse: number;
   language: Language;
+  /** The chapter's name in the reader's language, for the rail header. */
+  chapterName?: string;
   onGoToVerse: (verse: number) => void;
   onPrevChapter: () => void;
   onNextChapter: () => void;
@@ -60,6 +62,17 @@ const SECTION_LANG: Record<Language, string> = { en: "en", kn: "kn", te: "te" };
 
 const verseDomId = (chapter: number, verse: number): string => `c${chapter}v${verse}`;
 
+/** Which way the rail should slide. Written before the navigation, because the
+ *  view transition captures the old frame the moment `navigate` is called. */
+export const setRailDirection = (dir: "prev" | "next"): void => {
+  document.documentElement.dataset.railDir = dir;
+};
+
+const railStep = (go: () => void, dir: "prev" | "next"): void => {
+  setRailDirection(dir);
+  go();
+};
+
 /** Slides kept either side of the active verse. One: scroll-snap-stop makes a
  *  gesture reach exactly one neighbour, so that neighbour is always painted
  *  before the finger moves — and the track is only ever as tall as the tallest
@@ -98,11 +111,31 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
   const wordMeanings = sections.words && language === "en" ? verse.context_english : undefined;
   const [tab, setTab] = useState<"words" | "commentary">(commentary ? "commentary" : "words");
   const translationSource = language === "te" && verse.translation_telugu_machine ? TELUGU_COMPOSED : TRANSLATION_SOURCE[language];
-  // "term—gloss; term—gloss" from the source, split to one term per line.
+  /* "term—gloss; term—gloss" from the source. Split at the FIRST em dash only:
+     a gloss may contain one. The separator is chosen here rather than in CSS so
+     that a copied line carries a real character. */
   const glosses = wordMeanings
     ?.split(";")
-    .map((g) => g.trim().replace(/\s*—\s*/, ": "))
-    .filter(Boolean);
+    .map((g) => {
+      const [term, ...rest] = g.trim().split(/\s*—\s*/);
+      return { term, gloss: rest.join(" — ") };
+    })
+    .filter((g) => g.term);
+  const glossSep = panes ? " = " : ": ";
+
+  const glossList = glosses && (
+    <ul className="verse-glosses" lang="en">
+      {glosses.map(({ term, gloss }, i) => (
+        <li key={`${i}-${term}`}>
+          <span className="verse-gloss-term">{term}</span>
+          <span className="verse-gloss-sep" aria-hidden>
+            {glossSep}
+          </span>
+          {gloss}
+        </li>
+      ))}
+    </ul>
+  );
 
   return (
     <article className="verse-block" id={verseDomId(chapter, verse.verse_number)} data-verse={verse.verse_number}>
@@ -144,30 +177,32 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
         </div>
       )}
 
-      {/* At 1280 there is room for the commentary and the glosses at once, so
-          the tab bar — a phone compromise — is dropped and both are shown. */}
-      {panes && wordMeanings && commentary && glosses ? (
-        <div className="verse-panes">
-          <div className="verse-section-card commentary">
-            <h3 className="verse-pane-label" lang={SECTION_LANG[language]}>
-              {COMMENTARY_LABEL[language]}
-            </h3>
-            <p className="verse-section-content" lang={commentary.lang}>
-              {commentary.text}
-            </p>
-            {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
-          </div>
-          <div className="verse-section-card commentary">
-            <h3 className="verse-pane-label" lang="en">
-              {WORD_MEANINGS_LABEL}
-            </h3>
-            <ul className="verse-glosses" lang="en">
-              {glosses.map((g, i) => (
-                <li key={`${i}-${g}`}>{g}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
+      {/* At 1280 both bands run the full width of the card, stacked. Side by
+          side they were 326px columns — 32 characters of commentary, which is
+          below any prose floor. Page length is nearly free with a wheel and a
+          sticky rail; measure is not. */}
+      {panes && (wordMeanings || commentary) ? (
+        <>
+          {glossList && (
+            <div className="verse-section-card commentary">
+              <h3 className="verse-pane-label" lang="en">
+                {WORD_MEANINGS_LABEL}
+              </h3>
+              {glossList}
+            </div>
+          )}
+          {commentary && (
+            <div className="verse-section-card commentary">
+              <h3 className="verse-pane-label" lang={SECTION_LANG[language]}>
+                {COMMENTARY_LABEL[language]}
+              </h3>
+              <p className="verse-section-content" lang={commentary.lang}>
+                {commentary.text}
+              </p>
+              {commentary.lang === "en" && verse.commentary_author && <p className="verse-section-attribution">{verse.commentary_author}</p>}
+            </div>
+          )}
+        </>
       ) : (
         (wordMeanings || commentary) && (
           <div className="verse-section-card commentary">
@@ -177,19 +212,15 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
                   {COMMENTARY_LABEL[language]}
                 </button>
               )}
-              {wordMeanings && (
+              {glossList && (
                 <button type="button" role="tab" aria-selected={tab === "words"} className="verse-tab" onClick={() => setTab("words")} lang="en">
                   {WORD_MEANINGS_LABEL}
                 </button>
               )}
             </div>
 
-            {tab === "words" && glosses ? (
-              <ul className="verse-glosses" lang="en">
-                {glosses.map((g, i) => (
-                  <li key={`${i}-${g}`}>{g}</li>
-                ))}
-              </ul>
+            {tab === "words" && glossList ? (
+              glossList
             ) : (
               commentary && (
                 <>
@@ -214,12 +245,14 @@ VerseBlock.displayName = "VerseBlock";
  *  and the snap itself all run off the main thread — and prev/next is the same
  *  motion driven by scrollTo. Only WINDOW*2+1 slides are ever mounted; two flex
  *  spacers stand in for the rest so the scroll extent still spans the chapter. */
-export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targetVerse, language, onGoToVerse, onPrevChapter, onNextChapter, hasPrevChapter, hasNextChapter }) => {
+export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targetVerse, language, chapterName, onGoToVerse, onPrevChapter, onNextChapter, hasPrevChapter, hasNextChapter }) => {
   const { sections } = useSettings();
   const wide = useWide();
   const widePlus = useWidePlus();
   const trackRef = useRef<HTMLDivElement | null>(null);
   const columnRef = useRef<HTMLDivElement | null>(null);
+  const railRef = useRef<HTMLElement | null>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
   const activeSlideRef = useRef<HTMLDivElement | null>(null);
   /** The verse currently under the snap point. Mirrors `active` without the
    *  render lag, so the scroll listener can tell a settled page from a new one. */
@@ -385,6 +418,43 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
   // reading scroll, and an index taller than its box moves anyway the moment
   // the wheel passes over it.
 
+  /* The active-verse thumb is placed from the row's measured offsets rather
+     than from cell arithmetic, so it stays exact whatever the grid resolves the
+     cell width to, and it can transition between two positions instead of the
+     ground teleporting from cell to cell. */
+  const placedRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const grid = gridRef.current;
+    const row = grid?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (!grid) return;
+    grid.dataset.thumb = row ? "true" : "false";
+    if (!row) return;
+
+    // The first placement in a chapter is a cut, not a slide: on a deep link
+    // the thumb would otherwise travel the width of the keypad from its
+    // unplaced origin, and the transition swallows the placement entirely.
+    const settled = placedRef.current === chapter;
+    if (!settled) grid.dataset.settled = "false";
+
+    grid.style.setProperty("--thumb-x", `${row.offsetLeft}px`);
+    grid.style.setProperty("--thumb-y", `${row.offsetTop}px`);
+    grid.style.setProperty("--thumb-w", `${row.offsetWidth}px`);
+    grid.style.setProperty("--thumb-h", `${row.offsetHeight}px`);
+
+    if (!settled) {
+      placedRef.current = chapter;
+      // Flush the untransitioned placement before the transition is allowed back.
+      void grid.offsetWidth;
+      grid.dataset.settled = "true";
+    }
+  }, [active, count, chapter, widePlus]);
+
+  // A new chapter is a new list, not a moving cursor: the one scroll the rail
+  // is allowed to perform on its own.
+  useLayoutEffect(() => {
+    if (widePlus && railRef.current) railRef.current.scrollTop = 0;
+  }, [widePlus, chapter]);
+
   // Column -> route. The band is the middle of the viewport: a verse owns the
   // URL while its top third is in the reading position.
   useLayoutEffect(() => {
@@ -437,18 +507,41 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
     return (
       <div className="verse-viewer-container">
         {widePlus && count > 0 && (
-          <nav className="verse-rail" aria-label={`Verses in chapter ${chapter}`}>
-            <button type="button" className="verse-rail-chapter pressable" onClick={onPrevChapter} disabled={!hasPrevChapter}>
-              <ChevronLeft size={14} aria-hidden /> Previous chapter
-            </button>
-            <div className="verse-rail-label">Chapter {chapter}</div>
-            <div className="verse-rail-grid">
+          <nav className="verse-rail" aria-label={`Verses in chapter ${chapter}`} ref={railRef}>
+            <div className="verse-rail-head">
+              <button
+                type="button"
+                className="verse-rail-step pressable"
+                onClick={() => railStep(onPrevChapter, "prev")}
+                disabled={!hasPrevChapter}
+                data-tip={`Chapter ${chapter - 1}`}
+                aria-label={`Chapter ${chapter - 1}`}>
+                <ChevronLeft size={14} strokeWidth={2.4} aria-hidden />
+              </button>
+              <span className="verse-rail-head-text">
+                <span className="verse-rail-eyebrow">Chapter {chapter}</span>
+                {chapterName && <span className="verse-rail-name">{chapterName}</span>}
+              </span>
+              <button
+                type="button"
+                className="verse-rail-step pressable"
+                onClick={() => railStep(onNextChapter, "next")}
+                disabled={!hasNextChapter}
+                data-tip={`Chapter ${chapter + 1}`}
+                aria-label={`Chapter ${chapter + 1}`}>
+                <ChevronRight size={14} strokeWidth={2.4} aria-hidden />
+              </button>
+            </div>
+
+            <div className="verse-rail-grid" ref={gridRef}>
+              <span className="verse-rail-thumb" aria-hidden />
               {verses.map((v) => (
                 <a
                   key={v.verse_number}
                   href={`#${verseDomId(chapter, v.verse_number)}`}
                   className="verse-rail-item"
                   aria-label={`Verse ${v.verse_number}`}
+                  data-decade={v.verse_number % 10 === 0 ? "" : undefined}
                   aria-current={v.verse_number === active ? "true" : undefined}
                   onClick={(event) => {
                     event.preventDefault();
@@ -458,9 +551,6 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
                 </a>
               ))}
             </div>
-            <button type="button" className="verse-rail-chapter pressable" onClick={onNextChapter} disabled={!hasNextChapter}>
-              Next chapter <ChevronRight size={14} aria-hidden />
-            </button>
           </nav>
         )}
 
