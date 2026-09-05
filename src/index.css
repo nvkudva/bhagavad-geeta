@@ -3198,7 +3198,9 @@ body::before {
        --measure-read and --measure-prose are unchanged, so the sloka, the
        translation and the commentary keep the measure they were tuned at. */
     --measure-wide: 46rem;
-    /* The gloss sidebar's own track, beside the card rather than inside it. */
+    /* The gloss sidebar's own track, beside the card rather than inside it.
+       It steps up at 1600 (below): the rail, the panel and two gaps together
+       take ~600px, so a 20rem panel at 1280 would leave a 352px reading card. */
     --gloss-w: 15rem;
 
     --fs-verse: calc(2.125rem * var(--reading-scale));
@@ -3671,5 +3673,12 @@ body::before {
   .verse-rail-step:hover:not(:disabled) {
     background: var(--accent-soft);
     border-color: var(--accent-line);
+  }
+}
+
+/* Room for the full-width gloss panel without starving the reading card. */
+@media (min-width: 1600px) {
+  :root {
+    --gloss-w: 20rem;
   }
 }
