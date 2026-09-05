@@ -36,6 +36,12 @@ type Tagged = { text: string; lang: "sa" | "kn" | "te" | "en"; fellBack: boolean
    the word-gloss import both key off it. */
 const stripVerseNumber = (text: string): string => text.replace(/\s*(?:।।|॥|\|\|)[\s.\d\u0966-\u096f\u0c66-\u0c6f\u0ce6-\u0cef]+(?:।।|॥|\|\|)\s*$/u, "");
 
+/* A danda is a full stop, and a full stop does not start a line. The corpus
+   spaces it off the last word, so on a narrow column the pada wraps and leaves
+   the mark stranded at the head of the next line; a no-break space glues it to
+   the word it closes. */
+const bindDanda = (text: string): string => text.replace(/[ \t]+(?=(?:।|॥|\|)+)/g, "\u00a0");
+
 const pick = (language: Language, english: string | undefined, kannada: string | undefined, telugu: string | undefined, englishLang: "sa" | "en"): Tagged | null => {
   if (language === "kn" && kannada) return { text: kannada, lang: "kn", fellBack: false };
   if (language === "te" && telugu) return { text: telugu, lang: "te", fellBack: false };
@@ -183,7 +189,7 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
           <p className="verse-text" lang={scripture.lang}>
             {/* The corpus separates pada with blank lines; under pre-wrap those
                 render as a gap mid-verse. Collapse to a single line break. */}
-            {stripVerseNumber(scripture.text.replace(/\n\s*\n/g, "\n").trim())}
+            {bindDanda(stripVerseNumber(scripture.text.replace(/\n\s*\n/g, "\n").trim()))}
           </p>
         </div>
       )}
