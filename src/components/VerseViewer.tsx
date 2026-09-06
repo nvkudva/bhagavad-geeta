@@ -1,10 +1,12 @@
-import { Bookmark, ChevronLeft, ChevronRight } from "lucide-react";
+import { Bookmark, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import type React from "react";
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toggleBookmark, useIsSaved } from "../lib/bookmarks";
 import { useWide, useWidePlus } from "../lib/media";
+import { VerseIndexSheet } from "./VerseIndexSheet";
 import type { Verse } from "../lib/gita.types";
 import { syncVerseUrl } from "../lib/router";
+import { readableScripture } from "../lib/scripture";
 import type { Language } from "../lib/gita.types";
 import type { Sections } from "../lib/settings";
 import { useSettings } from "../lib/settings";
@@ -28,20 +30,6 @@ interface VerseViewerProps {
  *  right script. A field that fell back to English must be tagged "en" or the
  *  Latin prose would be painted in an Indic face at Indic line-height. */
 type Tagged = { text: string; lang: "sa" | "kn" | "te" | "en"; fellBack: boolean };
-
-/* Every line of scripture closes with its own number between double dandas —
-   "।।2.13।।" in Devanagari, "|| ೧೩ ||" in the Kannada and Telugu settings of the
-   same text. The heading above the verse already says which verse this is, so the
-   number and the pair that closes it are noise in the reading view. The opening
-   danda stays: it is the sentence's full stop, not part of the number. The corpus
-   is untouched — search and the word-gloss import both key off the number. */
-const stripVerseNumber = (text: string): string => text.replace(/(।।|॥|\|\|)[\s.\d\u0966-\u096f\u0c66-\u0c6f\u0ce6-\u0cef]+(?:।।|॥|\|\|)\s*$/u, "$1");
-
-/* A danda is a full stop, and a full stop does not start a line. The corpus
-   spaces it off the last word, so on a narrow column the pada wraps and leaves
-   the mark stranded at the head of the next line; a no-break space glues it to
-   the word it closes. */
-const bindDanda = (text: string): string => text.replace(/[ \t]+(?=(?:।|॥|\|)+)/g, "\u00a0");
 
 const pick = (language: Language, english: string | undefined, kannada: string | undefined, telugu: string | undefined, englishLang: "sa" | "en"): Tagged | null => {
   if (language === "kn" && kannada) return { text: kannada, lang: "kn", fellBack: false };
@@ -190,9 +178,7 @@ const VerseBlock = memo<{ chapter: number; verse: Verse; language: Language; sec
       {sections.text && (
         <div className="verse-text-wrapper">
           <p className="verse-text" lang={scripture.lang}>
-            {/* The corpus separates pada with blank lines; under pre-wrap those
-                render as a gap mid-verse. Collapse to a single line break. */}
-            {bindDanda(stripVerseNumber(scripture.text.replace(/\n\s*\n/g, "\n").trim()))}
+            {readableScripture(scripture.text)}
           </p>
         </div>
       )}
@@ -318,6 +304,9 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
    *  scroll-spy below never bumps it, so following the reader's own scroll
    *  cannot fight the reader. */
   const [targetNonce, setTargetNonce] = useState(0);
+  /** The phone's verse index. Raised from the pager label, which is the only
+   *  control on the screen that already names a verse. */
+  const [indexOpen, setIndexOpen] = useState(false);
   if (seenTarget !== targetVerse) {
     setSeenTarget(targetVerse);
     setActive(targetVerse);
@@ -641,13 +630,43 @@ export const VerseViewer: React.FC<VerseViewerProps> = ({ chapter, verses, targe
         <button type="button" className="pager-btn pressable" onClick={goPrev} disabled={!hasPrev} aria-label="Previous verse">
           <ChevronLeft size={18} strokeWidth={2.5} aria-hidden />
         </button>
-        <span className="verse-pager-label" aria-live="polite">
+        {/* The label is the index's trigger: it is already the one thing on the
+            screen that says which verse this is out of how many, so "tap it to
+            choose another" needs no new affordance beyond the chevron. */}
+        <button
+          type="button"
+          className="verse-pager-label pager-index pressable"
+          aria-haspopup="dialog"
+          aria-expanded={indexOpen}
+          aria-label={`Verse ${chapter}.${active} of ${last}. Choose a verse`}
+          onClick={() => setIndexOpen(true)}>
           {chapter}.{active} <span className="verse-pager-total">of {last}</span>
+          <ChevronUp size={13} strokeWidth={2.5} className="pager-index-caret" aria-hidden />
+        </button>
+        {/* Paging is a scroll, so nothing takes focus and nothing is announced
+            unless the pager says so itself. Kept off the trigger: a live region
+            on a button re-reads its own label every time the finger swipes. */}
+        <span className="pager-live" aria-live="polite">
+          Verse {chapter}.{active}
         </span>
         <button type="button" className="pager-btn pressable" onClick={goNext} disabled={!hasNext} aria-label="Next verse">
           <ChevronRight size={18} strokeWidth={2.5} aria-hidden />
         </button>
       </div>
+
+      <VerseIndexSheet
+        open={indexOpen}
+        chapter={chapter}
+        chapterName={chapterName}
+        verses={verses}
+        active={active}
+        onGoToVerse={onGoToVerse}
+        onPrevChapter={onPrevChapter}
+        onNextChapter={onNextChapter}
+        hasPrevChapter={hasPrevChapter}
+        hasNextChapter={hasNextChapter}
+        onClose={() => setIndexOpen(false)}
+      />
     </div>
   );
 };
