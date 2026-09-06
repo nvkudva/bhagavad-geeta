@@ -1687,6 +1687,16 @@ input:focus-visible {
   margin-bottom: var(--sp-5);
 }
 
+/* The same flanked label the reader gives a verse, so the two cards read as
+   one family. */
+.verse-of-moment-head::before,
+.verse-of-moment-head::after {
+  content: "";
+  width: 24px;
+  height: 1px;
+  background: var(--accent-line);
+}
+
 .verse-of-moment-label {
   font-size: var(--fs-caption1);
   font-weight: var(--fw-semibold);
